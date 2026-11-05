@@ -1,0 +1,20 @@
+---
+alwaysApply: true
+---
+
+Projekat: Skript, hibridna mobilna aplikacija za povezivanje na poslovnim konferencijama. Radi se kao diplomski rad i autor mora da razume i odbrani svaki fajl.
+
+1. Jednostavno pre pametnog. Bez apstrakcija za buduće potrebe i bez helpera koje koristi samo jedan fajl.
+2. Stek: Expo sa Expo Router-om, React Native, TypeScript, supabase-js. Novu biblioteku ne dodaj bez pitanja: napiši zašto u jednoj rečenici i sačekaj odgovor.
+3. Interfejs samo od osnovnih React Native komponenti (View, Text, TextInput, Pressable, FlatList, ScrollView, Image, Modal, ActivityIndicator, KeyboardAvoidingView) i Expo modula. Bez UI biblioteka, animacija (Reanimated), blur-a i SVG efekata. Gradijent samo za prelaz fotografije eventa u pozadinu (expo-linear-gradient). Fontovi su samo Plus Jakarta Sans i Fredoka, a ikone iz @expo/vector-icons (Feather).
+4. Sav pristup serveru ide kroz servise u lib/services/, i to samo preko supabase-js (supabase.from, supabase.functions.invoke). Ekrani ne zovu supabase direktno, i nema ručnog fetch-a ka /rest/v1.
+5. Tipovi tabela su u types/database.ts, pisani ručno.
+6. Svaki ekran ima stanje učitavanja, grešku koja kaže korisniku šta da uradi, i prazno stanje.
+7. Bez izmišljenih podataka i lažnih stanja. Kad nešto ne postoji ili server vrati grešku, prikaži grešku, a ne zamenski podatak. Nema ekrana koji glume rad tajmerom, a lokalni keš nikad nema prednost nad bazom.
+8. Fajl duži od oko 200 linija treba podeliti ili uprostiti. Ako zadatak traži duži fajl, prvo predloži podelu.
+9. Izgled, tekst i tokovi prate Skript web demo: docs/Demo-popis.md i fajlovi u stari-kod/demo-ref. Demo je web aplikacija (React, Tailwind), pa se iz njega prenose izgled, tekst i pravila, a ne kod komponenti.
+10. Tekst u aplikaciji je na srpskom (latinica), preveden sa demoa. Imena u kodu su na engleskom.
+11. Komentari su kratki, na srpskom, samo gde logika nije očigledna.
+12. Tajne nikad u kodu. Aplikacija zna samo EXPO_PUBLIC_SUPABASE_URL i EXPO_PUBLIC_SUPABASE_ANON_KEY iz .env. Service role ključ i Gemini ključ postoje samo na serveru i u lokalnim skriptama.
+13. Jedan zadatak po promptu. Ne diraj fajlove koji nisu deo zadatka.
+14. Na kraju svakog zadatka napiši: koje fajlove si napravio ili menjao i šta svaki radi u jednoj rečenici, kako da proverim na telefonu, i tri pitanja koja bi komisija mogla da postavi o tom delu, sa kratkim odgovorima.

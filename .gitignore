@@ -31,7 +31,11 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+
+# kod prenesen iz predmeta, samo kao polazna tačka
+stari-kod/
 
 # typescript
 *.tsbuildinfo
