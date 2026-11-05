@@ -18,3 +18,4 @@ Projekat: Skript, hibridna mobilna aplikacija za povezivanje na poslovnim konfer
 12. Tajne nikad u kodu. Aplikacija zna samo EXPO_PUBLIC_SUPABASE_URL i EXPO_PUBLIC_SUPABASE_ANON_KEY iz .env. Service role ključ i Gemini ključ postoje samo na serveru i u lokalnim skriptama.
 13. Jedan zadatak po promptu. Ne diraj fajlove koji nisu deo zadatka.
 14. Na kraju svakog zadatka napiši: koje fajlove si napravio ili menjao i šta svaki radi u jednoj rečenici, kako da proverim na telefonu, i tri pitanja koja bi komisija mogla da postavi o tom delu, sa kratkim odgovorima.
+15. Ekrani koriste komponente iz components/ui i vrednosti iz constants/theme.ts. Nijedna boja, veličina fonta ni razmak ne piše se direktno u ekranu. Nova komponenta ide u components/ui tek kad se ponavlja na dva mesta.
