@@ -12,6 +12,7 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { Fredoka_600SemiBold } from '@expo-google-fonts/fredoka';
 import { colors, fontSize, fonts, space } from '../../constants/theme';
+import { CurrentEventProvider } from '../../lib/currentEvent';
 import { authErrorMessage, getSession, onAuthChange } from '../../lib/services/authService';
 
 SplashScreen.preventAutoHideAsync();
@@ -84,15 +85,20 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.appBg } }}>
-      <Stack.Protected guard={session !== null}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="dev/ui" />
-      </Stack.Protected>
-      <Stack.Protected guard={session === null}>
-        <Stack.Screen name="(auth)" />
-      </Stack.Protected>
-    </Stack>
+    <CurrentEventProvider>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.appBg } }}>
+        <Stack.Protected guard={session !== null}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="scan" />
+          <Stack.Screen name="event/[slug]/welcome" />
+          <Stack.Screen name="event/[slug]/profile" />
+          <Stack.Screen name="dev/ui" />
+        </Stack.Protected>
+        <Stack.Protected guard={session === null}>
+          <Stack.Screen name="(auth)" />
+        </Stack.Protected>
+      </Stack>
+    </CurrentEventProvider>
   );
 }
 

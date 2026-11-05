@@ -1,13 +1,12 @@
 -- Tri eventa i njihove sesije iz demoa. Poruke i citati se ne prenose.
--- Demo daje samo natpis datuma, pa starts_on prati taj dan u 2026.
+-- Natpis datuma na ekranu računa se iz starts_on i days.
 
-insert into public.events (slug, name, city, dates_label, starts_on, days, rooms, color, cover_url, logo_url)
+insert into public.events (slug, name, city, starts_on, days, rooms, color, cover_url, logo_url)
 values
   (
     'startup-revolution-ai-summit',
     'Startup Revolution AI Summit',
     'Skopje',
-    'Oct 2 to 3',
     '2026-10-02',
     2,
     array['Main Stage', 'Startup Stage'],
@@ -19,7 +18,6 @@ values
     'founders-week-belgrade',
     'Founders Week Belgrade',
     'Belgrade',
-    'Oct 8',
     '2026-10-08',
     1,
     array['Main Hall', 'Builder Studio', 'Founders Lounge'],
@@ -31,7 +29,6 @@ values
     'the5',
     'THE5',
     'Novi Sad',
-    'Oct 15 · Demo date',
     '2026-10-15',
     1,
     array['Main Stage'],

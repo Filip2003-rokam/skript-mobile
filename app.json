@@ -23,6 +23,14 @@
     "plugins": [
       "expo-router",
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Skript koristi kameru da skenira QR kod eventa.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#F6F6F4",

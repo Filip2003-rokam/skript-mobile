@@ -19,3 +19,4 @@ Projekat: Skript, hibridna mobilna aplikacija za povezivanje na poslovnim konfer
 13. Jedan zadatak po promptu. Ne diraj fajlove koji nisu deo zadatka.
 14. Na kraju svakog zadatka napiši: koje fajlove si napravio ili menjao i šta svaki radi u jednoj rečenici, kako da proverim na telefonu, i tri pitanja koja bi komisija mogla da postavi o tom delu, sa kratkim odgovorima.
 15. Ekrani koriste komponente iz components/ui i vrednosti iz constants/theme.ts. Nijedna boja, veličina fonta ni razmak ne piše se direktno u ekranu. Nova komponenta ide u components/ui tek kad se ponavlja na dva mesta.
+16. Supabase CLI komande pokreći samo iz foldera skript-mobile, nikad iz ConnectLog - MR. Svaka izmena baze je nova migracija u supabase/migrations i pušta se sa npx supabase db push.
