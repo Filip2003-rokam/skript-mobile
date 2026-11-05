@@ -92,7 +92,6 @@ export default function RootLayout() {
           <Stack.Screen name="scan" />
           <Stack.Screen name="event/[slug]/welcome" />
           <Stack.Screen name="event/[slug]/profile" />
-          <Stack.Screen name="dev/ui" />
         </Stack.Protected>
         <Stack.Protected guard={session === null}>
           <Stack.Screen name="(auth)" />

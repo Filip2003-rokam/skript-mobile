@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
+import { EventHome } from '../../../components/EventHome';
 import { Button } from '../../../components/ui/Button';
 import { Screen } from '../../../components/ui/Screen';
 import { SkriptMark } from '../../../components/ui/SkriptMark';
-import { colors, fontSize, fonts, space, trackingTight } from '../../../constants/theme';
+import { colors, fontSize, fonts, space } from '../../../constants/theme';
 import { useCurrentEvent } from '../../../lib/currentEvent';
 import { authErrorMessage } from '../../../lib/services/authService';
 import { getMyEvents, type EventRow } from '../../../lib/services/eventService';
@@ -73,14 +74,7 @@ export default function HomeScreen() {
 
   if (!slug) return <NoEventHome />;
 
-  return (
-    <Screen tabBar>
-      <View style={styles.center}>
-        <Text style={styles.title}>Početna</Text>
-        <Button label="Komponente" variant="secondary" onPress={() => router.push('/dev/ui')} />
-      </View>
-    </Screen>
-  );
+  return <EventHome slug={slug} />;
 }
 
 const styles = StyleSheet.create({
@@ -89,12 +83,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: space.gap,
-  },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: fontSize.fs30,
-    color: colors.ink,
-    letterSpacing: fontSize.fs30 * trackingTight,
   },
   prompt: {
     alignItems: 'center',

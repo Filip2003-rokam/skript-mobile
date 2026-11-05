@@ -8,3 +8,11 @@ export type EventRow = {
   cover_url: string | null;
   logo_url: string | null;
 };
+
+export type EventAttendeeProfile = {
+  why: string[];
+  role: string | null;
+  company: string | null;
+  offers: string[];
+  needs: string[];
+};
