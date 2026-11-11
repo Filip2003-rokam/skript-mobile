@@ -12,6 +12,7 @@ export const colors = {
   fillSubtle: 'rgba(17, 17, 20, 0.04)',
   glass: 'rgba(255, 255, 255, 0.8)',
   glassStrong: 'rgba(255, 255, 255, 0.92)',
+  scrim: 'rgba(17, 17, 20, 0.28)',
   skriptYellow: '#FFE14D',
   skriptYellowSoft: '#FFF5BF',
   onSignal: '#111114',

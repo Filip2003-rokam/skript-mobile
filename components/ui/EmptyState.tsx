@@ -6,8 +6,8 @@ import { Button } from './Button';
 type EmptyStateProps = {
   icon: ReactNode;
   text: string;
-  action: string;
-  onAction: () => void;
+  action?: string;
+  onAction?: () => void;
 };
 
 export function EmptyState({ icon, text, action, onAction }: EmptyStateProps) {
@@ -15,7 +15,7 @@ export function EmptyState({ icon, text, action, onAction }: EmptyStateProps) {
     <View style={styles.wrap}>
       <View style={styles.icon}>{icon}</View>
       <Text style={styles.text}>{text}</Text>
-      <Button label={action} size="sm" onPress={onAction} />
+      {action && onAction ? <Button label={action} size="sm" onPress={onAction} /> : null}
     </View>
   );
 }

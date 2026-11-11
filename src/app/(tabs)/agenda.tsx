@@ -1,15 +1,36 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { Agenda } from '../../../components/Agenda';
+import { Button } from '../../../components/ui/Button';
 import { Screen } from '../../../components/ui/Screen';
-import { colors, fontSize, fonts, trackingTight } from '../../../constants/theme';
+import { colors, fontSize, fonts, space } from '../../../constants/theme';
+import { useCurrentEvent } from '../../../lib/currentEvent';
 
 export default function AgendaScreen() {
-  return (
-    <Screen tabBar>
-      <View style={styles.center}>
-        <Text style={styles.title}>Agenda</Text>
-      </View>
-    </Screen>
-  );
+  const { slug, ready } = useCurrentEvent();
+
+  if (!ready) {
+    return (
+      <Screen tabBar>
+        <View style={styles.center}>
+          <ActivityIndicator color={colors.ink} />
+        </View>
+      </Screen>
+    );
+  }
+
+  if (!slug) {
+    return (
+      <Screen tabBar>
+        <View style={styles.center}>
+          <Text style={styles.message}>Skeniraj QR kod eventa</Text>
+          <Button label="Skeniraj" onPress={() => router.push('/scan')} />
+        </View>
+      </Screen>
+    );
+  }
+
+  return <Agenda slug={slug} />;
 }
 
 const styles = StyleSheet.create({
@@ -17,11 +38,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: space.gap,
   },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: fontSize.fs30,
+  message: {
+    fontFamily: fonts.semibold,
+    fontSize: fontSize.fs17,
     color: colors.ink,
-    letterSpacing: fontSize.fs30 * trackingTight,
+    textAlign: 'center',
   },
 });

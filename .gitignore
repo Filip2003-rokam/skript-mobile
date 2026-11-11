@@ -36,6 +36,9 @@ yarn-error.*
 # service role i lozinka za scripts/seed-test-users.ts
 scripts/.env
 
+# Firebase service account (FCM V1 private key). Ne komitovati.
+firebase-adminsdk.json
+
 # kod prenesen iz predmeta, samo kao polazna tačka
 stari-kod/
 

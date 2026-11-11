@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1027959625168",
+    "project_id": "skript-app-filip",
+    "storage_bucket": "skript-app-filip.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1027959625168:android:fd85c18394fa7a2d2955d5",
+        "android_client_info": {
+          "package_name": "com.skript.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyACMB7vOVdlZyL8-dmRS1Yz1kY23ZbsADE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

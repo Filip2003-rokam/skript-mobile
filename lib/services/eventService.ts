@@ -83,7 +83,7 @@ async function userId(): Promise<string> {
 export async function getEventBySlug(slug: string): Promise<EventRow | null> {
   const { data, error } = await supabase
     .from('events')
-    .select('id, slug, name, city, starts_on, days, cover_url, logo_url')
+    .select('id, slug, name, city, starts_on, days, rooms, cover_url, logo_url')
     .eq('slug', slug)
     .maybeSingle();
   if (error) throw error;
@@ -94,7 +94,7 @@ export async function getMyEvents(): Promise<EventRow[]> {
   const id = await userId();
   const { data, error } = await supabase
     .from('event_attendees')
-    .select('events(id, slug, name, city, starts_on, days, cover_url, logo_url)')
+    .select('events(id, slug, name, city, starts_on, days, rooms, cover_url, logo_url)')
     .eq('user_id', id);
   if (error) throw error;
   return (data ?? []).flatMap((row) => {
