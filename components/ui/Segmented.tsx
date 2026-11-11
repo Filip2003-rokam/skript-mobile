@@ -14,15 +14,21 @@ export function Segmented({ value, options, onChange }: SegmentedProps) {
     <View style={styles.track}>
       {options.slice(0, 4).map((option) => {
         const active = option.id === value;
+        const compact = options.length > 3;
         return (
           <Pressable
             key={option.id}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
             onPress={() => onChange(option.id)}
-            style={({ pressed }) => [styles.option, active && styles.active, pressed && { transform: [{ scale: pressScale }] }]}
+            style={({ pressed }) => [
+              styles.option,
+              compact && styles.compact,
+              active && styles.active,
+              pressed && { transform: [{ scale: pressScale }] },
+            ]}
           >
-            <Text numberOfLines={1} style={[styles.label, active && styles.activeLabel]}>
+            <Text numberOfLines={1} style={[styles.label, compact && styles.compactLabel, active && styles.activeLabel]}>
               {option.label}
             </Text>
           </Pressable>
@@ -55,10 +61,16 @@ const styles = StyleSheet.create({
   active: {
     backgroundColor: colors.skriptYellow,
   },
+  compact: {
+    paddingHorizontal: 6,
+  },
   label: {
     fontFamily: fonts.semibold,
     fontSize: fontSize.fs13,
     color: colors.text2,
+  },
+  compactLabel: {
+    fontSize: fontSize.fs11,
   },
   activeLabel: {
     color: colors.onSignal,

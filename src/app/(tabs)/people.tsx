@@ -1,26 +1,44 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { People, type PeopleView } from '../../../components/People';
+import { Button } from '../../../components/ui/Button';
 import { Screen } from '../../../components/ui/Screen';
-import { Segmented } from '../../../components/ui/Segmented';
-import { colors, fontSize, fonts, trackingTight } from '../../../constants/theme';
+import { colors, fontSize, fonts, space } from '../../../constants/theme';
+import { useCurrentEvent } from '../../../lib/currentEvent';
 
-const peopleViews = [
-  { id: 'suggestions', label: 'Predlozi' },
-  { id: 'requests', label: 'Zahtevi' },
-];
+const views: PeopleView[] = ['suggestions', 'saved', 'requests', 'connected'];
+
+function selectedView(value: string | string[] | undefined): PeopleView {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return views.includes(raw as PeopleView) ? (raw as PeopleView) : 'suggestions';
+}
 
 export default function PeopleScreen() {
+  const { slug, ready } = useCurrentEvent();
   const { view } = useLocalSearchParams<{ view?: string }>();
-  const selected = view === 'requests' || view === 'suggestions' ? view : null;
 
-  return (
-    <Screen tabBar>
-      {selected ? <Segmented value={selected} options={peopleViews} onChange={(id) => router.setParams({ view: id })} /> : null}
-      <View style={styles.center}>
-        <Text style={styles.title}>Ljudi</Text>
-      </View>
-    </Screen>
-  );
+  if (!ready) {
+    return (
+      <Screen tabBar>
+        <View style={styles.center}>
+          <ActivityIndicator color={colors.ink} />
+        </View>
+      </Screen>
+    );
+  }
+
+  if (!slug) {
+    return (
+      <Screen tabBar>
+        <View style={styles.center}>
+          <Text style={styles.message}>Skeniraj QR kod eventa</Text>
+          <Button label="Skeniraj" onPress={() => router.push('/scan')} />
+        </View>
+      </Screen>
+    );
+  }
+
+  return <People slug={slug} view={selectedView(view)} onView={(next) => router.setParams({ view: next })} />;
 }
 
 const styles = StyleSheet.create({
@@ -28,11 +46,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: space.gap,
   },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: fontSize.fs30,
+  message: {
+    fontFamily: fonts.semibold,
+    fontSize: fontSize.fs17,
     color: colors.ink,
-    letterSpacing: fontSize.fs30 * trackingTight,
+    textAlign: 'center',
   },
 });
