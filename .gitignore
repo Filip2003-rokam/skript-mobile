@@ -33,6 +33,8 @@ yarn-error.*
 # local env files
 .env
 .env*.local
+# service role i lozinka za scripts/seed-test-users.ts
+scripts/.env
 
 # kod prenesen iz predmeta, samo kao polazna tačka
 stari-kod/

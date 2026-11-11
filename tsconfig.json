@@ -17,5 +17,5 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
   ],
-  "exclude": ["node_modules", "stari-kod"]
+  "exclude": ["node_modules", "stari-kod", "scripts", "supabase/functions"]
 }
