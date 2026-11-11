@@ -290,6 +290,8 @@ function prompt(ranked: Ranked[]): string {
   return [
     'Napiši tekst za već izabrane kandidate. Ne dodaji i ne izbacuj ljude. Svaki user_id prepiši tačno iz liste.',
     'Za svakog vrati why: jednu konkretnu rečenicu na srpskom, zašto da se upoznamo, bez laskanja.',
+    'Obraćaj se korisniku sa „ti“, npr. „Ti praviš softver, a Northwindu treba razvojni tim.“',
+    'Piši samo na osnovu podataka koje dobiješ (uloga, firma, šta nudi, šta traži, poklapanje). Ne izmišljaj potrebe, brojke ni detalje o firmama.',
     'I openers: tačno dve kratke prve poruke na srpskom, prirodne, do 200 znakova, bez laskanja.',
     'Odgovor je samo JSON niz objekata sa user_id, why i openers.',
     JSON.stringify(people),
