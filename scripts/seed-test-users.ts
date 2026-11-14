@@ -5,28 +5,11 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { needOptions, offerOptions, roleOptions } from '../constants/options';
+import { testPeople, type DemoPerson, type Kind } from './test-people.ts';
 
 const summitSlug = 'startup-revolution-ai-summit';
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const demoDir = join(scriptDir, '..', 'stari-kod', 'demo-ref');
-const englishRequest = 'Saw you build software for other companies. We need a team for our patient app. Coffee after lunch?';
 const serbianRequest = 'Video sam da pravite softver za druge firme. Treba nam tim za aplikaciju za pacijente. Kafa posle ručka?';
-
-const kinds = ['buyer', 'agency', 'investor', 'founder', 'operator'] as const;
-type Kind = (typeof kinds)[number];
-
-type DemoPerson = {
-  id: string;
-  name: string;
-  role: string;
-  company: string;
-  kind: Kind;
-  offersTags: string[];
-  needsTags: string[];
-  email: string;
-  phone: string;
-  inRoom: boolean;
-};
 
 type Profile = {
   person: DemoPerson;
@@ -68,64 +51,6 @@ function required(env: Record<string, string>, key: string): string {
   const value = env[key]?.trim();
   if (!value) throw new Error(`U scripts/.env nedostaje ${key}.`);
   return value;
-}
-
-function readObject(source: string, open: number): string {
-  let depth = 0;
-  let quote: string | null = null;
-  let escaped = false;
-  for (let index = open; index < source.length; index += 1) {
-    const char = source[index];
-    if (quote) {
-      if (escaped) escaped = false;
-      else if (char === '\\') escaped = true;
-      else if (char === quote) quote = null;
-      continue;
-    }
-    if (char === '"' || char === "'") {
-      quote = char;
-      continue;
-    }
-    if (char === '{') depth += 1;
-    if (char === '}') {
-      depth -= 1;
-      if (depth === 0) return source.slice(open, index + 1);
-    }
-  }
-  throw new Error('Ne mogu da pročitam osobu iz network.ts.');
-}
-
-// network.ts uvozi demo slike, pa čitamo same zapise osoba.
-function loadPeople(): DemoPerson[] {
-  const source = readFileSync(join(demoDir, 'network.ts'), 'utf8');
-  const people: DemoPerson[] = [];
-  let cursor = 0;
-  while (cursor < source.length) {
-    const start = source.indexOf('p({', cursor);
-    if (start < 0) break;
-    const literal = readObject(source, start + 2);
-    let person: DemoPerson;
-    try {
-      person = new Function(`return (${literal})`)() as DemoPerson;
-    } catch (cause) {
-      const detail = cause instanceof Error ? cause.message : 'nepoznata greška';
-      throw new Error(`Ne mogu da pročitam zapis iz network.ts: ${detail}`);
-    }
-    if (!kinds.includes(person.kind)) throw new Error(`${person.name}: nepoznata vrsta ${person.kind}.`);
-    people.push(person);
-    cursor = start + 2 + literal.length;
-  }
-  if (people.length !== 12) throw new Error(`U network.ts je ${people.length} osoba, a očekivano je 12.`);
-  return people;
-}
-
-function loadRequest(): string {
-  const source = readFileSync(join(demoDir, 'networking.ts'), 'utf8');
-  if (!source.includes(englishRequest)) {
-    throw new Error('Poruka iz emptyNetwork više nije ista. Proveri prevod u skripti.');
-  }
-  if (serbianRequest.length > 280) throw new Error('Prevedena poruka je duža od 280 znakova.');
-  return serbianRequest;
 }
 
 function mapWhy(kind: Kind): string[] {
@@ -231,8 +156,10 @@ async function createAttendee(supabase: SupabaseClient, eventId: string, profile
 }
 
 async function main() {
-  const people = profilesFor(loadPeople());
-  const message = loadRequest();
+  if (testPeople.length !== 12) throw new Error(`U test-people.ts je ${testPeople.length} osoba, a očekivano je 12.`);
+  if (serbianRequest.length > 280) throw new Error('Prevedena poruka je duža od 280 znakova.');
+  const people = profilesFor(testPeople);
+  const message = serbianRequest;
   const env = loadEnv(join(scriptDir, '.env'));
   const supabase = createClient(required(env, 'SUPABASE_URL'), required(env, 'SUPABASE_SERVICE_ROLE_KEY'), {
     auth: { autoRefreshToken: false, persistSession: false },
