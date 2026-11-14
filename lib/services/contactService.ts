@@ -17,6 +17,7 @@ export type Contact = ContactListItem & {
   email: string | null;
   phone: string | null;
   linkedinUrl: string | null;
+  followUpDraft: string | null;
 };
 
 export type ContactWrite = {
@@ -28,6 +29,7 @@ export type ContactWrite = {
   linkedinUrl: string | null;
   note: string | null;
   followUpDate: string | null;
+  followUpDraft?: string | null;
   followUpDone?: boolean;
   eventId?: string | null;
 };
@@ -50,10 +52,11 @@ type DetailRow = ListRow & {
   email: string | null;
   phone: string | null;
   linkedin_url: string | null;
+  follow_up_draft: string | null;
 };
 
 const listColumns = 'id, full_name, company, note, follow_up_date, follow_up_done, event_id, events(name)';
-const detailColumns = `${listColumns}, job_title, email, phone, linkedin_url`;
+const detailColumns = `${listColumns}, job_title, email, phone, linkedin_url, follow_up_draft`;
 
 function eventName(value: EventName): string | null {
   if (!value) return null;
@@ -80,6 +83,7 @@ function detailItem(row: DetailRow): Contact {
     email: row.email,
     phone: row.phone,
     linkedinUrl: row.linkedin_url,
+    followUpDraft: row.follow_up_draft,
   };
 }
 
@@ -113,6 +117,7 @@ export async function createContact(data: ContactWrite): Promise<string> {
       linkedin_url: data.linkedinUrl,
       note: data.note,
       follow_up_date: data.followUpDate,
+      follow_up_draft: data.followUpDraft ?? null,
       follow_up_done: data.followUpDone ?? false,
       event_id: data.eventId ?? null,
     })
@@ -132,6 +137,7 @@ export async function updateContact(id: string, data: Partial<ContactWrite>): Pr
   if (data.linkedinUrl !== undefined) patch.linkedin_url = data.linkedinUrl;
   if (data.note !== undefined) patch.note = data.note;
   if (data.followUpDate !== undefined) patch.follow_up_date = data.followUpDate;
+  if (data.followUpDraft !== undefined) patch.follow_up_draft = data.followUpDraft;
   if (data.followUpDone !== undefined) patch.follow_up_done = data.followUpDone;
   if (data.eventId !== undefined) patch.event_id = data.eventId;
   const { error } = await supabase.from('contacts').update(patch).eq('id', id);

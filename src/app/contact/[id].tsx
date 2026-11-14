@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Linking, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { ContactForm } from '../../../components/ContactForm';
+import { ContactEditModal } from '../../../components/ContactEditModal';
 import { Button } from '../../../components/ui/Button';
 import { EmptyState } from '../../../components/ui/EmptyState';
-import { Screen, keyboardBehavior } from '../../../components/ui/Screen';
+import { Screen } from '../../../components/ui/Screen';
 import { ErrorState, InlineError, LoadingState } from '../../../components/ui/State';
-import { colors, fontSize, fonts, radius, size, space, trackingWide } from '../../../constants/theme';
+import { FollowUpDraftActions } from '../../../components/voice/FollowUpDraftActions';
+import { VoiceNote } from '../../../components/voice/VoiceNote';
+import { colors, fontSize, fonts, size, space, trackingWide } from '../../../constants/theme';
 import { toDisplayDate } from '../../../lib/contactDates';
 import { authErrorMessage } from '../../../lib/services/authService';
 import { deleteContact, getContact, updateContact, type Contact, type ContactWrite } from '../../../lib/services/contactService';
+import { splitDraft } from '../../../lib/services/voiceNoteService';
 
 function linkUrl(value: string) {
   return /^https?:\/\//i.test(value) ? value : `https://${value}`;
@@ -70,6 +73,16 @@ export default function ContactScreen() {
       setFormError(authErrorMessage(cause));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function saveVoice(value: { note: string | null; followUpDate: string | null; followUpDraft: string | null }) {
+    try {
+      await updateContact(contactId, value);
+      setContact(await getContact(contactId));
+      setNotice('Izmenjeno');
+    } catch (cause) {
+      throw new Error(authErrorMessage(cause));
     }
   }
 
@@ -140,6 +153,8 @@ export default function ContactScreen() {
       <Fact label="Event" value={contact.eventName} />
       <Fact label="Beleška" value={contact.note} />
       <Fact label="Follow-up" value={toDisplayDate(contact.followUpDate) || null} />
+      <Fact label="Nacrt mejla" value={contact.followUpDraft} />
+      <FollowUpDraftActions email={contact.email} {...splitDraft(contact.followUpDraft)} />
       <View style={styles.switchRow}>
         <Text style={styles.switchLabel}>Follow-up poslat</Text>
         <Switch
@@ -149,21 +164,14 @@ export default function ContactScreen() {
           thumbColor={colors.surface}
         />
       </View>
+      <VoiceNote existingNote={contact.note} existingDate={contact.followUpDate} email={contact.email} onSave={saveVoice} />
       {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
       <View style={styles.actions}>
         <Button label="Izmeni" variant="secondary" onPress={() => setEditing(true)} />
         <Button label="Obriši" variant="ghost" onPress={confirmDelete} />
       </View>
       {editing ? (
-        <Modal visible transparent animationType="slide" statusBarTranslucent onRequestClose={() => setEditing(false)}>
-          <KeyboardAvoidingView behavior={keyboardBehavior} style={styles.modal}>
-            <Pressable accessibilityLabel="Zatvori" style={[StyleSheet.absoluteFill, styles.scrim]} onPress={() => setEditing(false)} />
-            <ScrollView style={styles.sheet} contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled">
-              <Text style={styles.sheetTitle}>Izmeni kontakt</Text>
-              <ContactForm contact={contact} saving={saving} error={formError} onSubmit={(data) => void save(data)} />
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </Modal>
+        <ContactEditModal contact={contact} saving={saving} error={formError} onClose={() => setEditing(false)} onSubmit={(data) => void save(data)} />
       ) : null}
     </Screen>
   );
@@ -190,14 +198,4 @@ const styles = StyleSheet.create({
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.gap },
   switchLabel: { fontFamily: fonts.semibold, fontSize: fontSize.fs15, color: colors.ink },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.gap },
-  modal: { flex: 1, justifyContent: 'flex-end' },
-  scrim: { backgroundColor: colors.scrim },
-  sheet: {
-    maxHeight: '88%',
-    borderTopLeftRadius: radius.panel,
-    borderTopRightRadius: radius.panel,
-    backgroundColor: colors.appBg,
-  },
-  sheetContent: { gap: space.gap, padding: space.edge },
-  sheetTitle: { fontFamily: fonts.bold, fontSize: fontSize.fs17, color: colors.ink },
 });

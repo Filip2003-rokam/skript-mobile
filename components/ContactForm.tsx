@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button } from './ui/Button';
 import { TextField } from './ui/TextField';
+import { FollowUpDraftActions } from './voice/FollowUpDraftActions';
 import { colors, fontSize, fonts, radius, size, space } from '../constants/theme';
 import { fromDisplayDate, toDisplayDate } from '../lib/contactDates';
 import type { Contact, ContactWrite } from '../lib/services/contactService';
+import { formatDraft, splitDraft } from '../lib/services/voiceNoteService';
 
 type ContactFormProps = {
-  contact?: Contact | null;
+  contact?: Partial<Contact> | null;
   saving?: boolean;
   error?: string | null;
   onSubmit: (data: ContactWrite) => void;
@@ -25,8 +27,11 @@ export function ContactForm({ contact, saving = false, error, onSubmit }: Contac
   const [email, setEmail] = useState(contact?.email ?? '');
   const [phone, setPhone] = useState(contact?.phone ?? '');
   const [linkedinUrl, setLinkedinUrl] = useState(contact?.linkedinUrl ?? '');
+  const draft = splitDraft(contact?.followUpDraft ?? null);
   const [note, setNote] = useState(contact?.note ?? '');
   const [followUp, setFollowUp] = useState(toDisplayDate(contact?.followUpDate ?? null));
+  const [subject, setSubject] = useState(draft.subject);
+  const [mailBody, setMailBody] = useState(draft.body);
   const [nameError, setNameError] = useState<string | null>(null);
   const [dateError, setDateError] = useState<string | null>(null);
 
@@ -46,6 +51,7 @@ export function ContactForm({ contact, saving = false, error, onSubmit }: Contac
       linkedinUrl: empty(linkedinUrl),
       note: empty(note),
       followUpDate: iso,
+      followUpDraft: formatDraft(subject, mailBody),
       followUpDone: contact?.followUpDone ?? false,
     });
   }
@@ -67,6 +73,9 @@ export function ContactForm({ contact, saving = false, error, onSubmit }: Contac
         keyboardType="numbers-and-punctuation"
         error={dateError ?? undefined}
       />
+      <TextField label="Predmet mejla" value={subject} onChangeText={setSubject} />
+      <TextField label="Tekst mejla" value={mailBody} onChangeText={setMailBody} multiline style={styles.note} />
+      <FollowUpDraftActions email={email} subject={subject} body={mailBody} />
       {error ? <Text style={styles.dateError}>{error}</Text> : null}
       <Button label="Sačuvaj" loading={saving} onPress={submit} />
     </View>

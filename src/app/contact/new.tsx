@@ -5,11 +5,13 @@ import { ContactForm } from '../../../components/ContactForm';
 import { Button } from '../../../components/ui/Button';
 import { Screen } from '../../../components/ui/Screen';
 import { ErrorState, LoadingState } from '../../../components/ui/State';
+import { VoiceNote } from '../../../components/voice/VoiceNote';
 import { colors, fontSize, fonts, space } from '../../../constants/theme';
 import { useCurrentEvent } from '../../../lib/currentEvent';
 import { authErrorMessage } from '../../../lib/services/authService';
-import { createContact, type ContactWrite } from '../../../lib/services/contactService';
+import { createContact, type Contact, type ContactWrite } from '../../../lib/services/contactService';
 import { getEventBySlug } from '../../../lib/services/eventService';
+import { noteWithTopic, type VoiceDraft } from '../../../lib/services/voiceNoteService';
 
 export default function NewContactScreen() {
   const { slug } = useCurrentEvent();
@@ -19,6 +21,8 @@ export default function NewContactScreen() {
   const [attempt, setAttempt] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [formKey, setFormKey] = useState(0);
+  const [seed, setSeed] = useState<Partial<Contact> | null>(null);
 
   useEffect(() => {
     if (!slug) {
@@ -50,6 +54,20 @@ export default function NewContactScreen() {
       active = false;
     };
   }, [slug, attempt]);
+
+  function fillFromVoice(result: VoiceDraft) {
+    setSeed({
+      fullName: result.fullName,
+      jobTitle: result.jobTitle || null,
+      company: result.company || null,
+      email: result.email || null,
+      phone: result.phone || null,
+      note: noteWithTopic(result.note, result.topic),
+      followUpDate: result.followUpDate,
+      followUpDraft: result.followUpDraft,
+    });
+    setFormKey((value) => value + 1);
+  }
 
   async function save(data: ContactWrite) {
     setSaving(true);
@@ -84,7 +102,8 @@ export default function NewContactScreen() {
     <Screen scroll>
       <Button label="Nazad" variant="ghost" onPress={() => router.back()} />
       <Text style={styles.title}>Nov kontakt</Text>
-      <ContactForm saving={saving} error={error} onSubmit={(data) => void save(data)} />
+      <VoiceNote onReady={fillFromVoice} />
+      <ContactForm key={formKey} contact={seed} saving={saving} error={error} onSubmit={(data) => void save(data)} />
     </Screen>
   );
 }
