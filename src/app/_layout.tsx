@@ -11,9 +11,11 @@ import {
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { Fredoka_600SemiBold } from '@expo-google-fonts/fredoka';
+import { Button } from '../../components/ui/Button';
 import { colors, fontSize, fonts, space } from '../../constants/theme';
 import { CurrentEventProvider } from '../../lib/currentEvent';
 import { authErrorMessage, getSession, onAuthChange } from '../../lib/services/authService';
+import { listenForNotificationOpens, registerForPush } from '../../lib/services/notificationService';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,6 +29,7 @@ export default function RootLayout() {
   });
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (loaded || fontError) {
@@ -54,7 +57,18 @@ export default function RootLayout() {
       active = false;
       stop();
     };
-  }, []);
+  }, [attempt]);
+
+  // Posle prijave i kad se sačuvana sesija vrati. Ne čeka se: dozvola i token ne smeju da zaustave ulaz.
+  useEffect(() => {
+    if (!session?.user.id) return;
+    void registerForPush();
+  }, [session?.user.id]);
+
+  useEffect(() => {
+    if (!loaded || fontError || !session?.user.id) return;
+    return listenForNotificationOpens();
+  }, [loaded, fontError, session?.user.id]);
 
   if (!loaded && !fontError) {
     return null;
@@ -80,6 +94,7 @@ export default function RootLayout() {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>{sessionError}</Text>
+        <Button label="Pokušaj ponovo" onPress={() => { setSession(undefined); setSessionError(null); setAttempt((value) => value + 1); }} />
       </View>
     );
   }
@@ -109,6 +124,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: space.gap,
     padding: space.edge,
     backgroundColor: colors.appBg,
   },

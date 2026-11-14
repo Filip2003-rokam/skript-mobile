@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
+import { unregisterPush } from './notificationService';
 
 // Triger na novom nalogu čita full_name iz metapodataka i upisuje ga u profiles.
 export async function signUp(email: string, password: string, fullName: string) {
@@ -22,6 +23,11 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signOut() {
+  try {
+    await unregisterPush();
+  } catch {
+    // Token ostaje upisan. Odjava ide dalje.
+  }
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }
@@ -44,10 +50,10 @@ export function authErrorMessage(error: unknown): string {
   const text = `${value.code ?? ''} ${value.name ?? ''} ${value.message ?? ''}`.toLowerCase();
 
   if (text.includes('invalid_credentials') || text.includes('invalid login')) {
-    return 'Pogrešna lozinka.';
+    return 'Pogrešna lozinka. Proveri mejl i lozinku pa pokušaj ponovo.';
   }
   if (text.includes('already registered') || text.includes('already been registered') || text.includes('user_already_exists')) {
-    return 'Nalog već postoji.';
+    return 'Nalog već postoji. Prijavi se ili koristi drugi mejl.';
   }
   if (text.includes('network') || text.includes('fetch') || text.includes('offline')) {
     return 'Nema interneta. Proveri vezu i pokušaj ponovo.';
