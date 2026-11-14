@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, space } from '../../constants/theme';
 
@@ -9,16 +9,20 @@ type ScreenProps = {
   tabBar?: boolean;
 };
 
+export const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : 'height';
+
 export function Screen({ children, scroll = false, tabBar = false }: ScreenProps) {
   return (
     <SafeAreaView edges={tabBar ? ['top'] : ['top', 'bottom']} style={styles.screen}>
-      {scroll ? (
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          {children}
-        </ScrollView>
-      ) : (
-        <View style={[styles.content, styles.fill]}>{children}</View>
-      )}
+      <KeyboardAvoidingView style={styles.fill} behavior={keyboardBehavior}>
+        {scroll ? (
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+            {children}
+          </ScrollView>
+        ) : (
+          <View style={[styles.content, styles.fill]}>{children}</View>
+        )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

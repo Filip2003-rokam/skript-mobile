@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../ui/Button';
+import { keyboardBehavior } from '../ui/Screen';
 import { TextField } from '../ui/TextField';
 import { colors, fontSize, fonts, radius, space } from '../../constants/theme';
 import type { MyProfile } from '../../lib/services/profileService';
@@ -31,7 +32,7 @@ export function EditProfile({ profile, open, saving, error, onClose, onSave }: E
 
   return (
     <Modal visible={open} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
-      <View style={styles.modal}>
+      <KeyboardAvoidingView behavior={keyboardBehavior} style={styles.modal}>
         <Pressable accessibilityLabel="Zatvori" style={[StyleSheet.absoluteFill, styles.scrim]} onPress={onClose} />
         <View style={styles.sheet}>
           <Text style={styles.title}>Izmeni profil</Text>
@@ -42,7 +43,7 @@ export function EditProfile({ profile, open, saving, error, onClose, onSave }: E
           <Button label="Sačuvaj" loading={saving} onPress={submit} />
           <Button label="Otkaži" variant="ghost" onPress={onClose} />
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

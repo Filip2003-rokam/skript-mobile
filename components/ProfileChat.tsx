@@ -1,7 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { Card } from './ui/Card';
 import { Chip } from './ui/Chip';
 import type { Choice } from '../constants/options';
-import { colors, fontSize, fonts, radius, size, space } from '../constants/theme';
+import { colors, fontSize, fonts, radius, space } from '../constants/theme';
 
 export function choiceLabels(options: Choice[], keys: string[]) {
   return options.filter((option) => keys.includes(option.key)).map((option) => option.label).join(', ');
@@ -9,9 +10,9 @@ export function choiceLabels(options: Choice[], keys: string[]) {
 
 export function Ask({ text }: { text: string }) {
   return (
-    <View style={styles.ask}>
+    <Card>
       <Text style={styles.askText}>{text}</Text>
-    </View>
+    </Card>
   );
 }
 
@@ -34,14 +35,6 @@ export function ChoiceChips({ options, selected, onPress }: { options: Choice[];
 }
 
 const styles = StyleSheet.create({
-  ask: {
-    alignSelf: 'flex-start',
-    borderRadius: radius.card,
-    padding: space.card,
-    backgroundColor: colors.glass,
-    borderWidth: size.border,
-    borderColor: colors.hairline,
-  },
   askText: {
     fontFamily: fonts.regular,
     fontSize: fontSize.fs15,

@@ -1,10 +1,13 @@
-import { useCallback, useState } from 'react';
-import { Alert, Linking, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Linking, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { ContactForm } from '../../../components/ContactForm';
 import { Button } from '../../../components/ui/Button';
-import { Screen } from '../../../components/ui/Screen';
-import { colors, fontSize, fonts, radius, space } from '../../../constants/theme';
+import { EmptyState } from '../../../components/ui/EmptyState';
+import { Screen, keyboardBehavior } from '../../../components/ui/Screen';
+import { ErrorState, InlineError, LoadingState } from '../../../components/ui/State';
+import { colors, fontSize, fonts, radius, size, space, trackingWide } from '../../../constants/theme';
 import { toDisplayDate } from '../../../lib/contactDates';
 import { authErrorMessage } from '../../../lib/services/authService';
 import { deleteContact, getContact, updateContact, type Contact, type ContactWrite } from '../../../lib/services/contactService';
@@ -24,6 +27,14 @@ export default function ContactScreen() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    setContact(null);
+    setReady(false);
+    setMissing(false);
+    setError(null);
+  }, [contactId]);
 
   const load = useCallback(() => {
     let active = true;
@@ -43,7 +54,7 @@ export default function ContactScreen() {
     return () => {
       active = false;
     };
-  }, [contactId]);
+  }, [contactId, attempt]);
 
   useFocusEffect(load);
 
@@ -88,12 +99,30 @@ export default function ContactScreen() {
     ]);
   }
 
-  if (!ready) return <Screen><Text style={styles.muted}>Učitavam…</Text></Screen>;
-  if (missing || !contact) {
+  if (!ready && !contact) {
+    return (
+      <Screen>
+        <LoadingState />
+      </Screen>
+    );
+  }
+  if (error && !contact) {
     return (
       <Screen>
         <Button label="Nazad" variant="ghost" onPress={() => router.back()} />
-        <Text style={styles.body}>{error ?? 'Kontakt nije pronađen.'}</Text>
+        <ErrorState text={error} onRetry={() => setAttempt((value) => value + 1)} />
+      </Screen>
+    );
+  }
+  if (missing || !contact) {
+    return (
+      <Screen>
+        <EmptyState
+          icon={<Feather name="user" size={size.iconMd} color={colors.ink} />}
+          text="Kontakt nije pronađen. Vrati se na listu kontakata."
+          action="Nazad"
+          onAction={() => router.back()}
+        />
       </Screen>
     );
   }
@@ -120,20 +149,20 @@ export default function ContactScreen() {
           thumbColor={colors.surface}
         />
       </View>
-      {error ? <Text style={styles.body}>{error}</Text> : null}
+      {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
       <View style={styles.actions}>
         <Button label="Izmeni" variant="secondary" onPress={() => setEditing(true)} />
         <Button label="Obriši" variant="ghost" onPress={confirmDelete} />
       </View>
       {editing ? (
         <Modal visible transparent animationType="slide" statusBarTranslucent onRequestClose={() => setEditing(false)}>
-          <View style={styles.modal}>
+          <KeyboardAvoidingView behavior={keyboardBehavior} style={styles.modal}>
             <Pressable accessibilityLabel="Zatvori" style={[StyleSheet.absoluteFill, styles.scrim]} onPress={() => setEditing(false)} />
             <ScrollView style={styles.sheet} contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled">
               <Text style={styles.sheetTitle}>Izmeni kontakt</Text>
               <ContactForm contact={contact} saving={saving} error={formError} onSubmit={(data) => void save(data)} />
             </ScrollView>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
       ) : null}
     </Screen>
@@ -154,14 +183,12 @@ function Fact({ label, value, onPress }: { label: string; value: string | null; 
 const styles = StyleSheet.create({
   name: { fontFamily: fonts.bold, fontSize: fontSize.fs22, color: colors.ink },
   notice: { fontFamily: fonts.semibold, fontSize: fontSize.fs13, color: colors.ink },
-  fact: { gap: 2 },
-  label: { fontFamily: fonts.bold, fontSize: fontSize.fs11, color: colors.text2, textTransform: 'uppercase', letterSpacing: 0.6 },
+  fact: { gap: space.tight },
+  label: { fontFamily: fonts.bold, fontSize: fontSize.fs11, color: colors.text2, textTransform: 'uppercase', letterSpacing: trackingWide },
   value: { fontFamily: fonts.regular, fontSize: fontSize.fs15, color: colors.ink },
   link: { textDecorationLine: 'underline' },
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.gap },
   switchLabel: { fontFamily: fonts.semibold, fontSize: fontSize.fs15, color: colors.ink },
-  body: { fontFamily: fonts.regular, fontSize: fontSize.fs15, color: colors.ink },
-  muted: { fontFamily: fonts.regular, fontSize: fontSize.fs15, color: colors.text2 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.gap },
   modal: { flex: 1, justifyContent: 'flex-end' },
   scrim: { backgroundColor: colors.scrim },

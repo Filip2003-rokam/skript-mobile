@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Button } from './ui/Button';
 import { TextField } from './ui/TextField';
 import { colors, fontSize, fonts, radius, size, space } from '../constants/theme';
@@ -59,18 +59,14 @@ export function ContactForm({ contact, saving = false, error, onSubmit }: Contac
       <TextField label="Telefon" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
       <TextField label="LinkedIn" value={linkedinUrl} onChangeText={setLinkedinUrl} autoCapitalize="none" />
       <TextField label="Beleška" value={note} onChangeText={setNote} multiline style={styles.note} />
-      <View style={styles.date}>
-        <Text style={styles.dateLabel}>Follow-up</Text>
-        <TextInput
-          value={followUp}
-          onChangeText={setFollowUp}
-          placeholder="DD.MM.GGGG"
-          placeholderTextColor={colors.text3}
-          keyboardType="numbers-and-punctuation"
-          style={styles.input}
-        />
-        {dateError ? <Text style={styles.dateError}>{dateError}</Text> : null}
-      </View>
+      <TextField
+        label="Follow-up"
+        value={followUp}
+        onChangeText={setFollowUp}
+        placeholder="DD.MM.GGGG"
+        keyboardType="numbers-and-punctuation"
+        error={dateError ?? undefined}
+      />
       {error ? <Text style={styles.dateError}>{error}</Text> : null}
       <Button label="Sačuvaj" loading={saving} onPress={submit} />
     </View>
@@ -79,19 +75,6 @@ export function ContactForm({ contact, saving = false, error, onSubmit }: Contac
 
 const styles = StyleSheet.create({
   form: { gap: space.gap },
-  date: { gap: space.tight },
-  dateLabel: { fontFamily: fonts.semibold, fontSize: fontSize.fs13, color: colors.ink },
-  input: {
-    height: size.field,
-    paddingHorizontal: space.buttonMd,
-    borderRadius: radius.pill,
-    borderWidth: size.border,
-    borderColor: colors.hairline,
-    backgroundColor: colors.glass,
-    fontFamily: fonts.regular,
-    fontSize: fontSize.fs15,
-    color: colors.ink,
-  },
   dateError: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.destructive },
-  note: { height: 96, borderRadius: radius.card, textAlignVertical: 'top', paddingTop: space.gap },
+  note: { height: size.field * 2, borderRadius: radius.card, textAlignVertical: 'top', paddingTop: space.gap },
 });

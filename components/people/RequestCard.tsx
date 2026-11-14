@@ -49,7 +49,7 @@ export function RequestCard(props: RequestCardProps) {
     <Card>
       <View style={styles.body}>
         <View style={styles.header}>
-          <Avatar name={person} size={44} />
+          <Avatar name={person} size={size.buttonSm} />
           <View style={styles.identity}>
             <Text style={styles.title}>{person} želi da se poveže</Text>
             <RoleLine role={props.role} company={props.company} />
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   block: { gap: space.tight },
   message: { fontFamily: fonts.regular, fontSize: fontSize.fs15, color: colors.ink },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.gap },
-  link: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: space.gap },
+  link: { minHeight: size.buttonSm, flexDirection: 'row', alignItems: 'center', gap: space.gap },
   linkText: { flex: 1, fontFamily: fonts.regular, fontSize: fontSize.fs15, color: colors.ink },
   saved: { fontFamily: fonts.semibold, fontSize: fontSize.fs13, color: colors.ink },
   aside: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.text2 },

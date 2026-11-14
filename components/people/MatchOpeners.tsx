@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import { colors, fontSize, fonts, radius, space } from '../../constants/theme';
+import { Button } from '../ui/Button';
+import { colors, fontSize, fonts, radius, size, space } from '../../constants/theme';
 import { actionError } from './personBits';
 
 export function MatchOpeners({ lines }: { lines: string[] }) {
@@ -24,10 +25,9 @@ export function MatchOpeners({ lines }: { lines: string[] }) {
       {lines.map((line, index) => (
         <View key={line} style={styles.line}>
           <Text style={styles.opener}>"{line}"</Text>
-          <Pressable accessibilityRole="button" onPress={() => void copy(line, index)} style={styles.copy}>
-            <Feather name={copied === index ? 'check' : 'copy'} size={14} color={colors.ink} />
-            <Text style={styles.copyText}>{copied === index ? 'Kopirano' : 'Kopiraj'}</Text>
-          </Pressable>
+          <Button size="sm" variant="ghost" label={copied === index ? 'Kopirano' : 'Kopiraj'} onPress={() => void copy(line, index)}>
+            <Feather name={copied === index ? 'check' : 'copy'} size={size.iconSm} color={colors.ink} />
+          </Button>
         </View>
       ))}
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   box: {
     gap: space.gap,
     padding: space.gap,
-    borderRadius: radius.card - 4,
+    borderRadius: radius.card,
     backgroundColor: colors.fillSubtle,
   },
   line: {
@@ -51,18 +51,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fonts.regular,
     fontSize: fontSize.fs15,
-    color: colors.ink,
-  },
-  copy: {
-    minHeight: 40,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.tight,
-    paddingHorizontal: space.tight,
-  },
-  copyText: {
-    fontFamily: fonts.semibold,
-    fontSize: fontSize.fs13,
     color: colors.ink,
   },
   error: {

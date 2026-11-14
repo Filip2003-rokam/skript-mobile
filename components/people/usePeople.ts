@@ -21,9 +21,19 @@ export function usePeople(slug: string) {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const refreshLock = useRef(false);
+  const loadedSlug = useRef<string | null>(null);
 
   useEffect(() => {
-    setReady(false);
+    if (loadedSlug.current !== slug) {
+      loadedSlug.current = null;
+      setEvent(null);
+      setSuggestions([]);
+      setSaved([]);
+      setIncoming([]);
+      setOutgoing([]);
+      setConnected([]);
+      setReady(false);
+    }
     setMissing(false);
     setError(null);
   }, [slug, attempt]);
@@ -46,6 +56,7 @@ export function usePeople(slug: string) {
             getConnected(row.id),
           ]);
           if (!active) return;
+          loadedSlug.current = slug;
           setEvent(row);
           setSuggestions(nextSuggestions);
           setSaved(nextSaved);

@@ -1,12 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 
 const storageKey = 'current-event-slug';
+const storageError = 'Ne mogu da otvorim sačuvani event. Zatvori aplikaciju i pokreni je ponovo.';
 
 type CurrentEventValue = {
   slug: string | null;
   ready: boolean;
+  error: string | null;
   setSlug: (slug: string) => Promise<void>;
+  reload: () => void;
 };
 
 const CurrentEventContext = createContext<CurrentEventValue | null>(null);
@@ -14,15 +17,19 @@ const CurrentEventContext = createContext<CurrentEventValue | null>(null);
 export function CurrentEventProvider({ children }: { children: ReactNode }) {
   const [slug, setSlugState] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     let active = true;
     AsyncStorage.getItem(storageKey)
       .then((value) => {
-        if (active) setSlugState(value);
+        if (!active) return;
+        setSlugState(value);
+        setError(null);
       })
       .catch(() => {
-        if (active) setSlugState(null);
+        if (active) setError(storageError);
       })
       .finally(() => {
         if (active) setReady(true);
@@ -30,14 +37,20 @@ export function CurrentEventProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
+  }, [tick]);
+
+  const reload = useCallback(() => {
+    setReady(false);
+    setTick((value) => value + 1);
   }, []);
 
-  async function setSlug(next: string) {
+  const setSlug = useCallback(async (next: string) => {
     await AsyncStorage.setItem(storageKey, next);
     setSlugState(next);
-  }
+    setError(null);
+  }, []);
 
-  return <CurrentEventContext.Provider value={{ slug, ready, setSlug }}>{children}</CurrentEventContext.Provider>;
+  return <CurrentEventContext.Provider value={{ slug, ready, error, setSlug, reload }}>{children}</CurrentEventContext.Provider>;
 }
 
 export function useCurrentEvent() {

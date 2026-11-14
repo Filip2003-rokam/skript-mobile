@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-import { Button } from './ui/Button';
 import { Chip } from './ui/Chip';
+import { EmptyState } from './ui/EmptyState';
 import { EventHero } from './ui/EventHero';
 import { Screen } from './ui/Screen';
-import { colors, fontSize, fonts, size, space } from '../constants/theme';
+import { InlineError, LoadingState } from './ui/State';
+import { colors, size, space } from '../constants/theme';
 import { authErrorMessage } from '../lib/services/authService';
 import { countIncoming } from '../lib/services/connectionService';
 import { countLiveSessions, getEventBySlug, type EventRow } from '../lib/services/eventService';
@@ -28,9 +29,14 @@ export function EventHome({ slug }: { slug: string }) {
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const loadedSlug = useRef<string | null>(null);
 
   useEffect(() => {
-    setReady(false);
+    if (loadedSlug.current !== slug) {
+      loadedSlug.current = null;
+      setEvent(null);
+      setReady(false);
+    }
     setMissing(false);
     setError(null);
   }, [slug, attempt]);
@@ -51,6 +57,7 @@ export function EventHome({ slug }: { slug: string }) {
           setName(person);
           setIncoming(requests);
           setLive(sessions);
+          loadedSlug.current = slug;
           setMissing(false);
           setError(null);
         })
@@ -66,22 +73,24 @@ export function EventHome({ slug }: { slug: string }) {
     }, [slug, attempt]),
   );
 
-  if (!ready) {
+  if (!event && !ready) {
     return (
       <Screen tabBar>
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.ink} />
-        </View>
+        <LoadingState />
       </Screen>
     );
   }
 
-  if (missing || error || !event) {
+  if (!event) {
     return (
       <Screen tabBar>
         <View style={styles.center}>
-          <Text style={styles.error}>{error ?? 'Ovaj event ne postoji. Skeniraj QR kod ponovo.'}</Text>
-          <Button label={error ? 'Pokušaj ponovo' : 'Skeniraj'} onPress={() => (error ? setAttempt((value) => value + 1) : router.push('/scan'))} />
+          <EmptyState
+            icon={<Feather name={error ? 'alert-circle' : 'camera'} size={size.iconMd} color={colors.ink} />}
+            text={error ?? 'Ovaj event ne postoji. Skeniraj QR kod ponovo.'}
+            action={error ? 'Pokušaj ponovo' : 'Skeniraj'}
+            onAction={() => (error ? setAttempt((value) => value + 1) : router.push('/scan'))}
+          />
         </View>
       </Screen>
     );
@@ -91,6 +100,7 @@ export function EventHome({ slug }: { slug: string }) {
 
   return (
     <Screen tabBar scroll>
+      {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
       <EventHero eventName={event.name} title={greeting(name)} coverUri={event.cover_url ?? undefined} />
       {incoming > 0 || live > 0 ? (
         <View style={styles.status}>
@@ -124,13 +134,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: space.gap,
-  },
-  error: {
-    fontFamily: fonts.regular,
-    fontSize: fontSize.fs15,
-    color: colors.ink,
-    textAlign: 'center',
   },
   status: {
     flexDirection: 'row',

@@ -1,5 +1,5 @@
 import { StyleSheet, Text } from 'react-native';
-import { colors, fontSize, fonts } from '../../constants/theme';
+import { colors, fontSize, fonts, trackingWide } from '../../constants/theme';
 import { authErrorMessage } from '../../lib/services/authService';
 
 export function displayName(name: string | null) {
@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.fs11,
     color: colors.text2,
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: trackingWide,
   },
   role: {
     fontFamily: fonts.regular,

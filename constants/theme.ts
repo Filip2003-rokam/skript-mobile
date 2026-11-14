@@ -63,7 +63,7 @@ export const size = {
   border: 1,
   ring: 2,
   dot: 4,
-  buttonSm: 36,
+  buttonSm: 44,
   buttonMd: 48,
   buttonLg: 56,
   chip: 32,
@@ -77,6 +77,8 @@ export const size = {
   emptyIcon: 40,
   emptyText: 260,
   avatar: 36,
+  avatarLg: 64,
+  qr: 176,
   iconSm: 16,
   iconMd: 18,
   iconLg: 22,
@@ -86,7 +88,8 @@ export const pressScale = 0.97;
 export const avatarText = 0.36;
 export const mark = { dot: 0.18, gap: 0.3, lift: 0.7 } as const;
 export const trackingTight = -0.02;
-export const opacity = { disabled: 0.4, homeIdle: 0.8 } as const;
+export const trackingWide = 0.6;
+export const opacity = { disabled: 0.4, homeIdle: 0.8, cover: 0.35 } as const;
 
 // Vrh fotografije ostaje vidljiv, dno prelazi u appBg. Ista boja sa nultom providnošću, da prelaz ne posivi.
 export const heroFade = ['rgba(246, 246, 244, 0)', colors.appBg] as const;

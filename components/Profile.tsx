@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { colors, fontSize, fonts, size, space } from '../constants/theme';
@@ -11,6 +11,7 @@ import { getMyProfile, listMyEventStats, updateMyProfile, type EventStat, type M
 import { Avatar } from './ui/Avatar';
 import { Button } from './ui/Button';
 import { Screen } from './ui/Screen';
+import { ErrorState, InlineError, LoadingState } from './ui/State';
 import { ContactList } from './profile/ContactList';
 import { EditProfile } from './profile/EditProfile';
 import { EventCards } from './profile/EventCards';
@@ -22,8 +23,10 @@ export function Profile({ notice }: { notice?: string }) {
   const [account, setAccount] = useState<MyProfile | null>(null);
   const [events, setEvents] = useState<EventStat[]>([]);
   const [network, setNetwork] = useState<string | null>(null);
+  const [networkError, setNetworkError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [message, setMessage] = useState<string | null>(notices[notice ?? ''] ?? null);
   const [version, setVersion] = useState(0);
   const [editing, setEditing] = useState(false);
@@ -56,12 +59,13 @@ export function Profile({ notice }: { notice?: string }) {
       return () => {
         active = false;
       };
-    }, []),
+    }, [attempt]),
   );
 
   useEffect(() => {
     if (!slug) {
       setNetwork(null);
+      setNetworkError(null);
       return;
     }
     let active = true;
@@ -71,9 +75,10 @@ export function Profile({ notice }: { notice?: string }) {
         if (!active) return;
         const line = [profile?.role, profile?.company].filter(Boolean).join(' · ');
         setNetwork(line);
+        setNetworkError(null);
       })
-      .catch(() => {
-        if (active) setNetwork('');
+      .catch((cause) => {
+        if (active) setNetworkError(authErrorMessage(cause));
       });
     return () => {
       active = false;
@@ -106,10 +111,18 @@ export function Profile({ notice }: { notice?: string }) {
     }
   }
 
-  if (!ready) {
+  if (!ready && !account) {
     return (
       <Screen tabBar>
-        <ActivityIndicator color={colors.ink} />
+        <LoadingState />
+      </Screen>
+    );
+  }
+
+  if (error && !account) {
+    return (
+      <Screen tabBar>
+        <ErrorState text={error} onRetry={() => setAttempt((value) => value + 1)} />
       </Screen>
     );
   }
@@ -119,8 +132,9 @@ export function Profile({ notice }: { notice?: string }) {
   return (
     <Screen tabBar scroll>
       {message ? <Text style={styles.notice}>{message}</Text> : null}
+      {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
       <View style={styles.header}>
-        <Avatar name={name} size={64} />
+        <Avatar name={name} size={size.avatarLg} />
         <View style={styles.identity}>
           <Text style={styles.name}>{name}</Text>
           {account?.email ? <Text style={styles.email}>{account.email}</Text> : null}
@@ -139,11 +153,11 @@ export function Profile({ notice }: { notice?: string }) {
           <Feather name="log-out" size={size.iconSm} color={colors.ink} />
         </Button>
       </View>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
       <Text style={styles.section}>Moji eventi</Text>
       <EventCards events={events} current={slug} onOpen={(next) => void setSlug(next)} />
       <Text style={styles.section}>Profil za mreženje</Text>
-      <Text style={styles.meta}>{slug ? network || 'Još nema profila za ovaj event.' : 'Izaberi event iz liste.'}</Text>
+      <Text style={styles.meta}>{slug ? network || 'Još nema profila za ovaj event. Otvori podešavanje u četiri koraka.' : 'Izaberi event iz liste.'}</Text>
+      {networkError ? <InlineError text={networkError} /> : null}
       {slug ? (
         <Button label="Izmeni u četiri koraka" size="sm" variant="secondary" onPress={() => router.push({ pathname: '/event/[slug]/profile', params: { slug } })} />
       ) : null}
@@ -163,7 +177,6 @@ const styles = StyleSheet.create({
   name: { fontFamily: fonts.bold, fontSize: fontSize.fs22, color: colors.ink },
   email: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.text2 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.gap },
-  error: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.destructive },
   section: { fontFamily: fonts.bold, fontSize: fontSize.fs15, color: colors.ink },
   meta: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.text2 },
 });

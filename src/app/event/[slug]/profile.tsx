@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Button } from '../../../../components/ui/Button';
+import { EmptyState } from '../../../../components/ui/EmptyState';
 import { Screen } from '../../../../components/ui/Screen';
 import { TextField } from '../../../../components/ui/TextField';
+import { InlineError, LoadingState } from '../../../../components/ui/State';
 import { needOptions, offerOptions, roleOptions, whyOptions } from '../../../../constants/options';
-import { colors, fontSize, fonts, space } from '../../../../constants/theme';
+import { colors, fontSize, fonts, size, space } from '../../../../constants/theme';
 import { Ask, ChoiceChips, Mine, choiceLabels } from '../../../../components/ProfileChat';
 import { authErrorMessage } from '../../../../lib/services/authService';
 import { getMyEventProfile, saveMyEventProfile } from '../../../../lib/services/attendeeService';
@@ -23,6 +26,7 @@ export default function EventProfileScreen() {
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const seen = useRef<string | null>(null);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [why, setWhy] = useState<string[]>([]);
@@ -33,7 +37,11 @@ export default function EventProfileScreen() {
 
   useEffect(() => {
     let active = true;
-    setReady(false);
+    if (seen.current !== code) {
+      seen.current = code;
+      setEventId(null);
+      setReady(false);
+    }
     setMissing(false);
     setError(null);
     getEventBySlug(code)
@@ -83,19 +91,23 @@ export default function EventProfileScreen() {
     }
   }
 
-  if (!ready) {
+  if (!ready && !eventId) {
     return (
       <Screen>
-        <ActivityIndicator color={colors.ink} />
+        <LoadingState />
       </Screen>
     );
   }
 
-  if (missing || (error && !eventId)) {
+  if (!eventId && (missing || error)) {
     return (
       <Screen>
-        <Text style={styles.body}>{missing ? 'Ovaj event ne postoji. Proveri kod.' : error}</Text>
-        <Button label={missing ? 'Nazad' : 'Pokušaj ponovo'} variant={missing ? 'ghost' : 'primary'} onPress={() => (missing ? router.back() : setAttempt((value) => value + 1))} />
+        <EmptyState
+          icon={<Feather name={missing ? 'camera' : 'alert-circle'} size={size.iconMd} color={colors.ink} />}
+          text={missing ? 'Ovaj event ne postoji. Vrati se i proveri kod.' : (error ?? 'Ne mogu da učitam profil. Proveri vezu i pokušaj ponovo.')}
+          action={missing ? 'Nazad' : 'Pokušaj ponovo'}
+          onAction={() => (missing ? router.back() : setAttempt((value) => value + 1))}
+        />
       </Screen>
     );
   }
@@ -104,6 +116,7 @@ export default function EventProfileScreen() {
 
   return (
     <Screen scroll>
+      {error ? <InlineError text={error} /> : null}
       <Ask text="Kratko podešavanje da nađem prave ljude. Šta te dovodi ovde? Izaberi sve što važi." />
       {step === 0 ? (
         <>
@@ -147,7 +160,6 @@ export default function EventProfileScreen() {
           <Text style={styles.group}>TREBA MI POMOĆ OKO</Text>
           <ChoiceChips options={needOptions} selected={needs} onPress={(key) => setNeeds((list) => toggle(list, key))} />
           <Button label="Gotovo" loading={saving} disabled={offers.length === 0 && needs.length === 0} onPress={finish} />
-          {error ? <Text style={styles.body}>{error}</Text> : null}
         </>
       ) : null}
     </Screen>
@@ -163,10 +175,5 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semibold,
     fontSize: fontSize.fs11,
     color: colors.text2,
-  },
-  body: {
-    fontFamily: fonts.regular,
-    fontSize: fontSize.fs15,
-    color: colors.ink,
   },
 });

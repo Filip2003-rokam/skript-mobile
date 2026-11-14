@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Chip } from '../ui/Chip';
-import { colors, fontSize, fonts, radius, size, space } from '../../constants/theme';
+import { TextField } from '../ui/TextField';
+import { colors, fontSize, fonts, size, space } from '../../constants/theme';
 import { MatchOpeners } from './MatchOpeners';
 import { actionError, displayName, Kicker, RoleLine } from './personBits';
 
@@ -70,9 +71,7 @@ export function PersonMatchCard(props: PersonMatchCardProps) {
             </Text>
             <RoleLine role={props.role} company={props.company} />
           </View>
-          <View style={styles.score}>
-            <Text style={styles.scoreText}>{props.score}/10</Text>
-          </View>
+          <Chip label={`${props.score}/10`} selected small />
         </View>
         <View style={styles.block}>
           <Kicker text="ZAŠTO DA SE UPOZNATE" />
@@ -90,14 +89,13 @@ export function PersonMatchCard(props: PersonMatchCardProps) {
         ) : null}
         {connecting && !locked ? (
           <View style={styles.block}>
-            <TextInput
+            <TextField
+              label="Poruka"
               value={note}
               onChangeText={setNote}
               placeholder="Dodaj kratku poruku"
               accessibilityLabel="Dodaj kratku poruku"
-              placeholderTextColor={colors.text3}
               maxLength={280}
-              style={styles.note}
             />
             <Button size="sm" label="Pošalji zahtev" disabled={sending} onPress={() => void send()}>
               <Feather name="send" size={size.iconSm} color={colors.onInk} />
@@ -129,31 +127,14 @@ export function PersonMatchCard(props: PersonMatchCardProps) {
 }
 
 const styles = StyleSheet.create({
-  body: { gap: 10 },
+  body: { gap: space.gap },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.gap },
   identity: { flex: 1, minWidth: 0 },
   name: { fontFamily: fonts.bold, fontSize: fontSize.fs13, color: colors.ink },
-  score: {
-    height: 24,
-    justifyContent: 'center',
-    paddingHorizontal: space.gap,
-    borderRadius: radius.pill,
-    backgroundColor: colors.skriptYellow,
-  },
-  scoreText: { fontFamily: fonts.bold, fontSize: fontSize.fs11, color: colors.onSignal, fontVariant: ['tabular-nums'] },
   block: { gap: space.tight },
-  why: { fontFamily: fonts.regular, fontSize: fontSize.fs13, lineHeight: 18, color: colors.ink },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
+  why: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.ink },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.gap },
   arrow: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.text3 },
-  note: {
-    height: size.field,
-    paddingHorizontal: space.buttonMd,
-    borderRadius: radius.pill,
-    backgroundColor: colors.fillSubtle,
-    fontFamily: fonts.regular,
-    fontSize: fontSize.fs15,
-    color: colors.ink,
-  },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.gap },
   error: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.ink },
 });

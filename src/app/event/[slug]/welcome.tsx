@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Button } from '../../../../components/ui/Button';
 import { Card } from '../../../../components/ui/Card';
+import { EmptyState } from '../../../../components/ui/EmptyState';
 import { EventLogo } from '../../../../components/ui/EventLogo';
 import { Screen } from '../../../../components/ui/Screen';
 import { SkriptMark } from '../../../../components/ui/SkriptMark';
+import { InlineError, LoadingState } from '../../../../components/ui/State';
 import { colors, fontSize, fonts, radius, size, space } from '../../../../constants/theme';
 import { useCurrentEvent } from '../../../../lib/currentEvent';
 import { authErrorMessage } from '../../../../lib/services/authService';
@@ -31,9 +34,15 @@ export default function EventWelcomeScreen() {
   const [entering, setEntering] = useState(false);
 
   useEffect(() => {
-    let active = true;
     setEvent(null);
     setLive(null);
+    setMissing(false);
+    setError(null);
+    setEntering(false);
+  }, [code]);
+
+  useEffect(() => {
+    let active = true;
     setMissing(false);
     setError(null);
     getEventBySlug(code)
@@ -70,26 +79,36 @@ export default function EventWelcomeScreen() {
     }
   }
 
-  if (!event || live === null) {
+  if (!event && !missing && !error) {
     return (
       <Screen>
-        <View style={styles.loading}>
-          <EventLogo initials={eventInitials(event?.name ?? code)} source={event?.logo_url ? { uri: event.logo_url } : undefined} />
-          {event ? <Text style={styles.name}>{event.name}</Text> : null}
-          {missing ? (
-            <>
-              <Text style={styles.body}>Ovaj event ne postoji. Proveri kod.</Text>
-              <Button label="Nazad" variant="ghost" onPress={() => router.back()} />
-            </>
-          ) : error ? (
-            <>
-              <Text style={styles.body}>{error}</Text>
-              <Button label="Pokušaj ponovo" onPress={() => setAttempt((value) => value + 1)} />
-            </>
-          ) : (
-            <ActivityIndicator color={colors.ink} />
-          )}
-        </View>
+        <LoadingState />
+      </Screen>
+    );
+  }
+
+  if (!event && missing) {
+    return (
+      <Screen>
+        <EmptyState
+          icon={<Feather name="camera" size={size.iconMd} color={colors.ink} />}
+          text="Ovaj event ne postoji. Vrati se i proveri kod."
+          action="Nazad"
+          onAction={() => router.back()}
+        />
+      </Screen>
+    );
+  }
+
+  if (!event) {
+    return (
+      <Screen>
+        <EmptyState
+          icon={<Feather name="alert-circle" size={size.iconMd} color={colors.ink} />}
+          text={error ?? 'Ne mogu da otvorim event. Proveri vezu i pokušaj ponovo.'}
+          action="Pokušaj ponovo"
+          onAction={() => setAttempt((value) => value + 1)}
+        />
       </Screen>
     );
   }
@@ -104,12 +123,18 @@ export default function EventWelcomeScreen() {
           <EventLogo initials={eventInitials(event.name)} source={event.logo_url ? { uri: event.logo_url } : undefined} />
           <Text style={styles.name}>{event.name}</Text>
           {place ? <Text style={styles.place}>{place}</Text> : null}
-          <Text style={styles.status}>{eventStatusLine(event, live)}</Text>
+          <Text style={styles.status}>
+            {live === null
+              ? error
+                ? 'Stanje sesija nije učitano. Pokušaj ponovo.'
+                : 'Učitavam stanje sesija.'
+              : eventStatusLine(event, live)}
+          </Text>
         </View>
       </Card>
       <View style={styles.actions}>
         <Button label="Uđi" size="lg" loading={entering} onPress={enter} />
-        {error ? <Text style={styles.body}>{error}</Text> : null}
+        {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
         <View style={styles.note}>
           <View style={styles.dot} />
           <Text style={styles.noteText}>Predlozi ljudi · Kontakt se deli tek kad oba prihvate</Text>
@@ -124,12 +149,6 @@ export default function EventWelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space.gap,
-  },
   cover: {
     height: size.hero,
     borderRadius: radius.card,
@@ -160,12 +179,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'stretch',
     gap: space.gap,
-  },
-  body: {
-    fontFamily: fonts.regular,
-    fontSize: fontSize.fs15,
-    color: colors.ink,
-    textAlign: 'center',
   },
   note: {
     flexDirection: 'row',

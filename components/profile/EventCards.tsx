@@ -1,13 +1,25 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { Card } from '../ui/Card';
+import { EmptyState } from '../ui/EmptyState';
 import { EventLogo } from '../ui/EventLogo';
-import { colors, fontSize, fonts, pressScale, radius, shadow, size, space } from '../../constants/theme';
+import { colors, fontSize, fonts, pressScale, size, space } from '../../constants/theme';
 import { eventInitials, eventPlaceLine } from '../../lib/services/eventService';
 import type { EventStat } from '../../lib/services/profileService';
 
 export function EventCards({ events, current, onOpen }: { events: EventStat[]; current: string | null; onOpen: (slug: string) => void }) {
   const ordered = [...events].sort((a, b) => a.name.localeCompare(b.name, 'sr'));
-  if (ordered.length === 0) return <Text style={styles.empty}>Još nema eventa.</Text>;
+  if (ordered.length === 0) {
+    return (
+      <EmptyState
+        icon={<Feather name="calendar" size={size.iconMd} color={colors.ink} />}
+        text="Još nema eventa. Skeniraj QR kod da uđeš."
+        action="Skeniraj"
+        onAction={() => router.push('/scan')}
+      />
+    );
+  }
   return (
     <View style={styles.list}>
       {ordered.map((event) => (
@@ -16,8 +28,9 @@ export function EventCards({ events, current, onOpen }: { events: EventStat[]; c
           accessibilityRole="button"
           accessibilityLabel={event.name}
           onPress={() => onOpen(event.slug)}
-          style={({ pressed }) => [styles.card, event.slug === current && styles.current, pressed && { transform: [{ scale: pressScale }] }]}
+          style={({ pressed }) => [pressed && { transform: [{ scale: pressScale }] }]}
         >
+          <Card variant={event.slug === current ? 'featured' : 'surface'}>
           {event.cover_url ? <Image source={{ uri: event.cover_url }} style={styles.cover} /> : null}
           <View style={styles.body}>
             <View style={styles.heading}>
@@ -34,6 +47,7 @@ export function EventCards({ events, current, onOpen }: { events: EventStat[]; c
               <Stat value={event.saved} label="Sačuvani" />
             </View>
           </View>
+          </Card>
         </Pressable>
       ))}
     </View>
@@ -51,11 +65,8 @@ function Stat({ value, label }: { value: number; label: string }) {
 
 const styles = StyleSheet.create({
   list: { gap: space.gap },
-  empty: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.text2 },
-  card: { overflow: 'hidden', borderRadius: radius.card, borderWidth: size.border, borderColor: colors.surfaceBorder, backgroundColor: colors.surface, ...shadow.card },
-  current: { borderColor: colors.skriptYellow },
-  cover: { width: '100%', height: 48 },
-  body: { gap: 10, padding: space.gap },
+  cover: { width: '100%', height: size.field, borderRadius: size.logoSm },
+  body: { gap: space.gap, paddingTop: space.gap },
   heading: { flexDirection: 'row', alignItems: 'center', gap: space.gap },
   identity: { flex: 1, minWidth: 0 },
   name: { fontFamily: fonts.bold, fontSize: fontSize.fs13, color: colors.ink },

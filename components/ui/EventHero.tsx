@@ -1,6 +1,7 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, fontSize, fonts, heroFade, heroFadeStart, radius, size, space, trackingTight } from '../../constants/theme';
+import { colors, fontSize, fonts, heroFade, heroFadeStart, size, space, trackingTight } from '../../constants/theme';
+import { Chip } from './Chip';
 import { SkriptMark } from './SkriptMark';
 
 type EventHeroProps = {
@@ -21,13 +22,8 @@ export function EventHero({ eventName, title, coverUri }: EventHeroProps) {
       ) : null}
       <View style={styles.content}>
         <View style={styles.pills}>
-          <View style={styles.pill}>
-            <Text style={styles.pillText}>{eventName}</Text>
-          </View>
-          <View style={styles.pill}>
-            <Text style={styles.by}>by</Text>
-            <SkriptMark size={fontSize.fs13} />
-          </View>
+          <Chip label={eventName} />
+          <Chip label="by" trailing={<SkriptMark size={fontSize.fs13} />} />
         </View>
         <Text style={styles.title}>{title}</Text>
       </View>
@@ -40,17 +36,6 @@ const styles = StyleSheet.create({
   image: { width: '100%', height: '100%' },
   content: { gap: space.gap, paddingTop: space.edge, paddingBottom: space.gap },
   pills: { alignItems: 'flex-start', gap: space.tight },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.tight,
-    paddingHorizontal: space.chip,
-    paddingVertical: space.tight,
-    borderRadius: radius.pill,
-    backgroundColor: colors.glass,
-  },
-  pillText: { fontFamily: fonts.semibold, fontSize: fontSize.fs13, color: colors.ink },
-  by: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.text2 },
   title: {
     fontFamily: fonts.display,
     fontSize: fontSize.fs30,

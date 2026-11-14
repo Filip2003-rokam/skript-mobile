@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { ContactForm } from '../../../components/ContactForm';
 import { Button } from '../../../components/ui/Button';
 import { Screen } from '../../../components/ui/Screen';
+import { ErrorState, LoadingState } from '../../../components/ui/State';
 import { colors, fontSize, fonts, space } from '../../../constants/theme';
 import { useCurrentEvent } from '../../../lib/currentEvent';
 import { authErrorMessage } from '../../../lib/services/authService';
@@ -13,23 +14,42 @@ import { getEventBySlug } from '../../../lib/services/eventService';
 export default function NewContactScreen() {
   const { slug } = useCurrentEvent();
   const [eventId, setEventId] = useState<string | null>(null);
+  const [loadingEvent, setLoadingEvent] = useState(Boolean(slug));
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!slug) return;
+    if (!slug) {
+      setEventId(null);
+      setLoadError(null);
+      setLoadingEvent(false);
+      return;
+    }
     let active = true;
+    setLoadingEvent(true);
+    setLoadError(null);
     getEventBySlug(slug)
       .then((event) => {
-        if (active) setEventId(event?.id ?? null);
+        if (!active) return;
+        if (!event) {
+          setEventId(null);
+          setLoadError('Ovaj event ne postoji. Vrati se i skeniraj QR kod.');
+          return;
+        }
+        setEventId(event.id);
       })
-      .catch(() => {
-        if (active) setEventId(null);
+      .catch((cause) => {
+        if (active) setLoadError(authErrorMessage(cause));
+      })
+      .finally(() => {
+        if (active) setLoadingEvent(false);
       });
     return () => {
       active = false;
     };
-  }, [slug]);
+  }, [slug, attempt]);
 
   async function save(data: ContactWrite) {
     setSaving(true);
@@ -41,6 +61,23 @@ export default function NewContactScreen() {
       setError(authErrorMessage(cause));
       setSaving(false);
     }
+  }
+
+  if (loadingEvent && !eventId) {
+    return (
+      <Screen>
+        <LoadingState />
+      </Screen>
+    );
+  }
+
+  if (loadError && !eventId) {
+    return (
+      <Screen>
+        <Button label="Nazad" variant="ghost" onPress={() => router.back()} />
+        <ErrorState text={loadError} onRetry={() => setAttempt((value) => value + 1)} />
+      </Screen>
+    );
   }
 
   return (

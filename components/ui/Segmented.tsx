@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.skriptYellow,
   },
   compact: {
-    paddingHorizontal: 6,
+    paddingHorizontal: space.tight,
   },
   label: {
     fontFamily: fonts.semibold,

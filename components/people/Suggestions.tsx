@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { Button } from '../ui/Button';
-import { colors, fontSize, fonts, space } from '../../constants/theme';
+import { EmptyState } from '../ui/EmptyState';
+import { InlineError, LoadingState } from '../ui/State';
+import { colors, size, space } from '../../constants/theme';
 import type { ConnectionPerson } from '../../lib/services/connectionService';
 import type { Suggestion } from '../../lib/services/matchService';
 import { PersonMatchCard } from './PersonMatchCard';
@@ -30,17 +33,34 @@ export function Suggestions(props: SuggestionsProps) {
   const rest = props.suggestions.length - shown.length;
   const label = props.refreshing ? 'Tražim prave ljude…' : props.suggestions.length === 0 ? 'Napravi predloge' : 'Osveži predloge';
 
+  if (props.suggestions.length === 0) {
+    return (
+      <View style={styles.list}>
+        {props.refreshing ? <LoadingState fill={false} /> : null}
+        {props.refreshError ? <InlineError text={props.refreshError} onRetry={props.onRefresh} /> : null}
+        {!props.refreshing && !props.refreshError ? (
+          <EmptyState
+            icon={<Feather name="users" size={size.iconMd} color={colors.ink} />}
+            text="Nema predloga. Napravi predloge da vidiš koga da upoznaš."
+            action="Napravi predloge"
+            onAction={props.onRefresh}
+          />
+        ) : null}
+      </View>
+    );
+  }
+
   return (
     <View style={styles.list}>
       <Button
         size="sm"
-        variant={props.suggestions.length === 0 && !props.refreshing ? 'primary' : 'secondary'}
+        variant="secondary"
         label={label}
         onPress={() => {
           if (!props.refreshing) props.onRefresh();
         }}
       />
-      {props.refreshError ? <Text style={styles.error}>{props.refreshError}</Text> : null}
+      {props.refreshError ? <InlineError text={props.refreshError} onRetry={props.onRefresh} /> : null}
       {shown.map((item) => {
         const link = linkOf(item.suggestedUserId, props.outgoing, props.connected);
         return (
@@ -69,5 +89,4 @@ export function Suggestions(props: SuggestionsProps) {
 
 const styles = StyleSheet.create({
   list: { gap: space.gap },
-  error: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.ink },
 });

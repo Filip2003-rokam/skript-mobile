@@ -1,11 +1,13 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { colors, fontSize, fonts, space } from '../constants/theme';
+import { colors, fontSize, fonts, size, space } from '../constants/theme';
 import { Button } from './ui/Button';
+import { EmptyState } from './ui/EmptyState';
 import { EventHero } from './ui/EventHero';
 import { Screen } from './ui/Screen';
 import { Segmented } from './ui/Segmented';
+import { InlineError, LoadingState } from './ui/State';
 import { Requests } from './people/Requests';
 import { Roster } from './people/Roster';
 import { Suggestions } from './people/Suggestions';
@@ -29,22 +31,24 @@ type PeopleProps = {
 export function People({ slug, view, onView }: PeopleProps) {
   const data = usePeople(slug);
 
-  if (!data.ready) {
+  if (!data.event && !data.ready) {
     return (
       <Screen tabBar>
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.ink} />
-        </View>
+        <LoadingState />
       </Screen>
     );
   }
 
-  if (data.missing || data.error || !data.event) {
+  if (!data.event) {
     return (
       <Screen tabBar>
         <View style={styles.center}>
-          <Text style={styles.message}>{data.error ?? 'Ovaj event ne postoji. Skeniraj QR kod ponovo.'}</Text>
-          <Button label={data.error ? 'Pokušaj ponovo' : 'Skeniraj'} onPress={() => (data.error ? data.retry() : router.push('/scan'))} />
+          <EmptyState
+            icon={<Feather name={data.error ? 'alert-circle' : 'users'} size={size.iconMd} color={colors.ink} />}
+            text={data.error ?? 'Ovaj event ne postoji. Skeniraj QR kod ponovo.'}
+            action={data.error ? 'Pokušaj ponovo' : 'Skeniraj'}
+            onAction={() => (data.error ? data.retry() : router.push('/scan'))}
+          />
         </View>
       </Screen>
     );
@@ -54,6 +58,7 @@ export function People({ slug, view, onView }: PeopleProps) {
 
   return (
     <Screen tabBar scroll>
+      {data.error ? <InlineError text={data.error} onRetry={data.retry} /> : null}
       <EventHero eventName={data.event.name} title="Ljudi" coverUri={data.event.cover_url ?? undefined} />
       <Segmented
         value={view}
@@ -82,7 +87,7 @@ export function People({ slug, view, onView }: PeopleProps) {
           onFind={() => onView('suggestions')}
           trailing={(person) => (
             <Button size="sm" variant="secondary" label="Sačuvano" onPress={() => void data.toggleSave(person.userId)}>
-              <Feather name="bookmark" size={16} color={colors.ink} />
+              <Feather name="bookmark" size={size.iconSm} color={colors.ink} />
             </Button>
           )}
         />
@@ -113,13 +118,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: space.gap,
-  },
-  message: {
-    fontFamily: fonts.regular,
-    fontSize: fontSize.fs15,
-    color: colors.ink,
-    textAlign: 'center',
   },
   linked: {
     fontFamily: fonts.semibold,

@@ -1,10 +1,10 @@
 import { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Linking from 'expo-linking';
 import { Button } from '../../components/ui/Button';
-import { Screen } from '../../components/ui/Screen';
+import { Screen, keyboardBehavior } from '../../components/ui/Screen';
 import { TextField } from '../../components/ui/TextField';
 import { colors, fontSize, fonts, radius, size, space } from '../../constants/theme';
 import { useCurrentEvent } from '../../lib/currentEvent';
@@ -48,19 +48,19 @@ export default function ScanScreen() {
     try {
       const session = await getSession();
       if (session?.user.id === userId) {
-        setNotice('Ovo je tvoj bedž.');
+        setNotice('Ovo je tvoj bedž. Skeniraj tuđi kod.');
         unlock();
         return;
       }
       if (!slug || eventSlug !== slug) {
-        setNotice('Ova osoba nije na ovom eventu.');
+        setNotice('Ova osoba nije na ovom eventu. Skeniraj bedž sa ovog eventa.');
         unlock();
         return;
       }
       const event = await getEventBySlug(slug);
       const name = event ? await getAttendeeName(event.id, userId) : null;
       if (!event || !name) {
-        setNotice('Ova osoba nije na ovom eventu.');
+        setNotice('Ova osoba nije na ovom eventu. Skeniraj bedž sa ovog eventa.');
         unlock();
         return;
       }
@@ -88,7 +88,7 @@ export default function ScanScreen() {
       void openPerson(result.userId, result.eventSlug);
       return;
     }
-    setNotice('Ovo nije Skript QR kod.');
+    setNotice('Ovo nije Skript QR kod. Skeniraj kod eventa ili bedž.');
   }
 
   function closeRequest() {
@@ -153,25 +153,24 @@ export default function ScanScreen() {
       <TextField label="Kod eventa" value={code} onChangeText={setCode} error={codeError ?? undefined} autoCapitalize="none" />
       <Button label="Uđi" onPress={enterByCode} />
       <Modal visible={person !== null} transparent animationType="slide" statusBarTranslucent onRequestClose={closeRequest}>
-        <View style={styles.modal}>
+        <KeyboardAvoidingView behavior={keyboardBehavior} style={styles.modal}>
           <Pressable accessibilityLabel="Zatvori" style={[StyleSheet.absoluteFill, styles.scrim]} onPress={closeRequest} />
           {person ? (
             <View style={styles.sheet}>
               <Text style={styles.person}>{person.name}</Text>
-              <TextInput
+              <TextField
+                label="Poruka"
                 value={note}
                 onChangeText={setNote}
                 placeholder="Dodaj kratku poruku"
                 accessibilityLabel="Dodaj kratku poruku"
-                placeholderTextColor={colors.text3}
                 maxLength={280}
-                style={styles.note}
               />
               {sendError ? <Text style={styles.body}>{sendError}</Text> : null}
               <Button label="Pošalji zahtev" loading={sending} onPress={() => void submit()} />
             </View>
           ) : null}
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </Screen>
   );
@@ -193,13 +192,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.appBg,
   },
   person: { fontFamily: fonts.bold, fontSize: fontSize.fs22, color: colors.ink },
-  note: {
-    height: size.field,
-    paddingHorizontal: space.buttonMd,
-    borderRadius: radius.pill,
-    backgroundColor: colors.fillSubtle,
-    fontFamily: fonts.regular,
-    fontSize: fontSize.fs15,
-    color: colors.ink,
-  },
 });

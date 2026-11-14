@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Button } from '../../../../components/ui/Button';
+import { EmptyState } from '../../../../components/ui/EmptyState';
 import { EventLogo } from '../../../../components/ui/EventLogo';
 import { Screen } from '../../../../components/ui/Screen';
-import { colors, fontSize, fonts, radius, shadow, space } from '../../../../constants/theme';
+import { InlineError, LoadingState } from '../../../../components/ui/State';
+import { colors, fontSize, fonts, opacity, radius, shadow, size, space, trackingWide } from '../../../../constants/theme';
 import { userBadgeUrl } from '../../../../lib/skriptQr';
 import { authErrorMessage, getSession } from '../../../../lib/services/authService';
 import { eventInitials, eventPlaceLine, getEventBySlug, type EventRow } from '../../../../lib/services/eventService';
@@ -23,16 +26,24 @@ export default function BadgeScreen() {
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const seen = useRef<string | null>(null);
 
   useEffect(() => {
     let active = true;
-    setReady(false);
+    if (seen.current !== code) {
+      seen.current = code;
+      setEvent(null);
+      setUserId(null);
+      setReady(false);
+    }
     setMissing(false);
     setError(null);
     getEventBySlug(code)
       .then(async (row) => {
         if (!active) return;
         if (!row) {
+          setEvent(null);
+          setUserId(null);
           setMissing(true);
           return;
         }
@@ -54,34 +65,43 @@ export default function BadgeScreen() {
     };
   }, [code, attempt]);
 
-  if (!ready) {
+  if (!event && !ready) {
     return (
       <Screen>
-        <ActivityIndicator color={colors.ink} />
+        <LoadingState />
       </Screen>
     );
   }
 
-  if (missing || !event) {
+  if (!event && missing) {
     return (
       <Screen>
-        <Text style={styles.body}>Ovaj event ne postoji.</Text>
-        <Button label="Nazad" variant="ghost" onPress={() => router.back()} />
+        <EmptyState
+          icon={<Feather name="camera" size={size.iconMd} color={colors.ink} />}
+          text="Ovaj event ne postoji. Vrati se i skeniraj QR kod ponovo."
+          action="Nazad"
+          onAction={() => router.back()}
+        />
       </Screen>
     );
   }
 
-  if (error || !userId) {
+  if (!event || !userId) {
     return (
       <Screen>
-        <Text style={styles.body}>{error ?? 'Nisi prijavljen.'}</Text>
-        <Button label="Pokušaj ponovo" onPress={() => setAttempt((value) => value + 1)} />
+        <EmptyState
+          icon={<Feather name="alert-circle" size={size.iconMd} color={colors.ink} />}
+          text={error ?? 'Nisi prijavljen. Prijavi se ponovo.'}
+          action="Pokušaj ponovo"
+          onAction={() => setAttempt((value) => value + 1)}
+        />
       </Screen>
     );
   }
 
   return (
     <Screen scroll>
+      {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
       <Button label="Nazad" variant="ghost" onPress={() => router.back()} />
       <View style={styles.card}>
         <View style={styles.band}>
@@ -101,7 +121,7 @@ export default function BadgeScreen() {
           <Text style={styles.person}>{name}</Text>
           {company ? <Text style={styles.company}>{company}</Text> : null}
           <View style={styles.qr}>
-            <QRCode value={userBadgeUrl(userId, event.slug)} size={176} color={colors.ink} backgroundColor={colors.surface} quietZone={8} />
+            <QRCode value={userBadgeUrl(userId, event.slug)} size={size.qr} color={colors.ink} backgroundColor={colors.surface} quietZone={space.gap} />
           </View>
           <Text style={styles.note}>Kad neko skenira tvoj bedž, tebi stiže zahtev. Kontakt se deli tek kad ga prihvatiš.</Text>
         </View>
@@ -118,14 +138,14 @@ const styles = StyleSheet.create({
     ...shadow.lift,
   },
   band: {
-    minHeight: 88,
+    minHeight: size.nav + space.edge + space.gap,
     justifyContent: 'center',
     backgroundColor: colors.ink,
     overflow: 'hidden',
   },
   cover: {
     ...StyleSheet.absoluteFill,
-    opacity: 0.35,
+    opacity: opacity.cover,
   },
   bandRow: {
     flexDirection: 'row',
@@ -136,13 +156,12 @@ const styles = StyleSheet.create({
   },
   bandText: { flex: 1, minWidth: 0 },
   eventName: { fontFamily: fonts.bold, fontSize: fontSize.fs15, color: colors.appBg },
-  eventPlace: { fontFamily: fonts.regular, fontSize: fontSize.fs11, color: colors.appBg, opacity: 0.8 },
+  eventPlace: { fontFamily: fonts.regular, fontSize: fontSize.fs11, color: colors.appBg, opacity: opacity.homeIdle },
   bodyBlock: { alignItems: 'center', gap: space.gap, paddingHorizontal: space.edge, paddingTop: space.card, paddingBottom: space.edge },
   pill: { paddingHorizontal: space.gap, paddingVertical: space.tight, borderRadius: radius.pill, backgroundColor: colors.skriptYellow },
-  pillText: { fontFamily: fonts.bold, fontSize: fontSize.fs11, color: colors.ink, letterSpacing: 0.6 },
+  pillText: { fontFamily: fonts.bold, fontSize: fontSize.fs11, color: colors.ink, letterSpacing: trackingWide },
   person: { fontFamily: fonts.display, fontSize: fontSize.fs30, color: colors.ink, textAlign: 'center' },
   company: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.text2, textAlign: 'center' },
   qr: { padding: space.gap, borderRadius: radius.card, backgroundColor: colors.surface, ...shadow.card },
   note: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.text2, textAlign: 'center' },
-  body: { fontFamily: fonts.regular, fontSize: fontSize.fs15, color: colors.ink },
 });

@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button } from './ui/Button';
+import { Card } from './ui/Card';
 import { Chip } from './ui/Chip';
 import { EmptyState } from './ui/EmptyState';
 import { EventHero } from './ui/EventHero';
 import { Screen } from './ui/Screen';
+import { InlineError, LoadingState } from './ui/State';
 import { colors, fontSize, fonts, pressScale, radius, shadow, size, space, trackingTight } from '../constants/theme';
 import { authErrorMessage } from '../lib/services/authService';
 import { eventPhase, getEventBySlug, type EventRow } from '../lib/services/eventService';
@@ -22,12 +23,14 @@ function SessionCard({ session, onPress }: { session: SessionRow; onPress: () =>
       accessibilityRole="button"
       accessibilityLabel={session.title}
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && { transform: [{ scale: pressScale }] }]}
+      style={({ pressed }) => [pressed && { transform: [{ scale: pressScale }] }]}
     >
-      {time ? <Text style={styles.time}>{time}</Text> : null}
-      <Text style={styles.cardTitle}>{session.title}</Text>
-      {session.room ? <Text style={styles.meta}>{session.room}</Text> : null}
-      {session.speakers.length > 0 ? <Text style={styles.meta}>{session.speakers.join(', ')}</Text> : null}
+      <Card>
+        {time ? <Text style={styles.time}>{time}</Text> : null}
+        <Text style={styles.cardTitle}>{session.title}</Text>
+        {session.room ? <Text style={styles.meta}>{session.room}</Text> : null}
+        {session.speakers.length > 0 ? <Text style={styles.meta}>{session.speakers.join(', ')}</Text> : null}
+      </Card>
     </Pressable>
   );
 }
@@ -68,12 +71,19 @@ export function Agenda({ slug }: { slug: string }) {
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const loadedId = useRef<string | null>(null);
+  const loadedSlug = useRef<string | null>(null);
 
   useEffect(() => {
-    setReady(false);
+    if (loadedSlug.current !== slug) {
+      loadedSlug.current = null;
+      loadedId.current = null;
+      setEvent(null);
+      setSessions([]);
+      setReady(false);
+      setOpen(false);
+    }
     setMissing(false);
     setError(null);
-    setOpen(false);
   }, [slug, attempt]);
 
   useFocusEffect(
@@ -98,6 +108,7 @@ export function Agenda({ slug }: { slug: string }) {
             setDay(Math.min(Math.max(next, 1), count));
             setRoom(null);
           }
+          loadedSlug.current = slug;
           setEvent(row);
           setSessions(list);
           setMissing(false);
@@ -116,22 +127,24 @@ export function Agenda({ slug }: { slug: string }) {
     }, [slug, attempt]),
   );
 
-  if (!ready) {
+  if (!event && !ready) {
     return (
       <Screen tabBar>
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.ink} />
-        </View>
+        <LoadingState />
       </Screen>
     );
   }
 
-  if (missing || error || !event) {
+  if (!event) {
     return (
       <Screen tabBar>
         <View style={styles.center}>
-          <Text style={styles.message}>{error ?? 'Ovaj event ne postoji. Skeniraj QR kod ponovo.'}</Text>
-          <Button label={error ? 'Pokušaj ponovo' : 'Skeniraj'} onPress={() => (error ? setAttempt((value) => value + 1) : router.push('/scan'))} />
+          <EmptyState
+            icon={<Feather name={error ? 'alert-circle' : 'calendar'} size={size.iconMd} color={colors.ink} />}
+            text={error ?? 'Ovaj event ne postoji. Skeniraj QR kod ponovo.'}
+            action={error ? 'Pokušaj ponovo' : 'Skeniraj'}
+            onAction={() => (error ? setAttempt((value) => value + 1) : router.push('/scan'))}
+          />
         </View>
       </Screen>
     );
@@ -165,6 +178,7 @@ export function Agenda({ slug }: { slug: string }) {
         keyboardShouldPersistTaps="handled"
         onLayout={(layout) => setListWidth(layout.nativeEvent.layout.width)}
       >
+        {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
         <EventHero eventName={event.name} title="Agenda" coverUri={event.cover_url ?? undefined} />
         <View style={styles.days}>
           {days.map((value) => (
@@ -218,12 +232,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: space.gap,
   },
-  message: {
-    fontFamily: fonts.regular,
-    fontSize: fontSize.fs15,
-    color: colors.ink,
-    textAlign: 'center',
-  },
   scroll: {
     flex: 1,
   },
@@ -269,15 +277,6 @@ const styles = StyleSheet.create({
     color: colors.text2,
     fontVariant: ['tabular-nums'],
   },
-  card: {
-    gap: space.tight,
-    borderRadius: radius.card,
-    padding: space.card,
-    borderWidth: size.border,
-    backgroundColor: colors.glass,
-    borderColor: colors.hairline,
-    ...shadow.card,
-  },
   time: {
     fontFamily: fonts.semibold,
     fontSize: fontSize.fs13,
@@ -313,8 +312,8 @@ const styles = StyleSheet.create({
   },
   handle: {
     alignSelf: 'center',
-    width: 40,
-    height: 6,
+    width: size.emptyIcon,
+    height: size.dot + size.ring,
     borderRadius: radius.pill,
     backgroundColor: colors.hairline,
   },

@@ -8,6 +8,7 @@
     "scheme": "skript",
     "userInterfaceStyle": "automatic",
     "android": {
+      "softwareKeyboardLayoutMode": "resize",
       "package": "com.skript.app",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
@@ -44,7 +45,10 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 280
         }
-      ]
+      ],
+      "expo-font",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
