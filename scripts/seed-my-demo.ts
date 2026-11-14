@@ -9,8 +9,8 @@ const summitSlug = 'startup-revolution-ai-summit';
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 
 const incoming = [
-  { id: 'tom', name: 'Tom Becker', message: 'Tražimo developere za Loopwise. Može kratka kafa?' },
-  { id: 'sofia', name: 'Sofia Reed', message: 'Smallwave traži partnere. Imaš li pet minuta danas?' },
+  { id: 'tom', name: 'Tom Becker' },
+  { id: 'sofia', name: 'Sofia Reed' },
 ] as const;
 
 const saved = [
@@ -84,79 +84,71 @@ function userId(users: Map<string, string>, email: string, label: string): strin
   return id;
 }
 
-async function incomingRequest(supabase: SupabaseClient, eventId: string, me: string, fromId: string, name: string, message: string, rows: Row[]) {
+async function incomingInterest(supabase: SupabaseClient, eventId: string, me: string, fromId: string, name: string, rows: Row[]) {
   const { data: existing, error: existingError } = await supabase
-    .from('connections')
+    .from('interests')
     .select('id')
     .eq('event_id', eventId)
-    .eq('requester_id', fromId)
-    .eq('receiver_id', me)
+    .eq('user_id', fromId)
+    .eq('target_user_id', me)
     .maybeSingle();
   if (existingError) throw new Error(existingError.message);
   if (existing) {
-    rows.push({ Šta: `Zahtev od ${name}`, Stanje: 'već postoji' });
+    rows.push({ Šta: `Interesovanje od ${name}`, Stanje: 'već postoji' });
     return;
   }
 
-  const { error } = await supabase.from('connections').insert({
+  const { error } = await supabase.from('interests').insert({
     event_id: eventId,
-    requester_id: fromId,
-    receiver_id: me,
-    status: 'pending',
-    message,
-    source: 'match',
+    user_id: fromId,
+    target_user_id: me,
+    kind: 'interested',
   });
   if (error) throw new Error(error.message);
-  rows.push({ Šta: `Zahtev od ${name}`, Stanje: 'upisan, čeka' });
+  rows.push({ Šta: `Interesovanje od ${name}`, Stanje: 'upisano, slepo' });
 }
 
-async function acceptMine(supabase: SupabaseClient, eventId: string, me: string, jonasId: string, rows: Row[]) {
+async function ensureInterest(supabase: SupabaseClient, eventId: string, userId: string, targetId: string) {
   const { data: existing, error: existingError } = await supabase
-    .from('connections')
-    .select('id, status')
+    .from('interests')
+    .select('id')
     .eq('event_id', eventId)
-    .eq('requester_id', me)
-    .eq('receiver_id', jonasId)
+    .eq('user_id', userId)
+    .eq('target_user_id', targetId)
     .maybeSingle();
   if (existingError) throw new Error(existingError.message);
+  if (existing) return;
 
-  let id = existing?.id as string | undefined;
-  const status = existing?.status as string | undefined;
+  const { error } = await supabase.from('interests').insert({
+    event_id: eventId,
+    user_id: userId,
+    target_user_id: targetId,
+    kind: 'interested',
+  });
+  if (error?.code === '23505') return;
+  if (error) throw new Error(error.message);
+}
+
+async function connectJonas(supabase: SupabaseClient, eventId: string, me: string, jonasId: string, rows: Row[]) {
+  const [forward, backward] = await Promise.all([
+    supabase.from('connections').select('id, status').eq('event_id', eventId).eq('requester_id', me).eq('receiver_id', jonasId).maybeSingle(),
+    supabase.from('connections').select('id, status').eq('event_id', eventId).eq('requester_id', jonasId).eq('receiver_id', me).maybeSingle(),
+  ]);
+  if (forward.error) throw new Error(forward.error.message);
+  if (backward.error) throw new Error(backward.error.message);
+  const status = (forward.data?.status ?? backward.data?.status) as string | undefined;
   if (status === 'accepted') {
-    rows.push({ Šta: 'Zahtev ka Jonasu Weberu', Stanje: 'već prihvaćen' });
+    rows.push({ Šta: 'Veza sa Jonasom Weberom', Stanje: 'već prihvaćena' });
     return;
   }
-  if (status && status !== 'pending') {
-    rows.push({ Šta: 'Zahtev ka Jonasu Weberu', Stanje: `postoji kao ${status}, nisam dirao` });
+  if (status) {
+    rows.push({ Šta: 'Veza sa Jonasom Weberom', Stanje: `postoji kao ${status}, nisam dirao` });
     return;
   }
 
-  if (!id) {
-    const { data: created, error } = await supabase
-      .from('connections')
-      .insert({
-        event_id: eventId,
-        requester_id: me,
-        receiver_id: jonasId,
-        status: 'pending',
-        message: 'Video sam da ulažeš preko Brightline. Može kratak razgovor?',
-        source: 'match',
-      })
-      .select('id')
-      .single();
-    if (error) throw new Error(error.message);
-    id = (created as { id: string }).id;
-  }
-
-  const { data: updated, error: updateError } = await supabase
-    .from('connections')
-    .update({ status: 'accepted' })
-    .eq('id', id)
-    .eq('status', 'pending')
-    .select('id');
-  if (updateError) throw new Error(updateError.message);
-  if (!updated?.length) throw new Error('Zahtev ka Jonasu Weberu nije prešao u prihvaćen.');
-  rows.push({ Šta: 'Zahtev ka Jonasu Weberu', Stanje: 'prihvaćen' });
+  await ensureInterest(supabase, eventId, me, jonasId);
+  await ensureInterest(supabase, eventId, jonasId, me);
+  rows.push({ Šta: 'Veza sa Jonasom Weberom', Stanje: 'oba interesovanja, prihvaćena ako je triger prošao' });
 }
 
 async function savePerson(supabase: SupabaseClient, eventId: string, me: string, savedId: string, name: string, rows: Row[]) {
@@ -240,11 +232,11 @@ async function main() {
   const rows: Row[] = [];
   for (const person of incoming) {
     const fromId = userId(users, loginEmail(person.id), person.name);
-    await incomingRequest(supabase, event.id, me, fromId, person.name, person.message, rows);
+    await incomingInterest(supabase, event.id, me, fromId, person.name, rows);
   }
 
   const jonasId = userId(users, loginEmail('jonas'), 'Jonas Weber');
-  await acceptMine(supabase, event.id, me, jonasId, rows);
+  await connectJonas(supabase, event.id, me, jonasId, rows);
 
   for (const person of saved) {
     const savedId = userId(users, loginEmail(person.id), person.name);

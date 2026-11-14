@@ -111,18 +111,29 @@ Filteri u putanji su skraćeni. Pravi poziv doda `?select=...` i uslove, na prim
 | `getSuggestions` | `GET /rest/v1/match_suggestions`, pa `GET /rest/v1/profiles` i `GET /rest/v1/event_attendees` |
 | `refreshSuggestions` | `POST /functions/v1/match-attendees` sa telom `{ event_id }`. Posle toga ponovo `getSuggestions`. |
 
-Telefon predloge samo čita. Upis, brisanje starog spiska i dnevni limit radi Edge funkcija, service role ključem.
+Telefon predloge samo čita. Upis, brisanje starog spiska i dnevni limit radi Edge funkcija, service role ključem. Iz predloga izbacuje i ljude iz `interests` (zainteresovane i preskočene).
+
+### `interestService.ts`
+
+| Funkcija | Tabela i poziv |
+| --- | --- |
+| `expressInterest` | `POST /rest/v1/interests` sa `kind = interested` |
+| `skipPerson` | `POST /rest/v1/interests` sa `kind = skipped` |
+| `removeInterest` | `DELETE /rest/v1/interests` za povlačenje ili „Vrati“ |
+| `listMine` | `GET /rest/v1/interests` samo svojih redova, pa profil i učesnik. Otvoreno je `interested` dok nema prihvaćene veze. |
+
+Šesto otvoreno interesovanje ne proverava ekran. Triger `limit_open_interests` baci „Imaš već 5 otvorenih interesovanja. Povuci jedno pa pokušaj ponovo.“ Politika čitanja pušta samo redove gde je `user_id` prijavljeni korisnik, pa tuđi klik ostaje nevidljiv. Kad postoje oba klika, `match_mutual_interest` upiše prihvaćenu vezu. Kontakt i dalje pravi samo `handle_connection_accepted`.
 
 ### `connectionService.ts`
 
 | Funkcija | Tabela i poziv |
 | --- | --- |
-| `sendRequest` | `POST /rest/v1/connections`. Dupli red (kod `23505`) postaje „Zahtev je već poslat.“ |
+| `sendRequest` | `POST /rest/v1/connections` za QR. Status mora biti `pending`. Dupli red (kod `23505`) postaje „Zahtev je već poslat.“ |
 | `getIncoming` | `GET /rest/v1/connections` gde sam ja primalac |
 | `getOutgoing` | `GET /rest/v1/connections` gde sam ja pošiljalac |
 | `getConnected` | Dva `GET /rest/v1/connections` za status `accepted` |
 | `respond` | `PATCH /rest/v1/connections` na `accepted` ili `declined`, samo ako sam primalac i status je još `pending` |
-| `countIncoming` | `HEAD /rest/v1/connections` sa brojanjem, status `pending` |
+| `countIncoming` | `HEAD /rest/v1/connections` sa brojanjem, status `pending` i izvor `qr` |
 | `loadBits` (interno) | `GET /rest/v1/profiles`, `GET /rest/v1/event_attendees`, `GET /rest/v1/contacts` |
 
 Prihvaćen zahtev ne pravi kontakt iz telefona. Triger `handle_connection_accepted` u bazi upiše po jedan red u `contacts` za obe strane i prepiše mejl, telefon i LinkedIn iz `profile_private`.
@@ -177,24 +188,24 @@ Isti ulaz radi i kad se kod ukuca u polje „Kod eventa“.
 1. Na tabu Ljudi, Predlozi, korisnik pritisne „Napravi predloge“.
 2. `refreshSuggestions` pošalje `POST /functions/v1/match-attendees` sa `event_id` i tokenom korisnika.
 3. Funkcija proveri token. Odbije poziv ako korisnik nije učesnik, ako event nema uključeno uparivanje, ili ako je danas već bilo pet pokretanja (`match_runs`, zona Europe/Belgrade).
-4. Učita ostale učesnike. Iz predloga izbaci ljude sa kojima veza već postoji i ljude koji su već u kontaktima.
+4. Učita ostale učesnike. Iz predloga izbaci ljude sa kojima veza već postoji, ljude koji su već u kontaktima i ljude koje je korisnik označio u `interests`.
 5. `scoreCandidate` u `score.ts` da skor od 4 do 10, ili `null` ako nema poklapanja. Pravila su fiksna: ponuda prema potrebi, investitor prema osnivaču koji skuplja novac, dve agencije se ne spajaju. Gemini ovde ne bira ljude. Ostane najviše deset.
 6. `writeCopy` pošalje `POST` na `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`. Model je `GEMINI_MODEL` ili `gemini-3.6-flash`. Traži jednu rečenicu i dve kratke poruke, samo iz podataka koje je dobio.
 7. Ako ključa nema, Gemini vrati grešku, istekne 20 sekundi ili JSON nije ispravan, funkcija zadrži lokalni tekst (`fallbackWhy`, `fallbackOpeners`). Predlozi se i dalje upišu.
 8. Stari redovi tog korisnika u `match_suggestions` se obrišu i ubace novi. To radi service role, jer telefon sme samo `SELECT` nad tom tabelom.
-9. Telefon ponovo uradi `getSuggestions` i nacrta kartice: skor, razlog, poruke, „Poveži se“ i čuvanje.
+9. Telefon ponovo uradi `getSuggestions` i nacrta kartice: skor, razlog, poruke, „Zainteresovan“, „Preskoči“ i čuvanje. Zainteresovane i preskočene sakrije i pre novog uparivanja.
 
 ### Povezivanje do kontakta
 
-1. Sa predloga, `sendRequest` uradi `POST /rest/v1/connections`. Status je `pending`, izvor `match`. Sa bedža je isti poziv, izvor `qr`.
-2. RLS pusti insert samo ako su oboje na tom eventu i ako je pošiljalac prijavljeni korisnik. Drugi zahtev istom paru baci `23505`, a ekran kaže da je zahtev već poslat.
-3. Ako je webhook uključen, insert pokrene `notify-connection`. Ona pročita `push_tokens` primaoca i pošalje „Novi zahtev za povezivanje“.
-4. Primalac na tabu Zahtevi vidi karticu. `respond` uradi `PATCH /rest/v1/connections`.
-5. „Ne sada“ postavi `declined`. Mejl i telefon se ne dele.
-6. „Prihvati“ postavi `accepted`. Pre upisa, triger `handle_connection_accepted` proveri da se menja samo status, upiše vreme odgovora i za obe strane ubaci red u `contacts`. Mejl, telefon i LinkedIn dolaze iz `profile_private` druge osobe. Ako kontakt već postoji, `on conflict do nothing` ne pravi drugi.
-7. Isti webhook, na izmenu u `accepted`, može poslati pošiljaocu „Zahtev je prihvaćen“.
-8. Oba telefona na tabu Povezani vide osobu. Mejl i telefon na kartici dolaze iz sopstvenog kontakta (`GET /rest/v1/contacts`), ne iz tuđeg `profile_private`.
-9. Kontakt ostaje u Profilu. Korisnik može da ga otvori, izmeni, označi follow-up ili obriše. To su posebni pozivi `contactService`, nezavisni od zahteva.
+1. Sa predloga, `expressInterest` uradi `POST /rest/v1/interests`. Druga strana taj red ne može da pročita.
+2. Ako i ona ima `interested` za ovog korisnika, `match_mutual_interest` upiše `connections` sa statusom `accepted` i izvorom `match`. Ako za par već postoji veza u bilo kom smeru, stari red ostaje i novi se ne pravi.
+3. `handle_connection_accepted` radi i za takav `INSERT`. Upiše vreme odgovora i po jedan kontakt. Isti triger i dalje hvata QR izmenu iz `pending` u `accepted`. Klijent sam ne može da upiše `accepted`: politika `connections_insert` traži `pending`.
+4. Na Zahtevima stoji „Na odgovor čeka N od 5 interesovanja.“ `removeInterest` briše svoj klik dok veza nije nastala. Šesti otvoreni klik odbija triger u bazi.
+5. QR i dalje zove `sendRequest` sa izvorom `qr` i porukom. RLS pusti insert samo ako su oboje na eventu, pošiljalac je prijavljeni korisnik i status je `pending`.
+6. Ako je webhook uključen, QR insert pokrene `notify-connection` i poruku „Novi zahtev za povezivanje“. Obostrani klik šalje oboma „Povezali ste se“.
+7. Primalac QR zahteva bira Prihvati ili Ne sada. „Ne sada“ ne deli mejl. Prihvatanje pravi kontakte istim trigerom.
+8. Oba telefona na tabu Povezani vide osobu. Mejl i telefon dolaze iz sopstvenog kontakta, ne iz tuđeg `profile_private`.
+9. Kontakt ostaje u Profilu. Korisnik može da ga otvori, izmeni, označi follow-up ili obriše.
 
 ## 5. Pitanja komisije
 
@@ -231,8 +242,8 @@ Isti ulaz radi i kad se kod ukuca u polje „Kod eventa“.
 11. **Ko sme da prihvati zahtev?**
     Samo primalac, i samo dok je status `pending`. To proverava i servis i politika `connections_update`. Pošiljalac ne može sam sebi da promeni status.
 
-12. **Šta ako pošaljem zahtev dvaput?**
-    Jedinstveni ključ u bazi vrati `23505`. Aplikacija to prevede u „Zahtev je već poslat.“
+12. **Šta ako kliknem „Zainteresovan“ šesti put?**
+    Triger prebroji otvorena interesovanja, ona kod kojih veza još nije prihvaćena. Šesto dobije „Imaš već 5 otvorenih interesovanja. Povuci jedno pa pokušaj ponovo.“ QR zahtev koji se pošalje dvaput i dalje vrati `23505` i tekst „Zahtev je već poslat.“
 
 13. **Zašto QR, a ne pretraga svih korisnika?**
     QR eventa otvara tačan događaj. QR bedža veže zahtev za osobu koja je na tom eventu. Pogrešan kod, sopstveni bedž i bedž sa drugog eventa imaju posebnu poruku i ne prave zahtev.
@@ -244,13 +255,13 @@ Isti ulaz radi i kad se kod ukuca u polje „Kod eventa“.
     Telefon upiše Expo token u `push_tokens`. Webhook na `connections` pozove `notify-connection`, a ona `POST` na Expo Push. Telefon taj API ne zove. Webhook nije u SQL migracijama, pa mora biti uključen na projektu.
 
 16. **Šta notifikacija otvara?**
-    U poruci je `data.url` ka zahtevima tog eventa. `listenForNotificationOpens` na dodir uradi `router.push`. Radi i kad je aplikacija bila ugašena. Na emulatoru token često ne postoji, i aplikacija zbog toga ne pukne.
+    QR zahtev nosi `data.url` ka zahtevima tog eventa. Obostrano interesovanje nosi adresu ka Povezanima. `listenForNotificationOpens` na dodir uradi `router.push`. Radi i kad je aplikacija bila ugašena. Na emulatoru token često ne postoji, i aplikacija zbog toga ne pukne.
 
 17. **Gde živi sesija?**
     U AsyncStorage, preko Supabase klijenta. `detectSessionInUrl` je isključen jer telefon nema adresu u pregledaču kao veb.
 
 18. **Koje tabele telefon sme da menja?**
-    Svoj profil, svoj `profile_private`, svoj red u `event_attendees`, svoje `saved_people`, svoje `contacts`, svoje `push_tokens`, i `connections` u granicama politika. `events` i `event_sessions` samo čita. `match_suggestions` samo čita. `match_runs` telefon ne dira.
+    Svoj profil, svoj `profile_private`, svoj red u `event_attendees`, svoje `saved_people`, svoje `contacts`, svoje `push_tokens`, svoje `interests` i `connections` u granicama politika. Prihvaćenu vezu telefon ne upisuje. `events` i `event_sessions` samo čita. `match_suggestions` samo čita. `match_runs` telefon ne dira.
 
 19. **Šta je pokriveno automatskim testom?**
     Čiste funkcije: skor kandidata, provera mejla i lozinke, i datum forme. Mreža, kamera i RLS nisu u Jestu. Za njih je `docs/TEST-SCENARIJI.md`.
@@ -263,7 +274,7 @@ Isti ulaz radi i kad se kod ukuca u polje „Kod eventa“.
 Sve komande su iz foldera `skript-mobile`. Vrednosti tajni se ne pišu u repou.
 
 1. **Migracije.** `npx supabase db push --remote` pošalje fajlove iz `supabase/migrations` na povezani projekat. Bez `--remote` CLI cilja lokalni Docker. `npx supabase migration list --remote` treba da pokaže iste brojeve u kolonama Local i Remote.
-2. **Seed.** Kopiraj `scripts/.env.example` u `scripts/.env` i popuni ga na svom računaru. `npx tsx scripts/seed-test-users.ts` pravi dvanaest test naloga iz `scripts/test-people.ts`. `npx tsx scripts/seed-my-demo.ts` doda zahteve, sačuvane ljude i ručne kontakte nalogu iz `MY_EMAIL`.
+2. **Seed.** Kopiraj `scripts/.env.example` u `scripts/.env` i popuni ga na svom računaru. `npx tsx scripts/seed-test-users.ts` pravi dvanaest test naloga iz `scripts/test-people.ts`. `npx tsx scripts/seed-my-demo.ts` doda slepa interesovanja Marka, Toma i Sofije, vezu sa Jonasom, sačuvane ljude i ručne kontakte nalogu iz `MY_EMAIL`.
 3. **Secrets.** U Edge Functions upiši imena `GEMINI_API_KEY`, `GEMINI_MODEL` i `WEBHOOK_SECRET`. Prva dva čita `match-attendees`, treće `notify-connection`.
 4. **Funkcije.** `npx supabase functions deploy match-attendees` i `npx supabase functions deploy notify-connection --no-verify-jwt`. Druga nema proveru JWT-a jer je zove webhook, a tajnu nosi zaglavlje.
 5. **Webhook.** U dashboardu, Database Webhooks: tabela `connections`, događaji Insert i Update, funkcija `notify-connection`, zaglavlje `x-webhook-secret` sa istom vrednošću kao `WEBHOOK_SECRET`. Webhook nije u SQL migracijama.

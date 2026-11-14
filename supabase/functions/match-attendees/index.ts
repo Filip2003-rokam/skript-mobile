@@ -196,19 +196,22 @@ async function rankCandidates(admin: SupabaseClient, eventId: string, userId: st
 }
 
 async function blockedIds(admin: SupabaseClient, eventId: string, userId: string): Promise<Set<string>> {
-  const [sent, received, contacts] = await Promise.all([
+  const [sent, received, contacts, interests] = await Promise.all([
     admin.from('connections').select('receiver_id').eq('event_id', eventId).eq('requester_id', userId),
     admin.from('connections').select('requester_id').eq('event_id', eventId).eq('receiver_id', userId),
     admin.from('contacts').select('contact_user_id').eq('owner_id', userId).not('contact_user_id', 'is', null),
+    admin.from('interests').select('target_user_id').eq('event_id', eventId).eq('user_id', userId),
   ]);
   if (sent.error) throw sent.error;
   if (received.error) throw received.error;
   if (contacts.error) throw contacts.error;
+  if (interests.error) throw interests.error;
 
   const blocked = new Set<string>();
   for (const row of sent.data ?? []) blocked.add(row.receiver_id);
   for (const row of received.data ?? []) blocked.add(row.requester_id);
   for (const row of contacts.data ?? []) if (row.contact_user_id) blocked.add(row.contact_user_id);
+  for (const row of interests.data ?? []) blocked.add(row.target_user_id);
   return blocked;
 }
 

@@ -9,7 +9,6 @@ import { testPeople, type DemoPerson, type Kind } from './test-people.ts';
 
 const summitSlug = 'startup-revolution-ai-summit';
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const serbianRequest = 'Video sam da pravite softver za druge firme. Treba nam tim za aplikaciju za pacijente. Kafa posle ručka?';
 
 type Profile = {
   person: DemoPerson;
@@ -157,9 +156,7 @@ async function createAttendee(supabase: SupabaseClient, eventId: string, profile
 
 async function main() {
   if (testPeople.length !== 12) throw new Error(`U test-people.ts je ${testPeople.length} osoba, a očekivano je 12.`);
-  if (serbianRequest.length > 280) throw new Error('Prevedena poruka je duža od 280 znakova.');
   const people = profilesFor(testPeople);
-  const message = serbianRequest;
   const env = loadEnv(join(scriptDir, '.env'));
   const supabase = createClient(required(env, 'SUPABASE_URL'), required(env, 'SUPABASE_SERVICE_ROLE_KEY'), {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -204,7 +201,7 @@ async function main() {
   }
 
   console.table(rows);
-  await sendMarkoRequest(supabase, event.id, users, myEmail, message);
+  await saveMarkoInterest(supabase, event.id, users, myEmail);
 }
 
 function line(person: DemoPerson, role: string, needs: string[], offers: string[], state: string) {
@@ -218,7 +215,7 @@ function line(person: DemoPerson, role: string, needs: string[], offers: string[
   };
 }
 
-async function sendMarkoRequest(supabase: SupabaseClient, eventId: string, users: Map<string, string>, myEmail: string, message: string) {
+async function saveMarkoInterest(supabase: SupabaseClient, eventId: string, users: Map<string, string>, myEmail: string) {
   if (!myEmail) return;
   const receiverId = users.get(myEmail);
   const { data: attendance, error: attendanceError } = receiverId
@@ -226,40 +223,38 @@ async function sendMarkoRequest(supabase: SupabaseClient, eventId: string, users
     : { data: null, error: null };
   if (attendanceError) throw new Error(attendanceError.message);
   if (!attendance) {
-    console.warn(`Upozorenje: nalog ${myEmail} još nije na eventu. Zahtev je preskočen.`);
+    console.warn(`Upozorenje: nalog ${myEmail} još nije na eventu. Interesovanje je preskočeno.`);
     return;
   }
 
   const markoId = users.get(loginEmail('marko'));
-  if (!markoId) throw new Error('Marko Ilić nema nalog, pa zahtev nije poslat.');
+  if (!markoId) throw new Error('Marko Ilić nema nalog, pa interesovanje nije upisano.');
   if (markoId === receiverId) {
-    console.warn('Upozorenje: MY_EMAIL je nalog Marka Ilića. Zahtev je preskočen.');
+    console.warn('Upozorenje: MY_EMAIL je nalog Marka Ilića. Interesovanje je preskočeno.');
     return;
   }
 
   const { data: existing, error: existingError } = await supabase
-    .from('connections')
+    .from('interests')
     .select('id')
     .eq('event_id', eventId)
-    .eq('requester_id', markoId)
-    .eq('receiver_id', receiverId)
+    .eq('user_id', markoId)
+    .eq('target_user_id', receiverId)
     .maybeSingle();
   if (existingError) throw new Error(existingError.message);
   if (existing) {
-    console.log('Zahtev od Marka Ilića već postoji.');
+    console.log('Interesovanje Marka Ilića već postoji.');
     return;
   }
 
-  const { error } = await supabase.from('connections').insert({
+  const { error } = await supabase.from('interests').insert({
     event_id: eventId,
-    requester_id: markoId,
-    receiver_id: receiverId,
-    status: 'pending',
-    message,
-    source: 'match',
+    user_id: markoId,
+    target_user_id: receiverId,
+    kind: 'interested',
   });
   if (error) throw new Error(error.message);
-  console.log(`Marko Ilić je poslao zahtev na ${myEmail}.`);
+  console.log(`Marko Ilić je zainteresovan za ${myEmail}.`);
 }
 
 main().catch((error: unknown) => {

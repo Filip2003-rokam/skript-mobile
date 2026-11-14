@@ -32,29 +32,29 @@ Radi se na telefonu, sa dva naloga kad scenario traži drugu osobu. Oba naloga s
 | --- | --- | --- |
 | 1. Na serveru privremeno skloni ili pokvari `GEMINI_API_KEY`. 2. Na telefonu otvori Ljudi, tab Predlozi. 3. Pritisni „Napravi predloge“. 4. Vrati ključ na server. | Lista se ipak pojavi. Razlog je lokalni tekst, na primer „Praviš softver ↔ Treba im razvojni tim“, a ne „Predlozi trenutno nisu dostupni“. | |
 
-## 6. Zahtev
+## 6. Interesovanje
 
 | Koraci | Očekivano | Stvarni rezultat |
 | --- | --- | --- |
-| 1. Na predlogu pritisni „Poveži se“. 2. Po želji dopiši poruku. 3. Pritisni „Pošalji zahtev“. 4. Otvori tab Zahtevi. | Dugme predloga postane „Zahtev poslat“. U poslati zahtevi stoji ta osoba sa statusom „čeka“. | |
+| 1. Na predlogu pritisni „Zainteresovan“. 2. Otvori tab Zahtevi. 3. Drugim nalogom otvori Zahteve istog eventa. | Osoba nestane iz predloga. Piše „Na odgovor čeka 1 od 5 interesovanja.“ i dugme „Povuci“. Drugi nalog taj klik ne vidi. | |
 
-## 7. Prihvatanje
-
-| Koraci | Očekivano | Stvarni rezultat |
-| --- | --- | --- |
-| 1. Drugim nalogom otvori Ljudi, tab Zahtevi. 2. Na kartici pritisni „Prihvati“. 3. Otvori tab Povezani. 4. Na prvom nalogu osveži Povezane. | Na kartici piše „Sačuvano u kontakte“ i vide se mejl ili telefon. Oba naloga vide osobu pod Povezani. | |
-
-## 8. Odbijanje
+## 7. Obostrani klik
 
 | Koraci | Očekivano | Stvarni rezultat |
 | --- | --- | --- |
-| 1. Sa trećim nalogom, ili novim zahtevom, otvori Zahtevi. 2. Pritisni „Ne sada“. | Kartica kaže „Odbijeno. Kontakt podaci se ne dele.“ Mejl i telefon se ne prikazuju. | |
+| 1. Drugi nalog na predlogu prvog pritisne „Zainteresovan“. 2. Oba otvore Povezane i Profil, kontakte. | Oba vide osobu pod Povezani. U kontaktima su mejl ili telefon. Nema kartice zahteva sa porukom. | |
 
-## 9. Dupli zahtev
+## 8. Preskok, povlačenje i šesto interesovanje
 
 | Koraci | Očekivano | Stvarni rezultat |
 | --- | --- | --- |
-| 1. Osobi kojoj je zahtev već poslat ili koja je već povezana pošalji zahtev još jednom (predlog ili sken bedža). | Pojavi se „Zahtev je već poslat.“ Novi red se ne pravi. | |
+| 1. Na predlogu pritisni „Preskoči“. 2. Pritisni „Vrati“. 3. Na Zahtevima pritisni „Povuci“. 4. Ostavi pet otvorenih i klikni šesto. | Preskočena osoba nestane, pa se vrati. Povučena nestane sa Zahteva. Šesti klik napiše „Imaš već 5 otvorenih interesovanja. Povuci jedno pa pokušaj ponovo.“ | |
+
+## 9. QR zahtev
+
+| Koraci | Očekivano | Stvarni rezultat |
+| --- | --- | --- |
+| 1. Skeniraj tuđi bedž i pošalji poruku. 2. Drugi nalog na Zahtevima pritisne „Prihvati“ ili „Ne sada“. 3. Isti bedž skeniraj još jednom. | Zahtev ima poruku. Prihvatanje deli kontakt. „Ne sada“ kaže „Odbijeno. Kontakt podaci se ne dele.“ Dupli sken napiše „Zahtev je već poslat.“ | |
 
 ## 10. Nov kontakt
 
@@ -84,7 +84,7 @@ Radi se na telefonu, sa dva naloga kad scenario traži drugu osobu. Oba naloga s
 
 | Koraci | Očekivano | Stvarni rezultat |
 | --- | --- | --- |
-| 1. Na fizičkom telefonu prihvati dozvolu za obaveštenja i ostavi aplikaciju u pozadini. 2. Drugim nalogom pošalji zahtev za povezivanje. 3. Dodirni obaveštenje. | Stigne „Novi zahtev za povezivanje“ sa imenom pošiljaoca i eventa. Dodir otvori tab Zahtevi tog eventa. Emulator token često nema, pa tamo obaveštenje ne mora da stigne. | |
+| 1. Na fizičkom telefonu prihvati dozvolu za obaveštenja i ostavi aplikaciju u pozadini. 2. Drugim nalogom pošalji QR zahtev. 3. Dodirni obaveštenje. Za obostrani klik uradi isto sa „Zainteresovan“ na oba naloga. | QR donese „Novi zahtev za povezivanje“ i otvori Zahteve. Obostrani klik donese „Povezali ste se“ i otvori Povezane. Emulator token često nema, pa tamo obaveštenje ne mora da stigne. | |
 
 ## 15. Rad bez interneta
 

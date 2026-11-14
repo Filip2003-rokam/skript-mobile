@@ -10,6 +10,8 @@ export type EventRow = {
   logo_url: string | null;
 };
 
+export type InterestKind = 'interested' | 'skipped';
+
 export type EventAttendeeProfile = {
   why: string[];
   role: string | null;

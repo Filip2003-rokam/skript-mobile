@@ -8,6 +8,7 @@ type ConnectionRow = {
   requester_id?: string;
   receiver_id?: string;
   status?: string;
+  source?: string;
 };
 
 type Ticket = {
@@ -38,6 +39,8 @@ Deno.serve(async (request) => {
     const admin = serviceClient();
     if (type === 'INSERT' && record?.status === 'pending') {
       await notifyNewRequest(admin, record);
+    } else if (type === 'INSERT' && record?.status === 'accepted' && record?.source === 'match') {
+      await notifyMutual(admin, record);
     } else if (type === 'UPDATE' && previous?.status === 'pending' && record?.status === 'accepted') {
       await notifyAccepted(admin, record);
     }
@@ -77,6 +80,32 @@ async function notifyAccepted(admin: SupabaseClient, record: ConnectionRow) {
     title: 'Zahtev je prihvaćen',
     body: `${name} je prihvatio/la tvoj zahtev`,
     url: requestsUrl(event.slug),
+  });
+}
+
+async function notifyMutual(admin: SupabaseClient, record: ConnectionRow) {
+  const eventId = required(record.event_id);
+  const requesterId = required(record.requester_id);
+  const receiverId = required(record.receiver_id);
+  if (!eventId || !requesterId || !receiverId) return;
+
+  const [fromName, toName, event] = await Promise.all([
+    profileName(admin, requesterId),
+    profileName(admin, receiverId),
+    eventInfo(admin, eventId),
+  ]);
+  if (!event) return;
+
+  const url = `/people?view=connected&slug=${encodeURIComponent(event.slug)}`;
+  await sendPush(admin, requesterId, {
+    title: 'Povezali ste se',
+    body: `${toName} i ti ste se povezali na eventu ${event.name}`,
+    url,
+  });
+  await sendPush(admin, receiverId, {
+    title: 'Povezali ste se',
+    body: `${fromName} i ti ste se povezali na eventu ${event.name}`,
+    url,
   });
 }
 

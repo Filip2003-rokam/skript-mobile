@@ -12,6 +12,7 @@ export type ConnectionPerson = {
   company: string | null;
   message: string | null;
   status: ConnectionStatus;
+  source: ConnectionSource;
   email: string | null;
   phone: string | null;
 };
@@ -22,6 +23,7 @@ type ConnectionDb = {
   receiver_id: string;
   status: ConnectionStatus;
   message: string | null;
+  source: ConnectionSource;
 };
 
 type PersonBits = {
@@ -81,6 +83,7 @@ function toPerson(row: ConnectionDb, otherId: string, bits: PersonBits | undefin
     company: bits?.company ?? null,
     message: row.message,
     status: row.status,
+    source: row.source,
     email: bits?.email ?? null,
     phone: bits?.phone ?? null,
   };
@@ -105,7 +108,7 @@ export async function getIncoming(eventId: string): Promise<ConnectionPerson[]> 
   const id = await userId();
   const { data, error } = await supabase
     .from('connections')
-    .select('id, requester_id, receiver_id, status, message')
+    .select('id, requester_id, receiver_id, status, message, source')
     .eq('event_id', eventId)
     .eq('receiver_id', id)
     .order('created_at', { ascending: false });
@@ -119,7 +122,7 @@ export async function getOutgoing(eventId: string): Promise<ConnectionPerson[]> 
   const id = await userId();
   const { data, error } = await supabase
     .from('connections')
-    .select('id, requester_id, receiver_id, status, message')
+    .select('id, requester_id, receiver_id, status, message, source')
     .eq('event_id', eventId)
     .eq('requester_id', id)
     .order('created_at', { ascending: false });
@@ -131,7 +134,7 @@ export async function getOutgoing(eventId: string): Promise<ConnectionPerson[]> 
 
 export async function getConnected(eventId: string): Promise<ConnectionPerson[]> {
   const id = await userId();
-  const columns = 'id, requester_id, receiver_id, status, message';
+  const columns = 'id, requester_id, receiver_id, status, message, source';
   const [{ data: sent, error: sentError }, { data: received, error: receivedError }] = await Promise.all([
     supabase.from('connections').select(columns).eq('event_id', eventId).eq('status', 'accepted').eq('requester_id', id),
     supabase.from('connections').select(columns).eq('event_id', eventId).eq('status', 'accepted').eq('receiver_id', id),
@@ -168,7 +171,8 @@ export async function countIncoming(eventId: string): Promise<number> {
     .select('id', { count: 'exact', head: true })
     .eq('event_id', eventId)
     .eq('receiver_id', session.user.id)
-    .eq('status', 'pending');
+    .eq('status', 'pending')
+    .eq('source', 'qr');
   if (error) throw error;
   return count ?? 0;
 }

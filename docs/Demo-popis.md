@@ -58,7 +58,7 @@ Posle četvrtog koraka odmah se prikazuje lista predloga.
   - +4 ako ja skupljam novac, a osoba je investitor.
 - **Skor:** 4 + zbir + 1 ako je osoba u sali, najviše 10. Bez ijednog poklapanja osoba se ne predlaže.
 - **„Matched on“** je par fraza, npr. „You build software ↔ Needs a product team“.
-- Redosled je po skoru, pa po imenu. Marko je izuzet, jer on šalje demo zahtev.
+- Redosled je po skoru, pa po imenu. Skor ostaje jednosmeran: dovoljno je jedno poklapanje.
 
 ### Kartica predloga
 
@@ -80,9 +80,17 @@ Posle četvrtog koraka odmah se prikazuje lista predloga.
 - Posle Accept: email, telefon i dugme „Save to contacts“.
 - Posle Not now: „You can still find Marko in People.“
 
-### Stanje mreženja
+### Stanje mreženja u veb demou
 
-`saved[]`, `sent{id: poruka}`, `connected[]` i `incoming[{id, note, status}]`. Status može biti pending, accepted ili dismissed. Na početku stiže jedan demo zahtev, od Marka Ilića iz Medika Group.
+`saved[]`, `sent{id: poruka}`, `connected[]` i `incoming[{id, note, status}]`. Status može biti pending, accepted ili dismissed. Na početku stiže jedan demo zahtev, od Marka Ilića iz Medika Group. Taj deo demoa je zastareo za aplikaciju.
+
+### Kako radi aplikacija
+
+Interesovanje je slepo. Dugme je „Zainteresovan“, bez poruke. Drugi korisnik taj klik ne vidi, ni na Zahtevima ni u `interests`, dok i sam ne pritisne „Zainteresovan“. Tek tada nastaje prihvaćena veza i oba kontakta, sa mejlom i telefonom. „Preskoči“ sklanja osobu iz predloga. Druga strana preskok ne vidi. „Vrati“ ga poništava. Otvorenih interesovanja, dok veza nije nastala, može biti najviše pet. Šesto baza odbija porukom „Imaš već 5 otvorenih interesovanja. Povuci jedno pa pokušaj ponovo.“ Na Zahtevima, ispod QR zahteva, piše „Na odgovor čeka N od 5 interesovanja.“ i svako ima „Povuci“.
+
+QR bedž i dalje šalje zahtev sa porukom. Primalac bira Prihvati ili Ne sada. Klijent ne sme sam da upiše prihvaćenu vezu: politika za upis u `connections` traži status `pending`. Ako za par već postoji veza u bilo kom smeru, obostrani klik ne pravi drugi red i ne menja odbijen ili QR zahtev.
+
+Marko, Tom i Sofia u demo podacima imaju slepo interesovanje prema nalogu iz `MY_EMAIL`. To se ne vidi dok taj nalog ne klikne „Zainteresovan“ na njihovoj kartici.
 
 ## Podaci (`src/mock`)
 
@@ -155,7 +163,7 @@ Logo je JPEG, pa ga za ikonicu aplikacije izvezi kao PNG. Znak „Skrıpt“ u a
 - ulaz na event: učitavanje, dobrodošlica, ime i Skip, posle skeniranja QR koda
 - profil u četiri koraka, sa istim čipovima
 - pravila skora iz `networking.ts`, koja prenosimo u Edge funkciju. Gemini piše „Why meet“ i dve prve poruke.
-- People: Saved, Requests, Connected, kartica predloga i kartica zahteva
+- People: Predlozi, Sačuvani, Zahtevi i Povezani. Predlog ima „Zainteresovan“ i „Preskoči“. Zahtev sa porukom ostaje samo za QR.
 - Me: profil, moji eventi, kontakti. Lični QR izgleda kao bedž iz demoa.
 - Contacts: pretraga, beleška i podsetnik za follow-up
 

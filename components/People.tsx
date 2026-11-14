@@ -70,13 +70,14 @@ export function People({ slug, view, onView }: PeopleProps) {
       {view === 'suggestions' ? (
         <Suggestions
           suggestions={data.suggestions}
+          skipped={data.skipped}
           savedIds={savedIds}
-          outgoing={data.outgoing}
-          connected={data.connected}
           refreshing={data.refreshing}
           refreshError={data.refreshError}
           onRefresh={() => void data.refresh()}
-          onConnect={data.connect}
+          onInterest={(userId) => data.interest(userId)}
+          onSkip={(userId) => data.skip(userId)}
+          onRestore={(interestId) => data.withdraw(interestId)}
           onToggleSave={data.toggleSave}
         />
       ) : null}
@@ -96,8 +97,10 @@ export function People({ slug, view, onView }: PeopleProps) {
         <Requests
           incoming={data.incoming}
           outgoing={data.outgoing}
+          open={data.openInterests}
           onAccept={(id) => data.answer(id, 'accepted')}
           onDecline={(id) => data.answer(id, 'declined')}
+          onWithdraw={(id) => data.withdraw(id)}
           onFind={() => onView('suggestions')}
         />
       ) : null}

@@ -5,7 +5,6 @@ import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Chip } from '../ui/Chip';
-import { TextField } from '../ui/TextField';
 import { colors, fontSize, fonts, size, space } from '../../constants/theme';
 import { MatchOpeners } from './MatchOpeners';
 import { actionError, displayName, Kicker, RoleLine } from './personBits';
@@ -20,31 +19,27 @@ type PersonMatchCardProps = {
   matchedTheirs: string | null;
   openers: string[];
   saved: boolean;
-  sent: boolean;
-  connected: boolean;
-  onConnect: (message: string) => Promise<void>;
+  onInterest: () => Promise<void>;
+  onSkip: () => Promise<void>;
   onToggleSave: () => Promise<void>;
 };
 
 export function PersonMatchCard(props: PersonMatchCardProps) {
-  const [connecting, setConnecting] = useState(false);
-  const [note, setNote] = useState('');
   const [tips, setTips] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [sending, setSending] = useState(false);
+  const [acting, setActing] = useState(false);
   const person = displayName(props.name);
-  const locked = props.sent || props.connected;
 
-  async function send() {
-    setSending(true);
+  async function run(action: () => Promise<void>) {
+    setActing(true);
     setError(null);
     try {
-      await props.onConnect(note);
+      await action();
     } catch (cause) {
       setError(actionError(cause));
     } finally {
-      setSending(false);
+      setActing(false);
     }
   }
 
@@ -87,38 +82,20 @@ export function PersonMatchCard(props: PersonMatchCardProps) {
             </View>
           </View>
         ) : null}
-        {connecting && !locked ? (
-          <View style={styles.block}>
-            <TextField
-              label="Poruka"
-              value={note}
-              onChangeText={setNote}
-              placeholder="Dodaj kratku poruku"
-              accessibilityLabel="Dodaj kratku poruku"
-              maxLength={280}
-            />
-            <Button size="sm" label="Pošalji zahtev" disabled={sending} onPress={() => void send()}>
-              <Feather name="send" size={size.iconSm} color={colors.onInk} />
-            </Button>
-          </View>
-        ) : (
-          <View style={styles.actions}>
-            <Button
-              size="sm"
-              label={props.connected ? 'Povezani' : props.sent ? 'Zahtev poslat' : 'Poveži se'}
-              disabled={locked}
-              onPress={() => setConnecting(true)}
-            >
-              <Feather name={locked ? 'check' : 'user-plus'} size={size.iconSm} color={colors.onInk} />
-            </Button>
-            <Button size="sm" variant="secondary" label={props.saved ? 'Sačuvano' : 'Sačuvaj'} disabled={saving} onPress={() => void toggleSave()}>
-              <Feather name="bookmark" size={size.iconSm} color={colors.ink} />
-            </Button>
-            <Button size="sm" variant="secondary" label="Kako da počnem?" onPress={() => setTips((open) => !open)}>
-              <Feather name="zap" size={size.iconSm} color={colors.ink} />
-            </Button>
-          </View>
-        )}
+        <View style={styles.actions}>
+          <Button size="sm" label="Zainteresovan" disabled={acting} onPress={() => void run(props.onInterest)}>
+            <Feather name="user-plus" size={size.iconSm} color={colors.onInk} />
+          </Button>
+          <Button size="sm" variant="secondary" label="Preskoči" disabled={acting} onPress={() => void run(props.onSkip)}>
+            <Feather name="x" size={size.iconSm} color={colors.ink} />
+          </Button>
+          <Button size="sm" variant="secondary" label={props.saved ? 'Sačuvano' : 'Sačuvaj'} disabled={saving} onPress={() => void toggleSave()}>
+            <Feather name="bookmark" size={size.iconSm} color={colors.ink} />
+          </Button>
+          <Button size="sm" variant="secondary" label="Kako da počnem?" onPress={() => setTips((open) => !open)}>
+            <Feather name="zap" size={size.iconSm} color={colors.ink} />
+          </Button>
+        </View>
         {tips ? <MatchOpeners lines={props.openers.slice(0, 2)} /> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </View>
