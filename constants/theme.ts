@@ -19,9 +19,9 @@ export const colors = {
   live: '#E5484D',
   destructive: '#D64545',
   avatarBg: '#EEEEF0',
-  summit: '#4B2A8C',
-  founders: '#1F7A55',
-  the5: '#B94267',
+  onPhoto: '#FFFFFF',
+  onPhotoDim: 'rgba(255, 255, 255, 0.8)',
+  onPhotoGlass: 'rgba(255, 255, 255, 0.15)',
 } as const;
 
 export const fonts = {
@@ -34,9 +34,12 @@ export const fonts = {
 
 export const fontSize = {
   fs11: 11,
+  fs12: 12,
   fs13: 13,
   fs15: 15,
   fs17: 17,
+  fs19: 19,
+  fs20: 20,
   fs22: 22,
   fs30: 30,
 } as const;
@@ -46,6 +49,8 @@ export const radius = {
   panel: 28,
   pill: 999,
   logo: 10,
+  cover: 24,
+  tile: 18,
 } as const;
 
 export const space = {
@@ -82,18 +87,23 @@ export const size = {
   iconSm: 16,
   iconMd: 18,
   iconLg: 22,
+  coverMin: 140,
+  speakerTile: 64,
+  liveDot: 6,
 } as const;
 
 export const pressScale = 0.97;
 export const avatarText = 0.36;
-export const mark = { dot: 0.18, gap: 0.3, lift: 0.7 } as const;
+// Logo je slika 433 x 160. Visina je 1.2 puta veličina slova pored kojeg stoji.
+export const mark = { height: 1.2, ratio: 433 / 160 } as const;
 export const trackingTight = -0.02;
 export const trackingWide = 0.6;
 export const opacity = { disabled: 0.4, homeIdle: 0.8, cover: 0.35 } as const;
 
-// Vrh fotografije ostaje vidljiv, dno prelazi u appBg. Ista boja sa nultom providnošću, da prelaz ne posivi.
-export const heroFade = ['rgba(246, 246, 244, 0)', colors.appBg] as const;
-export const heroFadeStart = 0.25;
+// Tamni sloj preko naslovne fotografije, da beli tekst bude čitljiv.
+export const photoShade = ['rgba(17, 17, 20, 0.15)', 'rgba(17, 17, 20, 0.65)'] as const;
+// Pločica govornika: inicijali su 34% visine pločice.
+export const tileText = 0.34;
 
 const inkShadow = colors.ink;
 

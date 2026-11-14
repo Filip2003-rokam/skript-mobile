@@ -1,43 +1,23 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { colors, fontSize, fonts, mark } from '../../constants/theme';
+import { Image } from 'react-native';
+import { fontSize, mark } from '../../constants/theme';
+
+const dark = require('../../assets/images/brand/skript-wordmark.png');
+const light = require('../../assets/images/brand/skript-wordmark-light.png');
 
 type SkriptMarkProps = {
   size?: number;
+  tone?: 'dark' | 'light';
 };
 
-export function SkriptMark({ size = fontSize.fs22 }: SkriptMarkProps) {
-  const dot = size * mark.dot;
+// Pravi Skript logo (tačke iznad slova i), kao slika. Svetla verzija ide preko fotografije.
+export function SkriptMark({ size = fontSize.fs22, tone = 'dark' }: SkriptMarkProps) {
+  const height = size * mark.height;
   return (
-    <View accessibilityLabel="Skript" style={[styles.row, { paddingTop: dot * mark.lift }]}>
-      <Text style={[styles.word, { fontSize: size }]}>Skr</Text>
-      <View>
-        <View style={[styles.dots, { gap: dot * mark.gap, top: -dot * mark.lift }]}>
-          <View style={[styles.dot, { width: dot, height: dot, borderRadius: dot }]} />
-          <View style={[styles.dot, { width: dot, height: dot, borderRadius: dot }]} />
-          <View style={[styles.dot, { width: dot, height: dot, borderRadius: dot }]} />
-        </View>
-        <Text style={[styles.word, { fontSize: size }]}>ı</Text>
-      </View>
-      <Text style={[styles.word, { fontSize: size }]}>pt</Text>
-    </View>
+    <Image
+      accessibilityLabel="Skript"
+      source={tone === 'light' ? light : dark}
+      style={{ height, width: height * mark.ratio }}
+      resizeMode="contain"
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-  },
-  word: {
-    fontFamily: fonts.display,
-    color: colors.ink,
-  },
-  dots: {
-    position: 'absolute',
-    left: 0,
-    flexDirection: 'row',
-  },
-  dot: {
-    backgroundColor: colors.skriptYellow,
-  },
-});

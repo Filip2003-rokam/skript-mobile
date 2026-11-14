@@ -59,7 +59,7 @@ export function People({ slug, view, onView }: PeopleProps) {
   return (
     <Screen tabBar scroll>
       {data.error ? <InlineError text={data.error} onRetry={data.retry} /> : null}
-      <EventHero eventName={data.event.name} title="Ljudi" coverUri={data.event.cover_url ?? undefined} />
+      <EventHero eventName={data.event.name} />
       <Segmented
         value={view}
         options={tabs}

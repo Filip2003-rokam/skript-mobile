@@ -3,10 +3,10 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Card } from './ui/Card';
 import { Chip } from './ui/Chip';
 import { EmptyState } from './ui/EmptyState';
 import { EventHero } from './ui/EventHero';
+import { SessionCard } from './ui/SessionCard';
 import { Screen } from './ui/Screen';
 import { InlineError, LoadingState } from './ui/State';
 import { colors, fontSize, fonts, pressScale, radius, shadow, size, space, trackingTight } from '../constants/theme';
@@ -15,25 +15,6 @@ import { eventPhase, getEventBySlug, type EventRow } from '../lib/services/event
 import { listSessions, sessionClock, sessionIsLive, type SessionRow } from '../lib/services/sessionService';
 
 const minute = 60_000;
-
-function SessionCard({ session, onPress }: { session: SessionRow; onPress: () => void }) {
-  const time = sessionClock(session.start_time);
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={session.title}
-      onPress={onPress}
-      style={({ pressed }) => [pressed && { transform: [{ scale: pressScale }] }]}
-    >
-      <Card>
-        {time ? <Text style={styles.time}>{time}</Text> : null}
-        <Text style={styles.cardTitle}>{session.title}</Text>
-        {session.room ? <Text style={styles.meta}>{session.room}</Text> : null}
-        {session.speakers.length > 0 ? <Text style={styles.meta}>{session.speakers.join(', ')}</Text> : null}
-      </Card>
-    </Pressable>
-  );
-}
 
 function SessionModal({ session, open, onClose }: { session: SessionRow | null; open: boolean; onClose: () => void }) {
   const insets = useSafeAreaInsets();
@@ -179,7 +160,7 @@ export function Agenda({ slug }: { slug: string }) {
         onLayout={(layout) => setListWidth(layout.nativeEvent.layout.width)}
       >
         {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
-        <EventHero eventName={event.name} title="Agenda" coverUri={event.cover_url ?? undefined} />
+        <EventHero eventName={event.name} />
         <View style={styles.days}>
           {days.map((value) => (
             <Chip key={value} label={`Dan ${value}`} selected={day === value} onPress={() => setDay(value)} />
@@ -204,7 +185,7 @@ export function Agenda({ slug }: { slug: string }) {
               <Text style={styles.liveTitle}>Upravo traje</Text>
             </View>
             {live.map((session) => (
-              <SessionCard key={session.id} session={session} onPress={() => show(session)} />
+              <SessionCard key={session.id} session={session} live onPress={() => show(session)} />
             ))}
           </View>
         ) : null}
@@ -282,12 +263,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.fs13,
     color: colors.text2,
     fontVariant: ['tabular-nums'],
-  },
-  cardTitle: {
-    fontFamily: fonts.semibold,
-    fontSize: fontSize.fs15,
-    color: colors.ink,
-    letterSpacing: fontSize.fs15 * trackingTight,
   },
   meta: {
     fontFamily: fonts.regular,

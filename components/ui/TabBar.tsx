@@ -1,12 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { colors, fontSize, fonts, opacity, pressScale, radius, shadow, size, space } from '../../constants/theme';
+import { colors, fontSize, fonts, pressScale, radius, shadow, size, space } from '../../constants/theme';
 
+// Kao u demou: sve kartice imaju isti miran izgled, a izabrana dobija tačku ispod.
 const tabs = {
-  index: { label: 'Početna', icon: 'message-circle' as const, home: true },
-  agenda: { label: 'Agenda', icon: 'calendar' as const, home: false },
-  people: { label: 'Ljudi', icon: 'users' as const, home: false },
-  profile: { label: 'Profil', icon: 'user' as const, home: false },
+  index: { label: 'Početna', icon: 'home' as const },
+  agenda: { label: 'Agenda', icon: 'calendar' as const },
+  people: { label: 'Ljudi', icon: 'users' as const },
+  profile: { label: 'Profil', icon: 'user' as const },
 };
 
 type TabKey = keyof typeof tabs;
@@ -23,25 +24,14 @@ export function TabBar({ activeKey, onPress, bottom = 0 }: { activeKey: string; 
             <Pressable
               key={key}
               accessibilityRole="button"
+              accessibilityLabel={item.label}
               accessibilityState={{ selected: active }}
               onPress={() => onPress(key)}
-              style={({ pressed }) => [
-                item.home ? styles.homeTab : styles.tab,
-                pressed && { transform: [{ scale: pressScale }] },
-              ]}
+              style={({ pressed }) => [styles.tab, pressed && { transform: [{ scale: pressScale }] }]}
             >
-              {item.home ? (
-                <View style={[styles.home, !active && styles.homeIdle]}>
-                  <Feather name={item.icon} size={size.iconMd} color={colors.ink} />
-                  <Text style={styles.homeLabel}>{item.label}</Text>
-                </View>
-              ) : (
-                <>
-                  <Feather name={item.icon} size={size.iconMd} color={color} />
-                  <Text style={[styles.label, { color }]}>{item.label}</Text>
-                  <View style={[styles.dot, active && styles.dotOn]} />
-                </>
-              )}
+              <Feather name={item.icon} size={size.iconMd} color={color} />
+              <Text style={[styles.label, { color }, active && styles.labelOn]}>{item.label}</Text>
+              <View style={[styles.dot, active && styles.dotOn]} />
             </Pressable>
           );
         })}
@@ -56,15 +46,9 @@ const styles = StyleSheet.create({
     height: size.nav, flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.tight,
     borderRadius: radius.pill, backgroundColor: colors.surface, ...shadow.navigation,
   },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.tight },
-  homeTab: { alignItems: 'center', justifyContent: 'center' },
-  home: {
-    height: size.chip, flexDirection: 'row', alignItems: 'center', gap: space.tight,
-    paddingHorizontal: space.chip, borderRadius: radius.pill, backgroundColor: colors.skriptYellow,
-  },
-  homeIdle: { opacity: opacity.homeIdle },
-  homeLabel: { fontFamily: fonts.bold, fontSize: fontSize.fs13, color: colors.ink },
-  label: { fontFamily: fonts.semibold, fontSize: fontSize.fs11 },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.tight / 2 },
+  label: { fontFamily: fonts.medium, fontSize: fontSize.fs11 },
+  labelOn: { fontFamily: fonts.semibold },
   dot: { width: size.dot, height: size.dot, borderRadius: radius.pill },
   dotOn: { backgroundColor: colors.ink },
 });

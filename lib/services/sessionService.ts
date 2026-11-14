@@ -54,3 +54,21 @@ export async function listSessions(eventId: string): Promise<SessionRow[]> {
     speakers: row.speakers ?? [],
   }));
 }
+
+// Sledeća predavanja za početnu: pre eventa prva sa prvog dana, tokom eventa ona koja danas tek počinju.
+export function upcomingSessions(
+  startsOn: string | null,
+  days: number | null,
+  sessions: SessionRow[],
+  now = new Date(),
+  limit = 3,
+): SessionRow[] {
+  const timing = eventPhase(startsOn, days, now);
+  if (timing.phase === 'after') return [];
+  const minute = now.getHours() * 60 + now.getMinutes();
+  const day = timing.phase === 'during' ? timing.day : 1;
+  return sessions
+    .filter((session) => session.day === day && session.start_time)
+    .filter((session) => timing.phase === 'before' || clockMinutes(session.start_time ?? '') > minute)
+    .slice(0, limit);
+}
