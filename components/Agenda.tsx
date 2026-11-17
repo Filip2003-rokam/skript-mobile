@@ -1,42 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Chip } from './ui/Chip';
+import { AgendaFilters } from './agenda/AgendaFilters';
+import { SessionSheet } from './agenda/SessionSheet';
 import { EmptyState } from './ui/EmptyState';
 import { EventHero } from './ui/EventHero';
 import { SessionCard } from './ui/SessionCard';
 import { Screen } from './ui/Screen';
 import { InlineError, LoadingState } from './ui/State';
-import { colors, fontSize, fonts, pressScale, radius, shadow, size, space, trackingTight } from '../constants/theme';
+import { colors, fontSize, fonts, size, space } from '../constants/theme';
 import { authErrorMessage } from '../lib/services/authService';
 import { eventPhase, getEventBySlug, type EventRow } from '../lib/services/eventService';
 import { listSessions, sessionClock, sessionIsLive, type SessionRow } from '../lib/services/sessionService';
 
 const minute = 60_000;
-
-function SessionModal({ session, open, onClose }: { session: SessionRow | null; open: boolean; onClose: () => void }) {
-  const insets = useSafeAreaInsets();
-  const time = session ? sessionClock(session.start_time) : '';
-  return (
-    <Modal visible={open} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
-      <View style={styles.modal}>
-        <Pressable accessibilityLabel="Zatvori" style={[StyleSheet.absoluteFill, styles.scrim]} onPress={onClose} />
-        {session ? (
-          <View style={[styles.sheet, { marginBottom: Math.max(insets.bottom, space.gap) }]}>
-            <View style={styles.handle} />
-            {time ? <Text style={styles.time}>{time}</Text> : null}
-            <Text style={styles.modalTitle}>{session.title}</Text>
-            {session.room ? <Text style={styles.meta}>{session.room}</Text> : null}
-            {session.speakers.length > 0 ? <Text style={styles.meta}>{session.speakers.join(', ')}</Text> : null}
-            {session.duration_min != null ? <Text style={styles.meta}>Trajanje: {session.duration_min} min</Text> : null}
-          </View>
-        ) : null}
-      </View>
-    </Modal>
-  );
-}
 
 export function Agenda({ slug }: { slug: string }) {
   const [listWidth, setListWidth] = useState(0);
@@ -161,23 +139,7 @@ export function Agenda({ slug }: { slug: string }) {
       >
         {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
         <EventHero eventName={event.name} />
-        <View style={styles.days}>
-          {days.map((value) => (
-            <Chip key={value} label={`Dan ${value}`} selected={day === value} onPress={() => setDay(value)} />
-          ))}
-        </View>
-        <ScrollView
-          horizontal
-          nestedScrollEnabled
-          showsHorizontalScrollIndicator={false}
-          style={[styles.rooms, listWidth > 0 ? { width: listWidth } : null]}
-          contentContainerStyle={styles.roomRow}
-        >
-          <Chip label="Sve sale" selected={room === null} onPress={() => setRoom(null)} />
-          {rooms.map((name) => (
-            <Chip key={name} label={name} selected={room === name} onPress={() => setRoom(name)} />
-          ))}
-        </ScrollView>
+        <AgendaFilters days={days} day={day} onDay={setDay} rooms={rooms} room={room} onRoom={setRoom} listWidth={listWidth} />
         {live.length > 0 ? (
           <View style={styles.section}>
             <View style={styles.liveHeading}>
@@ -201,7 +163,7 @@ export function Agenda({ slug }: { slug: string }) {
           <EmptyState icon={<Feather name="calendar" size={size.iconMd} color={colors.ink} />} text="Nema sesija za ove filtere." />
         ) : null}
       </ScrollView>
-      <SessionModal session={selected} open={open} onClose={() => setOpen(false)} />
+      <SessionSheet session={selected} open={open} onClose={() => setOpen(false)} />
     </Screen>
   );
 }
@@ -219,19 +181,6 @@ const styles = StyleSheet.create({
   list: {
     gap: space.gap,
     paddingBottom: space.gap,
-  },
-  days: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space.gap,
-  },
-  rooms: {
-    flexGrow: 0,
-  },
-  roomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.gap,
   },
   section: {
     gap: space.gap,
@@ -257,45 +206,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.fs13,
     color: colors.text2,
     fontVariant: ['tabular-nums'],
-  },
-  time: {
-    fontFamily: fonts.semibold,
-    fontSize: fontSize.fs13,
-    color: colors.text2,
-    fontVariant: ['tabular-nums'],
-  },
-  meta: {
-    fontFamily: fonts.regular,
-    fontSize: fontSize.fs13,
-    color: colors.text2,
-  },
-  modal: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  scrim: {
-    backgroundColor: colors.scrim,
-  },
-  sheet: {
-    gap: space.gap,
-    marginHorizontal: space.gap,
-    maxHeight: '80%',
-    borderRadius: radius.panel,
-    padding: space.edge,
-    backgroundColor: colors.glassStrong,
-    ...shadow.lift,
-  },
-  handle: {
-    alignSelf: 'center',
-    width: size.emptyIcon,
-    height: size.dot + size.ring,
-    borderRadius: radius.pill,
-    backgroundColor: colors.hairline,
-  },
-  modalTitle: {
-    fontFamily: fonts.bold,
-    fontSize: fontSize.fs22,
-    color: colors.ink,
-    letterSpacing: fontSize.fs22 * trackingTight,
   },
 });

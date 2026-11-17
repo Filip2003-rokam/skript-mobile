@@ -1,15 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Button } from '../../../../components/ui/Button';
-import { Card } from '../../../../components/ui/Card';
+import { WelcomeCard } from '../../../../components/event/WelcomeCard';
 import { EmptyState } from '../../../../components/ui/EmptyState';
-import { EventLogo } from '../../../../components/ui/EventLogo';
 import { Screen } from '../../../../components/ui/Screen';
-import { SkriptMark } from '../../../../components/ui/SkriptMark';
-import { InlineError, LoadingState } from '../../../../components/ui/State';
-import { colors, fontSize, fonts, radius, size, space } from '../../../../constants/theme';
+import { LoadingState } from '../../../../components/ui/State';
+import { colors, size } from '../../../../constants/theme';
 import { useCurrentEvent } from '../../../../lib/currentEvent';
 import { authErrorMessage } from '../../../../lib/services/authService';
 import {
@@ -113,100 +109,27 @@ export default function EventWelcomeScreen() {
     );
   }
 
-  const place = eventPlaceLine(event);
+  const status =
+    live === null
+      ? error
+        ? 'Stanje sesija nije učitano. Pokušaj ponovo.'
+        : 'Učitavam stanje sesija.'
+      : eventStatusLine(event, live);
 
   return (
     <Screen scroll>
-      {event.cover_url ? <Image source={{ uri: event.cover_url }} style={styles.cover} /> : null}
-      <Card>
-        <View style={styles.card}>
-          <EventLogo initials={eventInitials(event.name)} source={event.logo_url ? { uri: event.logo_url } : undefined} />
-          <Text style={styles.name}>{event.name}</Text>
-          {place ? <Text style={styles.place}>{place}</Text> : null}
-          <Text style={styles.status}>
-            {live === null
-              ? error
-                ? 'Stanje sesija nije učitano. Pokušaj ponovo.'
-                : 'Učitavam stanje sesija.'
-              : eventStatusLine(event, live)}
-          </Text>
-        </View>
-      </Card>
-      <View style={styles.actions}>
-        <Button label="Uđi" size="lg" loading={entering} onPress={enter} />
-        {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
-        <View style={styles.note}>
-          <View style={styles.dot} />
-          <Text style={styles.noteText}>Predlozi ljudi · Kontakt se deli tek kad oba prihvate</Text>
-        </View>
-        <View style={styles.sign}>
-          <Text style={styles.by}>by</Text>
-          <SkriptMark size={fontSize.fs13} />
-        </View>
-      </View>
+      <WelcomeCard
+        coverUri={event.cover_url}
+        initials={eventInitials(event.name)}
+        logoUri={event.logo_url}
+        name={event.name}
+        place={eventPlaceLine(event)}
+        status={status}
+        entering={entering}
+        error={error}
+        onEnter={() => void enter()}
+        onRetry={() => setAttempt((value) => value + 1)}
+      />
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  cover: {
-    height: size.hero,
-    borderRadius: radius.card,
-  },
-  card: {
-    alignItems: 'center',
-    gap: space.gap,
-  },
-  name: {
-    fontFamily: fonts.bold,
-    fontSize: fontSize.fs22,
-    color: colors.ink,
-    textAlign: 'center',
-  },
-  place: {
-    fontFamily: fonts.regular,
-    fontSize: fontSize.fs13,
-    color: colors.text2,
-    textAlign: 'center',
-  },
-  status: {
-    fontFamily: fonts.medium,
-    fontSize: fontSize.fs13,
-    color: colors.ink,
-    textAlign: 'center',
-  },
-  actions: {
-    alignItems: 'center',
-    alignSelf: 'stretch',
-    gap: space.gap,
-  },
-  note: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'stretch',
-    gap: space.tight,
-  },
-  dot: {
-    width: size.dot,
-    height: size.dot,
-    borderRadius: size.dot,
-    backgroundColor: colors.live,
-  },
-  noteText: {
-    flexShrink: 1,
-    fontFamily: fonts.semibold,
-    fontSize: fontSize.fs13,
-    color: colors.ink,
-    textAlign: 'center',
-  },
-  sign: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.tight,
-  },
-  by: {
-    fontFamily: fonts.regular,
-    fontSize: fontSize.fs13,
-    color: colors.text2,
-  },
-});
