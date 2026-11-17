@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import { getSession } from './authService';
+import { cancelFollowUp, syncFollowUp } from './reminderService';
 
 export type ContactListItem = {
   id: string;
@@ -124,7 +125,14 @@ export async function createContact(data: ContactWrite): Promise<string> {
     .select('id')
     .single();
   if (error) throw error;
-  return (row as { id: string }).id;
+  const id = (row as { id: string }).id;
+  await syncFollowUp({
+    id,
+    fullName: data.fullName,
+    followUpDate: data.followUpDate,
+    followUpDone: data.followUpDone ?? false,
+  }).catch(() => undefined);
+  return id;
 }
 
 export async function updateContact(id: string, data: Partial<ContactWrite>): Promise<void> {
@@ -142,9 +150,12 @@ export async function updateContact(id: string, data: Partial<ContactWrite>): Pr
   if (data.eventId !== undefined) patch.event_id = data.eventId;
   const { error } = await supabase.from('contacts').update(patch).eq('id', id);
   if (error) throw error;
+  const current = await getContact(id);
+  if (current) await syncFollowUp(current).catch(() => undefined);
 }
 
 export async function deleteContact(id: string): Promise<void> {
   const { error } = await supabase.from('contacts').delete().eq('id', id);
   if (error) throw error;
+  await cancelFollowUp(id).catch(() => undefined);
 }

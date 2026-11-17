@@ -13,6 +13,7 @@ import { Button } from './ui/Button';
 import { Screen } from './ui/Screen';
 import { ErrorState, InlineError, LoadingState } from './ui/State';
 import { ContactList } from './profile/ContactList';
+import { ReminderSetting } from './profile/ReminderSetting';
 import { EditProfile } from './profile/EditProfile';
 import { EventCards } from './profile/EventCards';
 
@@ -161,6 +162,8 @@ export function Profile({ notice }: { notice?: string }) {
       {slug ? (
         <Button label="Izmeni u četiri koraka" size="sm" variant="secondary" onPress={() => router.push({ pathname: '/event/[slug]/profile', params: { slug } })} />
       ) : null}
+      <Text style={styles.section}>Podsetnici</Text>
+      <ReminderSetting />
       <Text style={styles.section}>Svi kontakti</Text>
       <ContactList version={version} />
       {account && editing ? (

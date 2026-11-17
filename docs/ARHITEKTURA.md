@@ -252,10 +252,10 @@ Isti ulaz radi i kad se kod ukuca u polje „Kod eventa“.
     Već učitani podaci ostaju na ekranu. Novi poziv koji padne zbog mreže pokaže „Nema interneta. Proveri vezu i pokušaj ponovo.“ Posebna traka za mrežu nije ugrađena.
 
 15. **Kako stiže notifikacija?**
-    Telefon upiše Expo token u `push_tokens`. Webhook na `connections` pozove `notify-connection`, a ona `POST` na Expo Push. Telefon taj API ne zove. Webhook nije u SQL migracijama, pa mora biti uključen na projektu.
+    Telefon upiše Expo token u `push_tokens`. Webhook na `connections` pozove `notify-connection`, a ona `POST` na Expo Push. Telefon taj API ne zove. Webhook nije u SQL migracijama, pa mora biti uključen na projektu. Podsetnik za follow-up je lokalna notifikacija na telefonu, u 9:00 po vremenu uređaja, jer za diplomski jedan telefon dovoljno pokriva proveru. Serverski pg_cron bi trebao tek kad isti nalog ima više uređaja, da podsetnik stigne i na onaj koji datum nije sačuvao.
 
 16. **Šta notifikacija otvara?**
-    QR zahtev nosi `data.url` ka zahtevima tog eventa. Obostrano interesovanje nosi adresu ka Povezanima. `listenForNotificationOpens` na dodir uradi `router.push`. Radi i kad je aplikacija bila ugašena. Na emulatoru token često ne postoji, i aplikacija zbog toga ne pukne.
+    QR zahtev nosi `data.url` ka zahtevima tog eventa. Obostrano interesovanje nosi adresu ka Povezanima. Podsetnik za follow-up nosi adresu tog kontakta. `listenForNotificationOpens` na dodir uradi `router.push`. Radi i kad je aplikacija bila ugašena. Na emulatoru token često ne postoji, i aplikacija zbog toga ne pukne.
 
 17. **Gde živi sesija?**
     U AsyncStorage, preko Supabase klijenta. `detectSessionInUrl` je isključen jer telefon nema adresu u pregledaču kao veb.

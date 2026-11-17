@@ -35,6 +35,15 @@ export function fromDisplayDate(value: string): string | null {
   return isValidDateString(iso) ? iso : null;
 }
 
+// 9:00 po vremenu telefona. Null ako je taj trenutak već prošao ili datum nije ispravan.
+export function followUpAtNine(iso: string | null, now = new Date()): Date | null {
+  if (!iso) return null;
+  const day = parseIsoDate(iso);
+  if (!day) return null;
+  const at = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 9, 0, 0, 0);
+  return at.getTime() > now.getTime() ? at : null;
+}
+
 export function followUpIsDue(iso: string | null, done: boolean, today = new Date()): boolean {
   if (done || !iso) return false;
   const date = parseIsoDate(iso);
