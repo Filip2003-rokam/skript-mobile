@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
-import { transcribeAudio } from './gemini.ts';
+import { draftFromText, transcribeAudio } from './gemini.ts';
 
-const dailyLimit = 5;
+const dailyLimit = 20;
 const maxAudioChars = 2_000_000;
 const zone = 'Europe/Belgrade';
 const allowedMime = new Set(['audio/mp4', 'audio/m4a', 'audio/aac', 'audio/mpeg', 'audio/wav', 'audio/webm', 'audio/x-m4a']);
@@ -19,8 +19,8 @@ Deno.serve(async (request) => {
     const userId = await callerId(admin, request);
     if (!userId) return json({ error: 'Nisi prijavljen.' }, 401);
 
-    const payload = await readAudio(request);
-    if ('error' in payload) return json({ error: payload.error }, 400);
+    const body = await readBody(request);
+    if ('error' in body) return json({ error: body.error }, 400);
 
     const since = startOfZonedDay(zone);
     const { data: runs, error: countError } = await admin
@@ -30,15 +30,23 @@ Deno.serve(async (request) => {
       .gte('created_at', since);
     if (countError) throw countError;
     if ((runs?.length ?? 0) >= dailyLimit) {
-      return json({ error: 'Danas je već iskorišćeno pet glasovnih beleški. Pokušaj ponovo sutra.' }, 429);
+      const limit = body.kind === 'text'
+        ? 'Danas je već iskorišćeno dvadeset nacrta. Pokušaj ponovo sutra.'
+        : 'Danas je već iskorišćeno dvadeset glasovnih beleški. Pokušaj ponovo sutra.';
+      return json({ error: limit }, 429);
     }
 
     const { error: runError } = await admin.from('voice_note_runs').insert({ user_id: userId });
     if (runError) throw runError;
 
-    // Snimak živi samo u ovom zahtevu. Ne ide u Storage ni u tabelu.
+    // Snimak i tekst žive samo u ovom zahtevu. Ne idu u Storage ni u tabelu. Ostaje dnevni brojač.
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-    const draft = await transcribeAudio(payload.audio, payload.mime, today);
+    if (body.kind === 'text') {
+      const mail = await draftFromText(body.text, body.name, body.company, body.event, body.tone);
+      if (!mail) return json({ error: 'Nacrt nije napisan. Proveri belešku i pokušaj ponovo.' }, 422);
+      return json({ note: body.text, topic: '', follow_up_date: null, email_subject: mail.subject, email_body: mail.body, full_name: body.name, job_title: '', company: body.company, email: '', phone: '' });
+    }
+    const draft = await transcribeAudio(body.audio, body.mime, today);
     if (!draft) return json({ error: 'Nisam razumeo snimak. Govori bliže mikrofonu i pokušaj ponovo.' }, 422);
 
     return json({
@@ -90,19 +98,35 @@ async function callerId(admin: SupabaseClient, request: Request): Promise<string
   return data.user.id;
 }
 
-async function readAudio(request: Request): Promise<{ audio: string; mime: string } | { error: string }> {
-  let body: { audio_base64?: unknown; mime_type?: unknown };
+type Incoming =
+  | { kind: 'audio'; audio: string; mime: string }
+  | { kind: 'text'; text: string; name: string; company: string; event: string; tone: string }
+  | { error: string };
+
+async function readBody(request: Request): Promise<Incoming> {
+  let body: { audio_base64?: unknown; mime_type?: unknown; text?: unknown; name?: unknown; company?: unknown; event?: unknown; tone?: unknown };
   try {
-    body = (await request.json()) as { audio_base64?: unknown; mime_type?: unknown };
+    body = (await request.json()) as typeof body;
   } catch {
-    return { error: 'Snimak nije stigao. Pokušaj ponovo.' };
+    return { error: 'Poruka nije stigla. Pokušaj ponovo.' };
+  }
+  if (typeof body.text === 'string') {
+    const text = body.text.trim();
+    if (!text) return { error: 'Napiši belešku pa pokušaj ponovo.' };
+    if (text.length > 4000) return { error: 'Beleška je predugačka. Skrati je i pokušaj ponovo.' };
+    const tone = body.tone === 'shorter' || body.tone === 'formal' ? body.tone : 'plain';
+    return { kind: 'text', text, name: clipField(body.name), company: clipField(body.company), event: clipField(body.event), tone };
   }
   const mime = typeof body.mime_type === 'string' ? body.mime_type.trim().toLowerCase() : '';
   const audio = typeof body.audio_base64 === 'string' ? body.audio_base64.replace(/\s/g, '') : '';
   if (!allowedMime.has(mime)) return { error: 'Format snimka nije podržan. Snimi belešku ponovo.' };
   if (!audio) return { error: 'Snimak je prazan. Pritisni Snimi i govori do 30 sekundi.' };
   if (audio.length > maxAudioChars) return { error: 'Snimak je predugačak. Snimi najviše 30 sekundi.' };
-  return { audio, mime };
+  return { kind: 'audio', audio, mime };
+}
+
+function clipField(value: unknown): string {
+  return typeof value === 'string' ? value.trim().slice(0, 160) : '';
 }
 
 function suggestDate(today: string): string {

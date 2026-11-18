@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import type { Session } from '@supabase/supabase-js';
 import {
@@ -14,6 +14,7 @@ import { Fredoka_600SemiBold } from '@expo-google-fonts/fredoka';
 import { Button } from '../../components/ui/Button';
 import { colors, fontSize, fonts, space } from '../../constants/theme';
 import { CurrentEventProvider } from '../../lib/currentEvent';
+import { takeEntry } from '../../lib/pendingEntry';
 import { authErrorMessage, getSession, onAuthChange } from '../../lib/services/authService';
 import { listenForNotificationOpens, registerForPush } from '../../lib/services/notificationService';
 
@@ -63,6 +64,15 @@ export default function RootLayout() {
   useEffect(() => {
     if (!session?.user.id) return;
     void registerForPush();
+    let active = true;
+    takeEntry()
+      .then((slug) => {
+        if (active && slug) router.replace({ pathname: '/event/[slug]/welcome', params: { slug, enter: '1' } });
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
   }, [session?.user.id]);
 
   useEffect(() => {
@@ -102,10 +112,11 @@ export default function RootLayout() {
   return (
     <CurrentEventProvider>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.appBg } }}>
+        <Stack.Screen name="scan" />
+        <Stack.Screen name="event/[slug]/welcome" />
         <Stack.Protected guard={session !== null}>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="scan" />
-          <Stack.Screen name="event/[slug]/welcome" />
+          <Stack.Screen name="swap" />
           <Stack.Screen name="event/[slug]/profile" />
           <Stack.Screen name="event/[slug]/badge" />
           <Stack.Screen name="contact/new" />

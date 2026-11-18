@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, type Href } from 'expo-router';
 import { colors, fontSize, fonts, size, space } from '../constants/theme';
 import { useCurrentEvent } from '../lib/currentEvent';
 import { authErrorMessage, signOut } from '../lib/services/authService';
@@ -146,8 +146,8 @@ export function Profile({ notice }: { notice?: string }) {
           <Feather name="edit-2" size={size.iconSm} color={colors.ink} />
         </Button>
         {slug ? (
-          <Button label="Moj bedž" variant="secondary" onPress={() => router.push({ pathname: '/event/[slug]/badge', params: { slug } })}>
-            <Feather name="credit-card" size={size.iconSm} color={colors.ink} />
+          <Button label="Razmeni kontakt" variant="secondary" onPress={() => router.push('/swap' as Href)}>
+            <Feather name="repeat" size={size.iconSm} color={colors.ink} />
           </Button>
         ) : null}
         <Button label="Odjavi se" variant="ghost" loading={leaving} onPress={() => void leave()}>

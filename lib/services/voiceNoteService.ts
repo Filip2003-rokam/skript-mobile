@@ -40,6 +40,22 @@ export function noteWithTopic(note: string, topic: string, existing?: string | n
   return parts.length ? parts.join('\n\n') : null;
 }
 
+export type FollowUpTone = 'plain' | 'shorter' | 'formal';
+
+export async function draftFollowUp(input: { note: string; name: string; company: string | null; event: string | null; tone: FollowUpTone }): Promise<{ subject: string; body: string; followUpDraft: string | null }> {
+  const session = await getSession();
+  if (!session) throw new Error('Nisi prijavljen. Prijavi se i pokušaj ponovo.');
+  const { data, error } = await supabase.functions.invoke('voice-note', {
+    body: { text: input.note, name: input.name, company: input.company ?? '', event: input.event ?? '', tone: input.tone },
+  });
+  if (error) throw new Error(await functionMessage(error));
+  const row = data as Record<string, unknown> | null;
+  const subject = text(row?.email_subject);
+  const body = text(row?.email_body);
+  if (!subject && !body) throw new Error('Nacrt nije napisan. Proveri belešku i pokušaj ponovo.');
+  return { subject, body, followUpDraft: formatDraft(subject, body) };
+}
+
 export async function transcribeVoiceNote(audioBase64: string, mimeType: string): Promise<VoiceDraft> {
   const session = await getSession();
   if (!session) throw new Error('Nisi prijavljen. Prijavi se i pokušaj ponovo.');

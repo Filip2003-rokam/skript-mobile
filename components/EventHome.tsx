@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, type Href } from 'expo-router';
 import { Chip } from './ui/Chip';
 import { EmptyState } from './ui/EmptyState';
 import { EventCover } from './ui/EventCover';
@@ -128,6 +128,7 @@ export function EventHome({ slug }: { slug: string }) {
       {ended ? <Text style={styles.note}>Event je završen. Kontakti koje si sačuvao ostaju u profilu.</Text> : null}
       <Section title="Brzo">
         <View style={styles.quick}>
+          <Chip label="Razmeni kontakt" icon={icon('repeat')} onPress={() => router.push('/swap' as Href)} />
           <Chip label="Skeniraj QR" icon={icon('camera')} onPress={() => router.push('/scan')} />
           <Chip label="Moji kontakti" icon={icon('book')} onPress={() => router.push({ pathname: '/profile', params: { view: 'contacts' } })} />
           <Chip label="Profil za event" icon={icon('edit-2')} onPress={() => router.push({ pathname: '/event/[slug]/profile', params: { slug } })} />

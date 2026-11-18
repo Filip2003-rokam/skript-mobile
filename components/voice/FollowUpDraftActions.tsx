@@ -9,9 +9,10 @@ type FollowUpDraftActionsProps = {
   email?: string | null;
   subject: string;
   body: string;
+  copyLabel?: string;
 };
 
-export function FollowUpDraftActions({ email, subject, body }: FollowUpDraftActionsProps) {
+export function FollowUpDraftActions({ email, subject, body, copyLabel = 'Kopiraj nacrt' }: FollowUpDraftActionsProps) {
   const [notice, setNotice] = useState<string | null>(null);
   const draft = formatDraft(subject, body);
   if (!draft) return null;
@@ -35,7 +36,7 @@ export function FollowUpDraftActions({ email, subject, body }: FollowUpDraftActi
   return (
     <View style={styles.wrap}>
       <View style={styles.row}>
-        <Button label="Kopiraj nacrt" size="sm" variant="secondary" onPress={() => void copy()} />
+        <Button label={copyLabel} size="sm" variant="secondary" onPress={() => void copy()} />
         <Button label="Otvori u mejlu" size="sm" variant="secondary" onPress={() => void openMail()} />
       </View>
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}

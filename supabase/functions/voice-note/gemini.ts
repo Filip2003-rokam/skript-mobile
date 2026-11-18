@@ -67,6 +67,64 @@ export async function transcribeAudio(audio: string, mime: string, today: string
   return parseDraft(text);
 }
 
+export async function draftFromText(note: string, name: string, company: string, event: string, tone: string): Promise<{ subject: string; body: string } | null> {
+  const key = Deno.env.get('GEMINI_API_KEY');
+  if (!key) {
+    console.error('GEMINI_API_KEY nije podešen.');
+    throw new Error('Beleška nije obrađena. Pokušaj ponovo.');
+  }
+  const model = Deno.env.get('GEMINI_MODEL')?.trim() || defaultModel;
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    signal: AbortSignal.timeout(geminiTimeoutMs),
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts: [{ text: textPrompt(note, name, company, event, tone) }] }],
+      generationConfig: {
+        temperature: tone === 'plain' ? 0.2 : 0.4,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'OBJECT',
+          properties: { email_subject: { type: 'STRING' }, email_body: { type: 'STRING' } },
+          required: ['email_subject', 'email_body'],
+        },
+      },
+    }),
+  });
+  if (!response.ok) {
+    console.error(`Gemini je vratio ${response.status}: ${await geminiError(response, key)}`);
+    throw new Error('Beleška nije obrađena. Pokušaj ponovo.');
+  }
+  const payload = (await response.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+  const raw = payload.candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('') ?? '';
+  return parseMail(raw);
+}
+
+function textPrompt(note: string, name: string, company: string, event: string, tone: string): string {
+  const style = tone === 'shorter' ? 'Neka mejl bude kraći, u dve ili tri rečenice.' : tone === 'formal' ? 'Neka mejl bude formalniji, i dalje na ti.' : 'Neka mejl bude kratak i prijatan.';
+  return [
+    'Pišeš follow-up mejl posle razgovora na konferenciji. Srpski, latinica, na ti.',
+    `Ime: ${name || 'nepoznato'}. Firma: ${company || 'nije navedena'}. Event: ${event || 'nije naveden'}.`,
+    `Beleška: ${note}`,
+    style,
+    'Ne izmišljaj dogovore, brojke ni detalje kojih nema u belešci. Ne piši da je mejl već poslat.',
+    'Vrati email_subject i email_body.',
+  ].join('\n');
+}
+
+function parseMail(raw: string): { subject: string; body: string } | null {
+  const trimmed = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  try {
+    const row = JSON.parse(trimmed) as { email_subject?: unknown; email_body?: unknown };
+    const subject = clip(row.email_subject, 160);
+    const body = clip(row.email_body, 2000);
+    if (!subject && !body) return null;
+    return { subject, body };
+  } catch {
+    return null;
+  }
+}
+
 function prompt(today: string): string {
   return [
     'Čuješ glasovnu belešku posle razgovora na konferenciji. Piši na srpskom, latinica, na ti.',

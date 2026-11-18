@@ -7,13 +7,12 @@ import { Button } from '../../../components/ui/Button';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Screen } from '../../../components/ui/Screen';
 import { ErrorState, InlineError, LoadingState } from '../../../components/ui/State';
-import { FollowUpDraftActions } from '../../../components/voice/FollowUpDraftActions';
+import { WrittenFollowUp } from '../../../components/contact/WrittenFollowUp';
 import { VoiceNote } from '../../../components/voice/VoiceNote';
 import { colors, fontSize, fonts, size, space, trackingWide } from '../../../constants/theme';
 import { toDisplayDate } from '../../../lib/contactDates';
 import { authErrorMessage } from '../../../lib/services/authService';
 import { deleteContact, getContact, updateContact, type Contact, type ContactWrite } from '../../../lib/services/contactService';
-import { splitDraft } from '../../../lib/services/voiceNoteService';
 
 function linkUrl(value: string) {
   return /^https?:\/\//i.test(value) ? value : `https://${value}`;
@@ -152,9 +151,21 @@ export default function ContactScreen() {
       <Fact label="LinkedIn" value={contact.linkedinUrl} onPress={contact.linkedinUrl ? () => void Linking.openURL(linkUrl(contact.linkedinUrl ?? '')) : undefined} />
       <Fact label="Event" value={contact.eventName} />
       <Fact label="Beleška" value={contact.note} />
+      <WrittenFollowUp
+        note={contact.note}
+        draft={contact.followUpDraft}
+        name={contact.fullName}
+        company={contact.company}
+        eventName={contact.eventName}
+        email={contact.email}
+        done={contact.followUpDone}
+        onDraft={async (followUpDraft) => {
+          await updateContact(contactId, { followUpDraft });
+          setContact((current) => (current ? { ...current, followUpDraft } : current));
+        }}
+        onMarkSent={() => toggleSent(true)}
+      />
       <Fact label="Follow-up" value={toDisplayDate(contact.followUpDate) || null} />
-      <Fact label="Nacrt mejla" value={contact.followUpDraft} />
-      <FollowUpDraftActions email={contact.email} {...splitDraft(contact.followUpDraft)} />
       <View style={styles.switchRow}>
         <Text style={styles.switchLabel}>Follow-up poslat</Text>
         <Switch

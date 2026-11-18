@@ -1,6 +1,6 @@
 # Ručni test scenariji
 
-Radi se na telefonu, sa dva naloga kad scenario traži drugu osobu. Oba naloga su na istom eventu i imaju dopunjene profile (šta nude i šta im treba). Poslednja kolona ostaje prazna dok se test ne odradi.
+Radi se na telefonu, sa dva naloga kad scenario traži drugu osobu. Oba naloga su na istom eventu i imaju dopunjene profile (šta nude i šta im treba). Za razmenu uživo drugi nalog može biti pregledač: u Metro terminalu pritisni `w`, prijavi se i otvori Razmeni kontakt. Poslednja kolona ostaje prazna dok se test ne odradi.
 
 ## 1. Registracija
 
@@ -18,7 +18,7 @@ Radi se na telefonu, sa dva naloga kad scenario traži drugu osobu. Oba naloga s
 
 | Koraci | Očekivano | Stvarni rezultat |
 | --- | --- | --- |
-| 1. Prijavi se. 2. Otvori „Skeniraj“. 3. Dozvoli kameru. 4. Skeniraj QR koji nije Skript kod (na primer običan link). | Kamera ostaje otvorena. Piše „Ovo nije Skript QR kod. Skeniraj kod eventa ili bedž.“ | |
+| 1. Prijavi se. 2. Otvori „Skeniraj“. 3. Dozvoli kameru. 4. Skeniraj QR koji nije Skript kod (na primer običan link). | Kamera ostaje otvorena. Piše „Ovo nije Skript QR kod. Skeniraj kod eventa.“ | |
 
 ## 4. Ulazak na event
 
@@ -50,11 +50,11 @@ Radi se na telefonu, sa dva naloga kad scenario traži drugu osobu. Oba naloga s
 | --- | --- | --- |
 | 1. Na predlogu pritisni „Preskoči“. 2. Pritisni „Vrati“. 3. Na Zahtevima pritisni „Povuci“. 4. Ostavi pet otvorenih i klikni šesto. | Preskočena osoba nestane, pa se vrati. Povučena nestane sa Zahteva. Šesti klik napiše „Imaš već 5 otvorenih interesovanja. Povuci jedno pa pokušaj ponovo.“ | |
 
-## 9. QR zahtev
+## 9. Razmena uživo
 
 | Koraci | Očekivano | Stvarni rezultat |
 | --- | --- | --- |
-| 1. Skeniraj tuđi bedž i pošalji poruku. 2. Drugi nalog na Zahtevima pritisne „Prihvati“ ili „Ne sada“. 3. Isti bedž skeniraj još jednom. | Zahtev ima poruku. Prihvatanje deli kontakt. „Ne sada“ kaže „Odbijeno. Kontakt podaci se ne dele.“ Dupli sken napiše „Zahtev je već poslat.“ | |
+| 1. Oba naloga su na istom eventu. Jedan otvori Razmeni kontakt (na telefonu ili u pregledaču) i ostavi QR na ekranu. 2. Drugi nalog na istom ekranu pritisne „Skeniraj njihov“ i skenira taj kod. 3. Isti kod, posle osvežavanja ili kad se ekran zatvori, skeniraj sa fotografije. 4. Na „Skeniraj QR“ skeniraj kod osobe. | Posle uspešnog skena piše „Kontakt je sačuvan“ i nudi se glasovna beleška ili „Kasnije“. Oba naloga vide jedan drugog u kontaktima. Mejl se ne šalje sam. Stari kod ne prolazi. Na običnom skeneru piše „Ovo je kod osobe. Otvori Razmeni kontakt na eventu.“ | |
 
 ## 10. Nov kontakt
 
@@ -84,10 +84,22 @@ Radi se na telefonu, sa dva naloga kad scenario traži drugu osobu. Oba naloga s
 
 | Koraci | Očekivano | Stvarni rezultat |
 | --- | --- | --- |
-| 1. Na fizičkom telefonu prihvati dozvolu za obaveštenja i ostavi aplikaciju u pozadini. 2. Drugim nalogom pošalji QR zahtev. 3. Dodirni obaveštenje. Za obostrani klik uradi isto sa „Zainteresovan“ na oba naloga. | QR donese „Novi zahtev za povezivanje“ i otvori Zahteve. Obostrani klik donese „Povezali ste se“ i otvori Povezane. Emulator token često nema, pa tamo obaveštenje ne mora da stigne. | |
+| 1. Na fizičkom telefonu prihvati dozvolu za obaveštenja i ostavi aplikaciju u pozadini. 2. Oba naloga na predlogu jedan drugog pritisnu „Zainteresovan“. 3. Dodirni obaveštenje. | Stigne „Povezali ste se“ i otvori Povezane. Razmena uživo to obaveštenje ne šalje. Emulator token često nema, pa tamo obaveštenje ne mora da stigne. | |
 
 ## 15. Rad bez interneta
 
 | Koraci | Očekivano | Stvarni rezultat |
 | --- | --- | --- |
-| 1. Otvori event, agendu i ljude dok ima mreže. 2. Isključi internet. 3. Ostani na istom ekranu, pa povuci ili ponovo otvori tab. 4. Pokušaj da pošalješ zahtev ili sačuvaš kontakt. | Već učitani nazivi, sesije i ljudi ostaju na ekranu. Radnja koja traži mrežu napiše „Nema interneta. Proveri vezu i pokušaj ponovo.“ i ne briše listu. | |
+| 1. Otvori event, agendu i ljude dok ima mreže. 2. Isključi internet. 3. Ostani na istom ekranu, pa povuci ili ponovo otvori tab. 4. Pokušaj da sačuvaš kontakt ili da napišeš follow-up. | Već učitani nazivi, sesije i ljudi ostaju na ekranu. Radnja koja traži mrežu napiše „Nema interneta. Proveri vezu i pokušaj ponovo.“ i ne briše listu. | |
+
+## 16. Event pre prijave
+
+| Koraci | Očekivano | Stvarni rezultat |
+| --- | --- | --- |
+| 1. Odjavi se. 2. Pritisni „Imam kod eventa“. 3. U polje „Kod eventa“ unesi `startup-revolution-ai-summit` i pritisni „Uđi“. 4. Na kartici pritisni „Uđi“ i prijavi se nalogom koji je već na tom eventu. | Pre prijave vidi se slika, naziv, grad i datum. Posle prijave otvara se početna tog eventa. Ako profil za event još nije popunjen, otvaraju se četiri koraka. | |
+
+## 17. Pisani follow-up
+
+| Koraci | Očekivano | Stvarni rezultat |
+| --- | --- | --- |
+| 1. Otvori kontakt koji ima pisanu belešku. 2. Pritisni „Napiši follow-up“. 3. Pritisni „Kraće“, pa „Formalnije“. 4. Pritisni „Otvori u mejlu“ i ne šalji poruku. 5. Pritisni „Označi kao poslato“. 6. Na kontaktu bez beleške ponovo pritisni „Napiši follow-up“. | Pojavi se predmet i tekst. Kraće i formalnije napišu nov nacrt. Mejl aplikacija se otvori, a poruka ostane neposlata. Posle oznake piše „Označeno kao poslato. Mejl se ne šalje sam.“ i prekidač „Follow-up poslat“ je uključen. Bez beleške piše „Napiši belešku o razgovoru, pa onda follow-up.“ | |

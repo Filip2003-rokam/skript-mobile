@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { rememberEntry } from '../../../../lib/pendingEntry';
 import { WelcomeCard } from '../../../../components/event/WelcomeCard';
 import { EmptyState } from '../../../../components/ui/EmptyState';
 import { Screen } from '../../../../components/ui/Screen';
 import { LoadingState } from '../../../../components/ui/State';
 import { colors, size } from '../../../../constants/theme';
 import { useCurrentEvent } from '../../../../lib/currentEvent';
-import { authErrorMessage } from '../../../../lib/services/authService';
+import { authErrorMessage, getSession } from '../../../../lib/services/authService';
 import {
   countLiveSessions,
   eventInitials,
@@ -19,7 +20,7 @@ import {
 } from '../../../../lib/services/eventService';
 
 export default function EventWelcomeScreen() {
-  const { slug } = useLocalSearchParams<{ slug: string }>();
+  const { slug, enter } = useLocalSearchParams<{ slug: string; enter?: string }>();
   const code = typeof slug === 'string' ? slug : '';
   const { setSlug } = useCurrentEvent();
   const [event, setEvent] = useState<EventRow | null>(null);
@@ -28,6 +29,7 @@ export default function EventWelcomeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [entering, setEntering] = useState(false);
+  const continued = useRef(false);
 
   useEffect(() => {
     setEvent(null);
@@ -60,11 +62,18 @@ export default function EventWelcomeScreen() {
     };
   }, [code, attempt]);
 
-  async function enter() {
+  async function enterEvent() {
     if (!event) return;
     setEntering(true);
     setError(null);
     try {
+      const session = await getSession();
+      if (!session) {
+        await rememberEntry(event.slug);
+        router.push('/login');
+        setEntering(false);
+        return;
+      }
       await setSlug(event.slug);
       const attendance = await getMyAttendance(event.id);
       if (attendance) router.replace('/');
@@ -74,6 +83,12 @@ export default function EventWelcomeScreen() {
       setEntering(false);
     }
   }
+
+  useEffect(() => {
+    if (enter !== '1' || !event || continued.current) return;
+    continued.current = true;
+    void enterEvent();
+  }, [enter, event]);
 
   if (!event && !missing && !error) {
     return (
@@ -127,7 +142,7 @@ export default function EventWelcomeScreen() {
         status={status}
         entering={entering}
         error={error}
-        onEnter={() => void enter()}
+        onEnter={() => void enterEvent()}
         onRetry={() => setAttempt((value) => value + 1)}
       />
     </Screen>

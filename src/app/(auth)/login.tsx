@@ -56,6 +56,7 @@ export default function LoginScreen() {
       {formError ? <Text style={styles.error}>{formError}</Text> : null}
       <Button label="Prijavi se" loading={loading} onPress={submit} />
       <Button label="Napravi nalog" variant="ghost" onPress={() => router.push('/register')} />
+      <Button label="Imam kod eventa" variant="ghost" onPress={() => router.push('/scan')} />
     </Screen>
   );
 }
