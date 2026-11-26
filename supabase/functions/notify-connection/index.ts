@@ -11,43 +11,105 @@ type ConnectionRow = {
   source?: string;
 };
 
+type MeetingRow = {
+  id?: string;
+  event_id?: string;
+  proposer_id?: string;
+  invitee_id?: string;
+  day?: number;
+  start_time?: string;
+  place?: string;
+  status?: string;
+};
+
 type Ticket = {
   details?: { error?: string };
 };
 
+type Lang = 'sr' | 'en';
+type Person = { name: string; lang: Lang };
+type EventInfo = { name: string; slug: string };
+
+// Tekst ide na jeziku primaoca (profiles.language), ne pošiljaoca.
+const texts = {
+  sr: {
+    someone: 'Neko',
+    requestTitle: 'Novi zahtev za povezivanje',
+    requestBody: (name: string, event: string) => `${name} sa eventa ${event} želi da se poveže`,
+    acceptedTitle: 'Zahtev je prihvaćen',
+    acceptedBody: (name: string) => `${name} je prihvatio/la tvoj zahtev`,
+    mutualTitle: 'Povezali ste se',
+    mutualBody: (name: string, event: string) => `${name} i ti ste se povezali na eventu ${event}`,
+    meetingTitle: 'Predlog sastanka',
+    meetingBody: (name: string, when: string) => `${name} predlaže sastanak: ${when}`,
+    meetingAcceptedTitle: 'Sastanak je zakazan',
+    meetingAcceptedBody: (name: string, when: string) => `${name} je prihvatio/la sastanak: ${when}`,
+    meetingDeclinedTitle: 'Sastanak nije prihvaćen',
+    meetingDeclinedBody: (name: string) => `${name} ne može u predloženom terminu`,
+    day: (day: number) => `dan ${day}`,
+  },
+  en: {
+    someone: 'Someone',
+    requestTitle: 'New connection request',
+    requestBody: (name: string, event: string) => `${name} from ${event} wants to connect`,
+    acceptedTitle: 'Request accepted',
+    acceptedBody: (name: string) => `${name} accepted your request`,
+    mutualTitle: 'You are connected',
+    mutualBody: (name: string, event: string) => `You and ${name} connected at ${event}`,
+    meetingTitle: 'Meeting proposal',
+    meetingBody: (name: string, when: string) => `${name} suggests a meeting: ${when}`,
+    meetingAcceptedTitle: 'Meeting confirmed',
+    meetingAcceptedBody: (name: string, when: string) => `${name} accepted the meeting: ${when}`,
+    meetingDeclinedTitle: 'Meeting declined',
+    meetingDeclinedBody: (name: string) => `${name} can't make the proposed time`,
+    day: (day: number) => `day ${day}`,
+  },
+} as const;
+
 Deno.serve(async (request) => {
-  if (request.method !== 'POST') return json({ error: 'Samo POST.' }, 405);
+  if (request.method !== 'POST') return json({ error: 'POST only.' }, 405);
 
   const secret = Deno.env.get('WEBHOOK_SECRET');
   const header = request.headers.get('x-webhook-secret');
-  if (!secret || header !== secret) return json({ error: 'Neispravan secret.' }, 401);
+  if (!secret || header !== secret) return json({ error: 'Invalid secret.' }, 401);
 
   let payload: { type?: unknown; table?: unknown; record?: unknown; old_record?: unknown };
   try {
     payload = await request.json();
   } catch {
-    return json({ error: 'Neispravan payload.' }, 400);
+    return json({ error: 'Invalid payload.' }, 400);
   }
 
-  if (typeof payload.table === 'string' && payload.table !== 'connections') return json({ ok: true });
-
+  const table = typeof payload.table === 'string' ? payload.table : 'connections';
   const type = typeof payload.type === 'string' ? payload.type.toUpperCase() : '';
-  const record = row(payload.record);
-  const previous = row(payload.old_record);
 
   try {
     const admin = serviceClient();
-    if (type === 'INSERT' && record?.status === 'pending') {
-      await notifyNewRequest(admin, record);
-    } else if (type === 'INSERT' && record?.status === 'accepted' && record?.source === 'match') {
-      await notifyMutual(admin, record);
-    } else if (type === 'UPDATE' && previous?.status === 'pending' && record?.status === 'accepted') {
-      await notifyAccepted(admin, record);
+    if (table === 'connections') {
+      const record = row<ConnectionRow>(payload.record);
+      const previous = row<ConnectionRow>(payload.old_record);
+      if (type === 'INSERT' && record?.status === 'pending') {
+        await notifyNewRequest(admin, record);
+      } else if (type === 'INSERT' && record?.status === 'accepted' && record?.source === 'match') {
+        await notifyMutual(admin, record);
+      } else if (type === 'UPDATE' && previous?.status === 'pending' && record?.status === 'accepted') {
+        await notifyAccepted(admin, record);
+      }
+    } else if (table === 'meetings') {
+      const record = row<MeetingRow>(payload.record);
+      const previous = row<MeetingRow>(payload.old_record);
+      if (type === 'INSERT' && record?.status === 'pending') {
+        await notifyMeeting(admin, record, 'proposed');
+      } else if (type === 'UPDATE' && previous?.status === 'pending' && record?.status === 'accepted') {
+        await notifyMeeting(admin, record, 'accepted');
+      } else if (type === 'UPDATE' && previous?.status === 'pending' && record?.status === 'declined') {
+        await notifyMeeting(admin, record, 'declined');
+      }
     }
     return json({ ok: true });
   } catch (cause) {
     console.error(cause);
-    return json({ error: 'Slanje nije uspelo.' }, 500);
+    return json({ error: 'Sending failed.' }, 500);
   }
 });
 
@@ -57,13 +119,14 @@ async function notifyNewRequest(admin: SupabaseClient, record: ConnectionRow) {
   const receiverId = required(record.receiver_id);
   if (!eventId || !requesterId || !receiverId) return;
 
-  const [name, event] = await Promise.all([profileName(admin, requesterId), eventInfo(admin, eventId)]);
+  const [from, to, event] = await Promise.all([person(admin, requesterId), person(admin, receiverId), eventInfo(admin, eventId)]);
   if (!event) return;
+  const text = texts[to.lang];
 
   await sendPush(admin, receiverId, {
-    title: 'Novi zahtev za povezivanje',
-    body: `${name} sa eventa ${event.name} želi da se poveže`,
-    url: requestsUrl(event.slug),
+    title: text.requestTitle,
+    body: text.requestBody(named(from, to.lang), event.name),
+    url: peopleUrl('requests', event.slug),
   });
 }
 
@@ -73,13 +136,14 @@ async function notifyAccepted(admin: SupabaseClient, record: ConnectionRow) {
   const receiverId = required(record.receiver_id);
   if (!eventId || !requesterId || !receiverId) return;
 
-  const [name, event] = await Promise.all([profileName(admin, receiverId), eventInfo(admin, eventId)]);
+  const [from, to, event] = await Promise.all([person(admin, receiverId), person(admin, requesterId), eventInfo(admin, eventId)]);
   if (!event) return;
+  const text = texts[to.lang];
 
   await sendPush(admin, requesterId, {
-    title: 'Zahtev je prihvaćen',
-    body: `${name} je prihvatio/la tvoj zahtev`,
-    url: requestsUrl(event.slug),
+    title: text.acceptedTitle,
+    body: text.acceptedBody(named(from, to.lang)),
+    url: peopleUrl('requests', event.slug),
   });
 }
 
@@ -89,33 +153,69 @@ async function notifyMutual(admin: SupabaseClient, record: ConnectionRow) {
   const receiverId = required(record.receiver_id);
   if (!eventId || !requesterId || !receiverId) return;
 
-  const [fromName, toName, event] = await Promise.all([
-    profileName(admin, requesterId),
-    profileName(admin, receiverId),
+  const [requester, receiver, event] = await Promise.all([
+    person(admin, requesterId),
+    person(admin, receiverId),
     eventInfo(admin, eventId),
   ]);
   if (!event) return;
 
-  const url = `/people?view=connected&slug=${encodeURIComponent(event.slug)}`;
+  const url = peopleUrl('connected', event.slug);
   await sendPush(admin, requesterId, {
-    title: 'Povezali ste se',
-    body: `${toName} i ti ste se povezali na eventu ${event.name}`,
+    title: texts[requester.lang].mutualTitle,
+    body: texts[requester.lang].mutualBody(named(receiver, requester.lang), event.name),
     url,
   });
   await sendPush(admin, receiverId, {
-    title: 'Povezali ste se',
-    body: `${fromName} i ti ste se povezali na eventu ${event.name}`,
+    title: texts[receiver.lang].mutualTitle,
+    body: texts[receiver.lang].mutualBody(named(requester, receiver.lang), event.name),
     url,
   });
 }
 
-async function profileName(admin: SupabaseClient, userId: string): Promise<string> {
-  const { data, error } = await admin.from('profiles').select('full_name').eq('id', userId).maybeSingle();
-  if (error) throw error;
-  return clip(data?.full_name, 'Neko');
+async function notifyMeeting(admin: SupabaseClient, record: MeetingRow, change: 'proposed' | 'accepted' | 'declined') {
+  const eventId = required(record.event_id);
+  const proposerId = required(record.proposer_id);
+  const inviteeId = required(record.invitee_id);
+  if (!eventId || !proposerId || !inviteeId) return;
+
+  // Predlog ide pozvanom, odgovor ide onome ko je predložio.
+  const [actorId, targetId] = change === 'proposed' ? [proposerId, inviteeId] : [inviteeId, proposerId];
+  const [actor, target, event] = await Promise.all([person(admin, actorId), person(admin, targetId), eventInfo(admin, eventId)]);
+  if (!event) return;
+  const text = texts[target.lang];
+  const name = named(actor, target.lang);
+  const when = meetingWhen(record, target.lang);
+  const url = `/agenda?view=myDay&slug=${encodeURIComponent(event.slug)}`;
+
+  if (change === 'proposed') {
+    await sendPush(admin, targetId, { title: text.meetingTitle, body: text.meetingBody(name, when), url });
+  } else if (change === 'accepted') {
+    await sendPush(admin, targetId, { title: text.meetingAcceptedTitle, body: text.meetingAcceptedBody(name, when), url });
+  } else {
+    await sendPush(admin, targetId, { title: text.meetingDeclinedTitle, body: text.meetingDeclinedBody(name), url });
+  }
 }
 
-async function eventInfo(admin: SupabaseClient, eventId: string): Promise<{ name: string; slug: string } | null> {
+function meetingWhen(record: MeetingRow, lang: Lang): string {
+  const parts: string[] = [];
+  if (typeof record.day === 'number') parts.push(texts[lang].day(record.day));
+  if (typeof record.start_time === 'string') parts.push(record.start_time.slice(0, 5));
+  if (typeof record.place === 'string' && record.place.trim()) parts.push(clip(record.place, ''));
+  return parts.join(', ');
+}
+
+async function person(admin: SupabaseClient, userId: string): Promise<Person> {
+  const { data, error } = await admin.from('profiles').select('full_name, language').eq('id', userId).maybeSingle();
+  if (error) throw error;
+  return { name: clip(data?.full_name, ''), lang: data?.language === 'en' ? 'en' : 'sr' };
+}
+
+function named(who: Person, lang: Lang): string {
+  return who.name || texts[lang].someone;
+}
+
+async function eventInfo(admin: SupabaseClient, eventId: string): Promise<EventInfo | null> {
   const { data, error } = await admin.from('events').select('name, slug').eq('id', eventId).maybeSingle();
   if (error) throw error;
   if (!data?.slug || !data.name) return null;
@@ -152,7 +252,7 @@ async function sendPush(
     });
     if (!response.ok) {
       console.error(`Expo push ${response.status}: ${await response.text()}`);
-      throw new Error('Expo push nije primio poruku.');
+      throw new Error('Expo push rejected the message.');
     }
 
     const stale = unregistered(batch, await response.json());
@@ -168,13 +268,13 @@ function unregistered(tokens: string[], body: unknown): string[] {
   return tokens.filter((_, index) => tickets[index]?.details?.error === 'DeviceNotRegistered');
 }
 
-function requestsUrl(slug: string): string {
-  return `/people?view=requests&slug=${encodeURIComponent(slug)}`;
+function peopleUrl(view: 'requests' | 'connected', slug: string): string {
+  return `/people?view=${view}&slug=${encodeURIComponent(slug)}`;
 }
 
-function row(value: unknown): ConnectionRow | null {
+function row<T>(value: unknown): T | null {
   if (!value || typeof value !== 'object') return null;
-  return value as ConnectionRow;
+  return value as T;
 }
 
 function required(value: string | undefined): string | null {
@@ -194,7 +294,7 @@ function json(body: unknown, status = 200): Response {
 function serviceClient(): SupabaseClient {
   const url = Deno.env.get('SUPABASE_URL');
   const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? secretKey();
-  if (!url || !key) throw new Error('Service role klijent nije podešen.');
+  if (!url || !key) throw new Error('Service role client is not configured.');
   return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 }
 

@@ -7,7 +7,7 @@ import { useCurrentEvent } from '../lib/currentEvent';
 import { authErrorMessage, signOut } from '../lib/services/authService';
 import { getEventBySlug } from '../lib/services/eventService';
 import { getMyEventProfile } from '../lib/services/attendeeService';
-import { getMyProfile, listMyEventStats, updateMyProfile, type EventStat, type MyProfile } from '../lib/services/profileService';
+import { getMyProfile, listMyEventStats, saveMyLanguage, updateMyProfile, type EventStat, type MyProfile } from '../lib/services/profileService';
 import { Avatar } from './ui/Avatar';
 import { Button } from './ui/Button';
 import { EventHero } from './ui/EventHero';
@@ -203,7 +203,11 @@ export function Profile({ notice }: { notice?: string }) {
             { id: 'sr', label: t('language.sr') },
             { id: 'en', label: t('language.en') },
           ]}
-          onChange={(id) => void setAppLanguage(id === 'en' ? 'en' : 'sr')}
+          onChange={(id) => {
+            const next = id === 'en' ? 'en' : 'sr';
+            void setAppLanguage(next);
+            saveMyLanguage(next).catch(() => undefined);
+          }}
         />
       </View>
       <Button label={t('profile.signOut')} variant="ghost" loading={leaving} onPress={() => void leave()}>

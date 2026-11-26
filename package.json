@@ -39,6 +39,7 @@
     "react-native-worklets": "0.13.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.6.0",
     "@types/jest": "30.0.0",
     "@types/react": "~19.3.0",
     "jest": "~30.5.2",
@@ -51,12 +52,17 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "jest"
+    "test": "jest",
+    "test:db": "node --experimental-vm-modules node_modules/jest/bin/jest.js -c jest.db.config.js"
   },
   "jest": {
     "preset": "jest-expo",
     "setupFiles": [
       "./lib/i18n/jestSetup.ts"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/supabase/tests/"
     ]
   },
   "private": true

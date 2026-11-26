@@ -25,6 +25,7 @@ export function AgendaFilters({ days, day, onDay, rooms, room, onRoom }: AgendaF
         selected={String(day)}
         onChange={(value) => onDay(Number(value))}
       />
+      {rooms.length === 0 ? null : (
       <FilterSelect
         label={t('agenda.room')}
         value={room ?? t('agenda.allRooms')}
@@ -32,6 +33,7 @@ export function AgendaFilters({ days, day, onDay, rooms, room, onRoom }: AgendaF
         selected={room ?? ''}
         onChange={(value) => onRoom(value || null)}
       />
+      )}
     </View>
   );
 }

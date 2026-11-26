@@ -19,9 +19,10 @@ type RosterProps = {
   empty: string;
   onFind: () => void;
   trailing?: (person: Person) => ReactNode;
+  footer?: (person: Person) => ReactNode;
 };
 
-export function Roster({ people, empty, onFind, trailing }: RosterProps) {
+export function Roster({ people, empty, onFind, trailing, footer }: RosterProps) {
   if (people.length === 0) {
     return (
       <EmptyState
@@ -42,6 +43,7 @@ export function Roster({ people, empty, onFind, trailing }: RosterProps) {
           role={person.role}
           company={person.company}
           trailing={trailing?.(person)}
+          footer={footer?.(person)}
         />
       ))}
       <Button size="sm" variant="secondary" label={t('people.findMore')} onPress={onFind} style={styles.more} />

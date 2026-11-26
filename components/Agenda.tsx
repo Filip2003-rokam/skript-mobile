@@ -14,10 +14,16 @@ import { authErrorMessage } from '../lib/services/authService';
 import { eventPhase, getEventBySlug, type EventRow } from '../lib/services/eventService';
 import { listSessions, sessionMark, type SessionRow } from '../lib/services/sessionService';
 import { t } from '../lib/i18n';
+import { MyDay } from './agenda/MyDay';
+import { Segmented } from './ui/Segmented';
+import { useMeetings } from './meetings/useMeetings';
+import { listSavedSessionIds, setSessionSaved } from '../lib/services/mySessionsService';
 
 const minute = 60_000;
 
-export function Agenda({ slug }: { slug: string }) {
+export type AgendaView = 'agenda' | 'myDay';
+
+export function Agenda({ slug, view = 'agenda', onView }: { slug: string; view?: AgendaView; onView?: (next: AgendaView) => void }) {
   const [event, setEvent] = useState<EventRow | null>(null);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [day, setDay] = useState(1);
@@ -31,6 +37,9 @@ export function Agenda({ slug }: { slug: string }) {
   const [attempt, setAttempt] = useState(0);
   const loadedId = useRef<string | null>(null);
   const loadedSlug = useRef<string | null>(null);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const meetings = useMeetings(event?.id ?? null);
 
   useEffect(() => {
     if (loadedSlug.current !== slug) {
@@ -70,6 +79,9 @@ export function Agenda({ slug }: { slug: string }) {
           loadedSlug.current = slug;
           setEvent(row);
           setSessions(list);
+          setSavedIds(await listSavedSessionIds(list.map((session) => session.id)).catch(() => new Set<string>()));
+          if (!active) return;
+          void meetings.reload();
           setMissing(false);
           setError(null);
         })
@@ -114,15 +126,69 @@ export function Agenda({ slug }: { slug: string }) {
   const rooms = Array.isArray(event.rooms) ? event.rooms : [];
   const openMark = selected ? sessionMark(event.starts_on, event.days, selected, now) : 'upcoming';
 
+  async function toggleSaved(session: SessionRow) {
+    const next = !savedIds.has(session.id);
+    setSaveError(null);
+    setSavedIds((current) => {
+      const copy = new Set(current);
+      if (next) copy.add(session.id);
+      else copy.delete(session.id);
+      return copy;
+    });
+    try {
+      await setSessionSaved(session.id, next);
+    } catch {
+      setSaveError(t('session.saveFailed'));
+      setSavedIds((current) => {
+        const copy = new Set(current);
+        if (next) copy.delete(session.id);
+        else copy.add(session.id);
+        return copy;
+      });
+    }
+  }
+
   return (
     <Screen tabBar>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
         {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
         <EventHero eventName={event.name} />
-        <AgendaFilters days={days} day={day} onDay={setDay} rooms={rooms} room={room} onRoom={setRoom} />
-        <AgendaList event={event} sessions={sessions} day={day} room={room} now={now} onOpen={(session) => { setSelected(session); setOpen(true); }} />
+        <Segmented
+          value={view}
+          options={[
+            { id: 'agenda', label: t('agenda.viewAgenda') },
+            { id: 'myDay', label: t('agenda.viewMyDay') },
+          ]}
+          onChange={(id) => {
+            onView?.(id === 'myDay' ? 'myDay' : 'agenda');
+            setRoom(null);
+          }}
+        />
+        <AgendaFilters days={days} day={day} onDay={setDay} rooms={view === 'agenda' ? rooms : []} room={room} onRoom={setRoom} />
+        {view === 'agenda' ? (
+          <AgendaList event={event} sessions={sessions} day={day} room={room} now={now} onOpen={(session) => { setSelected(session); setOpen(true); }} />
+        ) : (
+          <MyDay
+            event={event}
+            sessions={sessions}
+            savedIds={savedIds}
+            meetings={meetings.meetings}
+            day={day}
+            now={now}
+            onOpen={(session) => { setSelected(session); setOpen(true); }}
+            onMeetingChanged={() => void meetings.reload()}
+          />
+        )}
       </ScrollView>
-      <SessionSheet session={selected} mark={openMark} open={open} onClose={() => setOpen(false)} />
+      <SessionSheet
+        session={selected}
+        mark={openMark}
+        open={open}
+        onClose={() => setOpen(false)}
+        saved={selected ? savedIds.has(selected.id) : false}
+        saveError={saveError}
+        onToggleSave={selected ? () => void toggleSaved(selected) : undefined}
+      />
     </Screen>
   );
 }

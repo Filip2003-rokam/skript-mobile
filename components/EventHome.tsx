@@ -4,6 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect, type Href } from 'expo-router';
 import { emptyFacts, loadFacts, type HomeFacts } from './home/loadHome';
 import { HomeMark } from './home/HomeMark';
+import { InboxBell } from './home/InboxBell';
 import { Section } from './home/HomeSections';
 import { StatusPills } from './home/StatusPills';
 import { buildTryCards, TryCards } from './home/TryCards';
@@ -95,7 +96,15 @@ export function EventHome({ slug }: { slug: string }) {
   return (
     <Screen tabBar scroll>
       <View style={styles.hero}>
-        <Text style={styles.eventName}>{event.name}</Text>
+        <View style={styles.top}>
+          <View style={styles.side} />
+          <Text style={styles.eventName} numberOfLines={2}>
+            {event.name}
+          </Text>
+          <View style={[styles.side, styles.sideEnd]}>
+            <InboxBell eventId={event.id} />
+          </View>
+        </View>
         <HomeMark color={event.color} />
         <Text style={styles.question}>{t('home.question')}</Text>
         <StatusPills live={live.length} linksToday={facts.linksToday} />
@@ -127,7 +136,19 @@ const styles = StyleSheet.create({
     gap: space.gap,
     paddingTop: space.gap,
   },
+  top: {
+    alignSelf: 'stretch',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  side: {
+    width: size.buttonSm,
+  },
+  sideEnd: {
+    alignItems: 'flex-end',
+  },
   eventName: {
+    flex: 1,
     fontFamily: fonts.bold,
     fontSize: fontSize.fs11,
     color: colors.text3,

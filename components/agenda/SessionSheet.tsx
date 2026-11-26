@@ -1,5 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { Avatar } from '../ui/Avatar';
+import { Button } from '../ui/Button';
+import { InlineError } from '../ui/State';
 import { Sheet } from '../ui/Sheet';
 import { colors, fontSize, fonts, radius, size, space, trackingTight } from '../../constants/theme';
 import { sessionClock, sessionEndClock, type SessionMark, type SessionRow } from '../../lib/services/sessionService';
@@ -10,9 +13,12 @@ type SessionSheetProps = {
   mark: SessionMark;
   open: boolean;
   onClose: () => void;
+  saved?: boolean;
+  saveError?: string | null;
+  onToggleSave?: () => void;
 };
 
-export function SessionSheet({ session, mark, open, onClose }: SessionSheetProps) {
+export function SessionSheet({ session, mark, open, onClose, saved = false, saveError = null, onToggleSave }: SessionSheetProps) {
   const time = session ? sessionClock(session.start_time) : '';
   const end = session ? sessionEndClock(session.start_time, session.duration_min) : '';
   const span = time && end ? `${time}–${end}` : time;
@@ -30,6 +36,12 @@ export function SessionSheet({ session, mark, open, onClose }: SessionSheetProps
             </View>
           ))}
           <Status mark={mark} />
+          {onToggleSave ? (
+            <Button size="sm" variant={saved ? 'secondary' : 'primary'} label={saved ? t('session.saved') : t('session.save')} onPress={onToggleSave}>
+              <Feather name={saved ? 'check' : 'bookmark'} size={size.iconSm} color={saved ? colors.ink : colors.onInk} />
+            </Button>
+          ) : null}
+          {saveError ? <InlineError text={saveError} /> : null}
         </View>
       ) : null}
     </Sheet>

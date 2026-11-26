@@ -13,6 +13,10 @@ import { Roster } from './people/Roster';
 import { Suggestions } from './people/Suggestions';
 import { usePeople } from './people/usePeople';
 import { t } from '../lib/i18n';
+import { useState } from 'react';
+import { MeetingBlock } from './meetings/MeetingBlock';
+import { ProposeMeetingSheet } from './meetings/ProposeMeetingSheet';
+import { useMeetings } from './meetings/useMeetings';
 
 export type PeopleView = 'suggestions' | 'saved' | 'requests' | 'connected';
 
@@ -24,6 +28,8 @@ type PeopleProps = {
 
 export function People({ slug, view, onView }: PeopleProps) {
   const data = usePeople(slug);
+  const meetings = useMeetings(data.event?.id ?? null);
+  const [meetWith, setMeetWith] = useState<{ userId: string; name: string | null } | null>(null);
 
   if (!data.event && !data.ready) {
     return (
@@ -57,6 +63,19 @@ export function People({ slug, view, onView }: PeopleProps) {
     { id: 'connected', label: t('people.connected') },
   ];
 
+  const eventDays = data.event.days;
+  // Isti red ispod svake osobe: žuto dok sastanak čeka, zeleno kad je zakazan.
+  const meetingLine = (userId: string) => {
+    const meeting = meetings.byPerson.get(userId);
+    return meeting ? <MeetingBlock meeting={meeting} eventDays={eventDays} onChanged={() => void meetings.reload()} /> : null;
+  };
+  const meetButton = (person: { userId: string; name: string | null }) =>
+    meetings.byPerson.has(person.userId) ? null : (
+      <Button size="sm" variant="secondary" label={t('meetings.suggest')} onPress={() => setMeetWith(person)}>
+        <Feather name="calendar" size={size.iconSm} color={colors.ink} />
+      </Button>
+    );
+
   return (
     <Screen tabBar scroll>
       {data.error ? <InlineError text={data.error} onRetry={data.retry} /> : null}
@@ -80,6 +99,8 @@ export function People({ slug, view, onView }: PeopleProps) {
           onSkip={(userId) => data.skip(userId)}
           onRestore={(interestId) => data.withdraw(interestId)}
           onToggleSave={data.toggleSave}
+          meetingLine={meetingLine}
+          onMeet={setMeetWith}
         />
       ) : null}
       {view === 'saved' ? (
@@ -92,6 +113,7 @@ export function People({ slug, view, onView }: PeopleProps) {
               <Feather name="bookmark" size={size.iconSm} color={colors.ink} />
             </Button>
           )}
+          footer={(person) => meetingLine(person.userId) ?? meetButton(person)}
         />
       ) : null}
       {view === 'requests' ? (
@@ -111,8 +133,20 @@ export function People({ slug, view, onView }: PeopleProps) {
           empty={t('people.noConnections')}
           onFind={() => onView('suggestions')}
           trailing={() => <Text style={styles.linked}>{t('people.connected')}</Text>}
+          footer={(person) => meetingLine(person.userId) ?? meetButton(person)}
         />
       ) : null}
+      <ProposeMeetingSheet
+        open={meetWith != null}
+        eventId={data.event.id}
+        eventDays={eventDays}
+        person={meetWith}
+        onClose={() => setMeetWith(null)}
+        onSent={() => {
+          setMeetWith(null);
+          void meetings.reload();
+        }}
+      />
     </Screen>
   );
 }

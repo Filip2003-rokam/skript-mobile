@@ -1,16 +1,18 @@
 import { StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Agenda } from '../../../components/Agenda';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Screen } from '../../../components/ui/Screen';
 import { ErrorState, LoadingState } from '../../../components/ui/State';
 import { colors, size, space } from '../../../constants/theme';
-import { useCurrentEvent } from '../../../lib/currentEvent';
+import { useLinkedSlug } from '../../../lib/useLinkedSlug';
 import { t } from '../../../lib/i18n';
 
 export default function AgendaScreen() {
-  const { slug, ready, error, reload } = useCurrentEvent();
+  const { view: viewParam, slug: slugParam } = useLocalSearchParams<{ view?: string; slug?: string }>();
+  const view = viewParam === 'myDay' ? 'myDay' : 'agenda';
+  const { slug, ready, error, reload } = useLinkedSlug('/agenda', slugParam, view);
 
   if (!ready && !slug) {
     return (
@@ -43,7 +45,7 @@ export default function AgendaScreen() {
     );
   }
 
-  return <Agenda slug={slug} />;
+  return <Agenda slug={slug} view={view} onView={(next) => router.setParams({ view: next })} />;
 }
 
 const styles = StyleSheet.create({

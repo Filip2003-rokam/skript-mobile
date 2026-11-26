@@ -89,3 +89,11 @@ export async function listMyEventStats(): Promise<EventStat[]> {
     return [{ ...event, contacts: contactCount.get(event.id) ?? 0, connections: connectionCount.get(event.id) ?? 0, saved: savedCount.get(event.id) ?? 0 }];
   });
 }
+
+/** Jezik naloga, da push obaveštenja stižu na izabranom jeziku. */
+export async function saveMyLanguage(language: 'sr' | 'en'): Promise<void> {
+  const session = await getSession();
+  if (!session) return;
+  const { error } = await supabase.from('profiles').update({ language }).eq('id', session.user.id);
+  if (error) throw error;
+}

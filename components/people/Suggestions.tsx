@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Button } from '../ui/Button';
@@ -23,6 +23,8 @@ type SuggestionsProps = {
   onSkip: (userId: string) => Promise<void>;
   onRestore: (interestId: string) => Promise<void>;
   onToggleSave: (userId: string) => Promise<void>;
+  meetingLine?: (userId: string) => ReactNode;
+  onMeet?: (person: { userId: string; name: string | null }) => void;
 };
 
 export function Suggestions(props: SuggestionsProps) {
@@ -68,6 +70,8 @@ export function Suggestions(props: SuggestionsProps) {
           matchedTheirs={item.matchedTheirs}
           openers={item.openers}
           saved={props.savedIds.has(item.suggestedUserId)}
+          meetingLine={props.meetingLine?.(item.suggestedUserId)}
+          onMeet={props.onMeet ? () => props.onMeet?.({ userId: item.suggestedUserId, name: item.name }) : undefined}
           onInterest={() => props.onInterest(item.suggestedUserId)}
           onSkip={() => props.onSkip(item.suggestedUserId)}
           onToggleSave={() => props.onToggleSave(item.suggestedUserId)}

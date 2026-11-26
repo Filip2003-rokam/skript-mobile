@@ -17,8 +17,9 @@ import { CurrentEventProvider } from '../../lib/currentEvent';
 import { takeEntry } from '../../lib/pendingEntry';
 import { authErrorMessage, getSession, onAuthChange } from '../../lib/services/authService';
 import { listenForNotificationOpens, registerForPush } from '../../lib/services/notificationService';
+import { saveMyLanguage } from '../../lib/services/profileService';
 import { useTranslation } from 'react-i18next';
-import { loadSavedLanguage } from '../../lib/i18n';
+import { appLanguage, loadSavedLanguage } from '../../lib/i18n';
 import { t } from '../../lib/i18n';
 
 SplashScreen.preventAutoHideAsync();
@@ -69,6 +70,12 @@ export default function RootLayout() {
       stop();
     };
   }, [attempt]);
+
+  // Baza zna jezik da bi push obaveštenja stigla na istom jeziku kao aplikacija.
+  useEffect(() => {
+    if (!session?.user.id || !languageReady) return;
+    saveMyLanguage(appLanguage()).catch(() => undefined);
+  }, [session?.user.id, languageReady]);
 
   // Posle prijave i kad se sačuvana sesija vrati. Ne čeka se: dozvola i token ne smeju da zaustave ulaz.
   useEffect(() => {

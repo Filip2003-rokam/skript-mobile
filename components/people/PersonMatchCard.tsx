@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
@@ -22,6 +23,9 @@ type PersonMatchCardProps = {
   onInterest: () => Promise<void>;
   onSkip: () => Promise<void>;
   onToggleSave: () => Promise<void>;
+  /** Otvoren ili zakazan sastanak sa ovom osobom. */
+  meetingLine?: ReactNode;
+  onMeet?: () => void;
 };
 
 const tile = size.logo + size.dot;
@@ -108,10 +112,16 @@ export function PersonMatchCard(props: PersonMatchCardProps) {
             <Button size="sm" variant="secondary" label={t('match.howStart')} onPress={() => setTips((value) => !value)}>
               <Feather name="zap" size={size.iconSm} color={colors.ink} />
             </Button>
+            {props.onMeet && !props.meetingLine ? (
+              <Button size="sm" variant="secondary" label={t('meetings.suggest')} onPress={props.onMeet}>
+                <Feather name="calendar" size={size.iconSm} color={colors.ink} />
+              </Button>
+            ) : null}
           </View>
           {tips ? <MatchOpeners lines={props.openers.slice(0, 2)} /> : null}
         </>
       ) : null}
+      {props.meetingLine ?? null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </Card>
   );

@@ -10,9 +10,10 @@ type PersonCardProps = {
   role: string | null;
   company: string | null;
   trailing?: ReactNode;
+  footer?: ReactNode;
 };
 
-export function PersonCard({ name, role, company, trailing }: PersonCardProps) {
+export function PersonCard({ name, role, company, trailing, footer }: PersonCardProps) {
   const person = displayName(name);
   return (
     <Card>
@@ -26,11 +27,13 @@ export function PersonCard({ name, role, company, trailing }: PersonCardProps) {
         </View>
         {trailing ? <View style={styles.trailing}>{trailing}</View> : null}
       </View>
+      {footer ? <View style={styles.footer}>{footer}</View> : null}
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
+  footer: { marginTop: space.gap },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

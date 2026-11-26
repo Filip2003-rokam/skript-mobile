@@ -15,6 +15,9 @@ export const colors = {
   scrim: 'rgba(17, 17, 20, 0.28)',
   skriptYellow: '#FFE14D',
   skriptYellowSoft: '#FFF5BF',
+  // Zakazan sastanak, isto kao na webu: zelena koja ne zavisi od boje eventa.
+  ok: '#2F9E5B',
+  okSoft: '#E2F4E8',
   accentRing: 'rgba(255, 225, 77, 0.6)',
   onSignal: '#111114',
   live: '#E5484D',
