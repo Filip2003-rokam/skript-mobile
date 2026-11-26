@@ -6,6 +6,8 @@ import { InlineError } from '../ui/State';
 import { Sheet } from '../ui/Sheet';
 import { colors, fontSize, fonts, radius, size, space, trackingTight } from '../../constants/theme';
 import { sessionClock, sessionEndClock, type SessionMark, type SessionRow } from '../../lib/services/sessionService';
+import type { CalendarDraft } from '../../lib/reminders';
+import { CalendarButton } from '../device/CalendarButton';
 import { t } from '../../lib/i18n';
 
 type SessionSheetProps = {
@@ -16,9 +18,10 @@ type SessionSheetProps = {
   saved?: boolean;
   saveError?: string | null;
   onToggleSave?: () => void;
+  calendar?: CalendarDraft | null;
 };
 
-export function SessionSheet({ session, mark, open, onClose, saved = false, saveError = null, onToggleSave }: SessionSheetProps) {
+export function SessionSheet({ session, mark, open, onClose, saved = false, saveError = null, onToggleSave, calendar = null }: SessionSheetProps) {
   const time = session ? sessionClock(session.start_time) : '';
   const end = session ? sessionEndClock(session.start_time, session.duration_min) : '';
   const span = time && end ? `${time}–${end}` : time;
@@ -42,6 +45,7 @@ export function SessionSheet({ session, mark, open, onClose, saved = false, save
             </Button>
           ) : null}
           {saveError ? <InlineError text={saveError} /> : null}
+          {mark !== 'ended' ? <CalendarButton item={calendar} /> : null}
         </View>
       ) : null}
     </Sheet>

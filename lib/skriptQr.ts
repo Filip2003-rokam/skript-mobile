@@ -1,5 +1,5 @@
 export type ScanResult =
-  | { kind: 'event'; slug: string }
+  | { kind: 'event'; slug: string; webUrl?: string }
   | { kind: 'user'; userId: string; eventSlug: string | null }
   | { kind: 'swap'; token: string }
   | { kind: 'unknown' };
@@ -16,7 +16,8 @@ export function readSkriptQr(value: string): ScanResult {
     }
     if (url.protocol === 'http:' || url.protocol === 'https:') {
       const [root, slug] = url.pathname.split('/').filter(Boolean);
-      if (root === 'e' && slug) return { kind: 'event', slug: decodeURIComponent(slug) };
+      // QR sa veb aplikacije za event. Adresa ostaje, da može da se otvori u browseru ako event nije u aplikaciji.
+      if (root === 'e' && slug) return { kind: 'event', slug: decodeURIComponent(slug), webUrl: `https://${url.host}/e/${slug}` };
     }
   } catch {
     return { kind: 'unknown' };

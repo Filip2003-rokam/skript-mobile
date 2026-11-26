@@ -16,6 +16,10 @@ import { listSessions, sessionMark, type SessionRow } from '../lib/services/sess
 import { t } from '../lib/i18n';
 import { MyDay } from './agenda/MyDay';
 import { Segmented } from './ui/Segmented';
+import { sessionCalendarDraft, sessionReminders } from '../lib/reminders';
+import { syncAgendaReminders } from '../lib/services/agendaReminderService';
+import { withOfflineCache } from '../lib/offlineCache';
+import { OfflineNote } from './ui/OfflineNote';
 import { useMeetings } from './meetings/useMeetings';
 import { listSavedSessionIds, setSessionSaved } from '../lib/services/mySessionsService';
 
@@ -39,7 +43,14 @@ export function Agenda({ slug, view = 'agenda', onView }: { slug: string; view?:
   const loadedSlug = useRef<string | null>(null);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [saveError, setSaveError] = useState<string | null>(null);
-  const meetings = useMeetings(event?.id ?? null);
+  const [offline, setOffline] = useState<string | null>(null);
+  const meetings = useMeetings(event);
+
+  // Podsetnik 10 minuta pre svake sačuvane sesije. Zakazuje ga telefon, pa stiže i bez mreže.
+  useEffect(() => {
+    if (!event || !ready) return;
+    void syncAgendaReminders(event.id, 'session', sessionReminders({ slug: event.slug, startsOn: event.starts_on, sessions, savedIds }));
+  }, [event, sessions, savedIds, ready]);
 
   useEffect(() => {
     if (loadedSlug.current !== slug) {
@@ -59,15 +70,20 @@ export function Agenda({ slug, view = 'agenda', onView }: { slug: string; view?:
       let active = true;
       setNow(new Date());
       const timer = setInterval(() => setNow(new Date()), minute);
-      getEventBySlug(slug)
-        .then(async (row) => {
+      withOfflineCache(`agenda:${slug}`, async () => {
+        const row = await getEventBySlug(slug);
+        if (!row) return null;
+        const list = await listSessions(row.id);
+        const saved = await listSavedSessionIds(list.map((session) => session.id)).catch(() => new Set<string>());
+        return { row, list, saved: [...saved] };
+      })
+        .then(async ({ value, offline: fromCache, savedAt }) => {
           if (!active) return;
-          if (!row) {
+          if (!value) {
             setMissing(true);
             return;
           }
-          const list = await listSessions(row.id);
-          if (!active) return;
+          const { row, list } = value;
           if (loadedId.current !== row.id) {
             loadedId.current = row.id;
             const timing = eventPhase(row.starts_on, row.days);
@@ -79,8 +95,8 @@ export function Agenda({ slug, view = 'agenda', onView }: { slug: string; view?:
           loadedSlug.current = slug;
           setEvent(row);
           setSessions(list);
-          setSavedIds(await listSavedSessionIds(list.map((session) => session.id)).catch(() => new Set<string>()));
-          if (!active) return;
+          setSavedIds(new Set(value.saved));
+          setOffline(fromCache ? savedAt : null);
           void meetings.reload();
           setMissing(false);
           setError(null);
@@ -152,6 +168,7 @@ export function Agenda({ slug, view = 'agenda', onView }: { slug: string; view?:
     <Screen tabBar>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
         {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
+        {offline ? <OfflineNote savedAt={offline} onRetry={() => setAttempt((value) => value + 1)} /> : null}
         <EventHero eventName={event.name} />
         <Segmented
           value={view}
@@ -188,6 +205,7 @@ export function Agenda({ slug, view = 'agenda', onView }: { slug: string; view?:
         saved={selected ? savedIds.has(selected.id) : false}
         saveError={saveError}
         onToggleSave={selected ? () => void toggleSaved(selected) : undefined}
+        calendar={selected ? sessionCalendarDraft(event, selected) : null}
       />
     </Screen>
   );

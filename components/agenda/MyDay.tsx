@@ -50,7 +50,7 @@ export function MyDay({ event, sessions, savedIds, meetings, day, now, onOpen, o
         ) : (
           <View key={`m-${item.meeting.id}`} style={styles.meeting}>
             <Text style={styles.with}>{t('meetings.with', { name: item.meeting.otherName?.trim() || t('person.unknown') })}</Text>
-            <MeetingBlock meeting={item.meeting} eventDays={event.days} onChanged={onMeetingChanged} />
+            <MeetingBlock meeting={item.meeting} eventDays={event.days} onChanged={onMeetingChanged} event={event} />
           </View>
         ),
       )}

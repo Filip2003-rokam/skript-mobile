@@ -62,6 +62,17 @@ export const en: WithoutFew<Dictionary> = {
     none: "No contacts yet. Add the first one with the plus.",
     search: "Search contacts",
   },
+  device: {
+    addToCalendar: "Add to calendar",
+    calendarDenied: "Calendar access is off. Turn it on in your phone settings.",
+    calendarFailed: "The calendar did not open. Try again.",
+    calendarSaved: "Added to your calendar.",
+    contactFailed: "Contacts did not open. Try again.",
+    contactSaved: "Saved to your phone contacts.",
+    metAt: "We met at: {{event}}",
+    saveContact: "Save to contacts",
+    unsupported: "This works only in the phone app.",
+  },
   empty: {
     noEventAgenda: "No event selected. Scan a QR code to open the agenda.",
     noEventPeople: "No event selected. Scan a QR code to see people.",
@@ -219,6 +230,9 @@ export const en: WithoutFew<Dictionary> = {
     whenOneDay: "{{time}} · {{place}}",
     with: "Meeting · {{name}}",
   },
+  offline: {
+    note: "No connection. Showing what was saved at {{time}}.",
+  },
   options: {
     need: {
       clients: "Clients",
@@ -288,14 +302,19 @@ export const en: WithoutFew<Dictionary> = {
     statSaved: "Saved",
   },
   reminder: {
-    hint: "On that day you get a notification that opens the contact.",
+    hint: "Follow-ups arrive at 9:00 on the day, sessions and meetings 10 minutes before. Your phone schedules them, so they arrive even offline.",
+    meetingBody: "{{name}}, {{place}}",
+    meetingCalendarTitle: "Meeting: {{name}}",
+    meetingTitle: "Meeting in {{minutes}} min",
     notification: "Time to follow up: {{name}}",
     readFailed: "Could not read the setting. Close the app and open it again.",
     saveFailed: "Could not save the setting. Try again.",
+    sessionBodyRoom: "{{title}}, {{room}}",
+    sessionTitle: "Starting in {{minutes}} min",
     someone: "your contact",
-    title: "Follow-up reminder",
-    toggle: "Follow-up reminders",
-    when: "In the morning, at 9:00",
+    title: "Reminders",
+    toggle: "Reminders",
+    when: "Follow-ups, sessions and meetings",
   },
   request: {
     accept: "Accept",
@@ -320,8 +339,10 @@ export const en: WithoutFew<Dictionary> = {
     enterCode: "Enter the event code.",
     eventCode: "Event code",
     notSkript: "This is not a Skript QR code. Scan the event code.",
+    openInBrowser: "Open in browser",
     personCode: "This is a person's code. Open Swap contacts at the event.",
     title: "Scan QR",
+    webEvent: "This event runs on the web, not in the app. Open it in your browser, no account or install needed.",
   },
   session: {
     ended: "Ended",

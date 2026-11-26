@@ -58,6 +58,17 @@ export const sr = {
     none: "Još nema kontakata. Dodaj prvi preko plusa.",
     search: "Pretraga kontakata",
   },
+  device: {
+    addToCalendar: "Dodaj u kalendar",
+    calendarDenied: "Kalendar nije dozvoljen. Uključi ga u podešavanjima telefona.",
+    calendarFailed: "Kalendar se nije otvorio. Pokušaj ponovo.",
+    calendarSaved: "Dodato u kalendar.",
+    contactFailed: "Imenik se nije otvorio. Pokušaj ponovo.",
+    contactSaved: "Sačuvano u imeniku telefona.",
+    metAt: "Upoznali smo se na: {{event}}",
+    saveContact: "Sačuvaj u imenik",
+    unsupported: "Ovo radi samo u aplikaciji na telefonu.",
+  },
   empty: {
     noEventAgenda: "Nema izabranog eventa. Skeniraj QR kod da otvoriš agendu.",
     noEventPeople: "Nema izabranog eventa. Skeniraj QR kod da vidiš ljude.",
@@ -220,6 +231,9 @@ export const sr = {
     whenOneDay: "{{time}} · {{place}}",
     with: "Sastanak · {{name}}",
   },
+  offline: {
+    note: "Nema mreže. Prikazujem sačuvano u {{time}}.",
+  },
   options: {
     need: {
       clients: "Klijenti",
@@ -289,14 +303,19 @@ export const sr = {
     statSaved: "Sačuvani",
   },
   reminder: {
-    hint: "Tog dana stiže obaveštenje koje otvara kontakt.",
+    hint: "Follow-up stiže tog dana u 9:00, a sesija i sastanak 10 minuta ranije. Telefon ih zakazuje sam, pa stižu i bez interneta.",
+    meetingBody: "{{name}}, {{place}}",
+    meetingCalendarTitle: "Sastanak: {{name}}",
+    meetingTitle: "Sastanak za {{minutes}} min",
     notification: "Vreme je da se javiš: {{name}}",
     readFailed: "Ne mogu da pročitam podešavanje. Zatvori aplikaciju i pokreni je ponovo.",
     saveFailed: "Ne mogu da sačuvam podešavanje. Pokušaj ponovo.",
+    sessionBodyRoom: "{{title}}, {{room}}",
+    sessionTitle: "Za {{minutes}} min počinje",
     someone: "kontakt",
-    title: "Podsetnik za follow-up",
-    toggle: "Podsetnici za follow-up",
-    when: "Ujutru, u 9:00",
+    title: "Podsetnici",
+    toggle: "Podsetnici",
+    when: "Follow-up, sesije i sastanci",
   },
   request: {
     accept: "Prihvati",
@@ -321,8 +340,10 @@ export const sr = {
     enterCode: "Unesi kod eventa.",
     eventCode: "Kod eventa",
     notSkript: "Ovo nije Skript QR kod. Skeniraj kod eventa.",
+    openInBrowser: "Otvori u browseru",
     personCode: "Ovo je kod osobe. Otvori Razmeni kontakt na eventu.",
     title: "Skeniraj QR",
+    webEvent: "Ovaj event radi na vebu, ne u aplikaciji. Otvori ga u browseru, bez naloga i instalacije.",
   },
   session: {
     ended: "Završeno",

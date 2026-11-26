@@ -12,7 +12,29 @@ import { colors, fontSize, fonts, pressScale, radius, shadow, size, space, track
 import { followUpIsDue, toDisplayDate } from '../../lib/contactDates';
 import { authErrorMessage } from '../../lib/services/authService';
 import { listContacts, type ContactListItem } from '../../lib/services/contactService';
+import { readCache, withOfflineCache } from '../../lib/offlineCache';
+import { OfflineNote } from '../ui/OfflineNote';
 import { appLocale, t } from '../../lib/i18n';
+
+// Ceo spisak se čuva na telefonu. Bez mreže pretraga ide po sačuvanom spisku.
+async function loadContacts(search: string): Promise<{ list: ContactListItem[]; savedAt: string | null }> {
+  const query = search.trim();
+  if (!query) {
+    const result = await withOfflineCache('contacts', () => listContacts(''));
+    return { list: result.value, savedAt: result.offline ? result.savedAt : null };
+  }
+  try {
+    return { list: await listContacts(search), savedAt: null };
+  } catch (cause) {
+    const stored = await readCache<ContactListItem[]>('contacts');
+    if (!stored) throw cause;
+    const needle = query.toLocaleLowerCase();
+    const list = stored.value.filter((row) =>
+      [row.fullName, row.company, row.eventName].some((value) => value?.toLocaleLowerCase().includes(needle)),
+    );
+    return { list, savedAt: stored.savedAt };
+  }
+}
 
 export function ContactList({ version }: { version: number }) {
   const [search, setSearch] = useState('');
@@ -21,15 +43,17 @@ export function ContactList({ version }: { version: number }) {
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [offline, setOffline] = useState<string | null>(null);
 
   useEffect(() => {
     if (version === 0) return;
     let active = true;
     const timer = setTimeout(() => {
-      listContacts(search)
-        .then((list) => {
+      loadContacts(search)
+        .then(({ list, savedAt }) => {
           if (!active) return;
           setRows(list);
+          setOffline(savedAt);
           setError(null);
         })
         .catch((cause) => {
@@ -73,6 +97,7 @@ export function ContactList({ version }: { version: number }) {
           <Feather name="plus" size={size.iconMd} color={colors.ink} />
         </Button>
       </View>
+      {offline ? <OfflineNote savedAt={offline} onRetry={() => setAttempt((value) => value + 1)} /> : null}
       <Chip label={t('contacts.followUpDue')} selected={due} icon={<Feather name="bell" size={size.iconSm} color={colors.ink} />} onPress={() => setDue((value) => !value)} />
       {version === 0 || (!loaded && rows.length === 0 && !error) ? <LoadingState fill={false} /> : null}
       {error && rows.length === 0 ? (

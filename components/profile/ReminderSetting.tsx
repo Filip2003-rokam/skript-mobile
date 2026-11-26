@@ -4,6 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { Card } from '../ui/Card';
 import { colors, fontSize, fonts, space, trackingWide } from '../../constants/theme';
+import { clearAgendaReminders } from '../../lib/services/agendaReminderService';
 import { remindersEnabled, setRemindersEnabled } from '../../lib/services/reminderService';
 import { InlineError } from '../ui/State';
 import { t } from '../../lib/i18n';
@@ -39,6 +40,8 @@ export function ReminderSetting() {
     setError(null);
     try {
       await setRemindersEnabled(next);
+      // Sesije i sastanci se ponovo zakažu kad se otvore Agenda ili Ljudi.
+      if (!next) await clearAgendaReminders();
     } catch {
       setOn(!next);
       setError(t('reminder.saveFailed'));

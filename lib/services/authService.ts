@@ -1,6 +1,9 @@
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
+import { clearOfflineCache } from '../offlineCache';
+import { clearAgendaReminders } from './agendaReminderService';
 import { unregisterPush } from './notificationService';
+import { cancelAllFollowUps } from './reminderService';
 import { t } from '../i18n';
 
 // Triger na novom nalogu čita full_name iz metapodataka i upisuje ga u profiles.
@@ -29,6 +32,10 @@ export async function signOut() {
   } catch {
     // Token ostaje upisan. Odjava ide dalje.
   }
+  // Podsetnici su vezani za nalog. Sledeći korisnik na ovom telefonu ne sme da ih dobije.
+  await clearAgendaReminders();
+  await cancelAllFollowUps().catch(() => undefined);
+  await clearOfflineCache();
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }

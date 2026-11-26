@@ -25,8 +25,8 @@ export default function ScanScreen() {
     }, []),
   );
 
-  function openEvent(next: string) {
-    router.push({ pathname: '/event/[slug]/welcome', params: { slug: next } });
+  function openEvent(next: string, webUrl?: string) {
+    router.push({ pathname: '/event/[slug]/welcome', params: webUrl ? { slug: next, web: webUrl } : { slug: next } });
   }
 
   function unlock() {
@@ -39,7 +39,7 @@ export default function ScanScreen() {
     const result = readSkriptQr(value);
     if (result.kind === 'event') {
       setLocked(true);
-      openEvent(result.slug);
+      openEvent(result.slug, result.webUrl);
       return;
     }
     if (result.kind === 'user' || result.kind === 'swap') {

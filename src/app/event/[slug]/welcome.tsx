@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { rememberEntry } from '../../../../lib/pendingEntry';
 import { WelcomeCard } from '../../../../components/event/WelcomeCard';
 import { EmptyState } from '../../../../components/ui/EmptyState';
@@ -18,7 +19,8 @@ import {
 import { t } from '../../../../lib/i18n';
 
 export default function EventWelcomeScreen() {
-  const { slug, enter } = useLocalSearchParams<{ slug: string; enter?: string }>();
+  const { slug, enter, web } = useLocalSearchParams<{ slug: string; enter?: string; web?: string }>();
+  const webUrl = typeof web === 'string' && web.startsWith('https://') ? web : null;
   const code = typeof slug === 'string' ? slug : '';
   const { setSlug } = useCurrentEvent();
   const [event, setEvent] = useState<EventRow | null>(null);
@@ -88,6 +90,20 @@ export default function EventWelcomeScreen() {
     return (
       <Screen>
         <LoadingState />
+      </Screen>
+    );
+  }
+
+  // Skeniran QR sa veb aplikacije za event koji ne postoji u bazi aplikacije: otvori ga tamo gde postoji.
+  if (!event && missing && webUrl) {
+    return (
+      <Screen>
+        <EmptyState
+          icon={<Feather name="globe" size={size.iconMd} color={colors.ink} />}
+          text={t('scan.webEvent')}
+          action={t('scan.openInBrowser')}
+          onAction={() => void WebBrowser.openBrowserAsync(webUrl)}
+        />
       </Screen>
     );
   }

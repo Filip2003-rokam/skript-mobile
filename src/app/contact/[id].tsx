@@ -13,6 +13,7 @@ import { VoiceNote } from '../../../components/voice/VoiceNote';
 import { colors, fontSize, fonts, size, space } from '../../../constants/theme';
 import { authErrorMessage } from '../../../lib/services/authService';
 import { deleteContact, getContact, updateContact, type Contact, type ContactWrite } from '../../../lib/services/contactService';
+import { saveToPhoneContacts } from '../../../lib/services/deviceService';
 import { t } from '../../../lib/i18n';
 
 export default function ContactScreen() {
@@ -93,6 +94,25 @@ export default function ContactScreen() {
     }
   }
 
+  async function saveToPhone() {
+    if (!contact) return;
+    setNotice(null);
+    try {
+      const saved = await saveToPhoneContacts({
+        fullName: contact.fullName,
+        company: contact.company,
+        role: contact.jobTitle,
+        email: contact.email,
+        phone: contact.phone,
+        linkedin: contact.linkedinUrl,
+        note: contact.eventName ? t('device.metAt', { event: contact.eventName }) : null,
+      });
+      if (saved) setNotice(t('device.contactSaved'));
+    } catch {
+      setError(t('device.contactFailed'));
+    }
+  }
+
   function confirmDelete() {
     Alert.alert(t('contact.deleteTitle'), t('contact.deleteBody'), [
       { text: t('common.notNow'), style: 'cancel' },
@@ -168,6 +188,9 @@ export default function ContactScreen() {
       <VoiceNote existingNote={contact.note} existingDate={contact.followUpDate} email={contact.email} onSave={saveVoice} />
       {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
       <View style={styles.actions}>
+        <Button label={t('device.saveContact')} variant="secondary" onPress={() => void saveToPhone()}>
+          <Feather name="user-plus" size={size.iconSm} color={colors.ink} />
+        </Button>
         <Button label={t('common.edit')} variant="secondary" onPress={() => setEditing(true)} />
         <Button label={t('common.delete')} variant="ghost" onPress={confirmDelete} />
       </View>

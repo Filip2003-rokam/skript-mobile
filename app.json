@@ -7,6 +7,11 @@
     "icon": "./assets/images/icon.png",
     "scheme": "skript",
     "userInterfaceStyle": "automatic",
+    "ios": {
+      "infoPlist": {
+        "NSCalendarsWriteOnlyAccessUsageDescription": "Skript dodaje sesije i sastanke u tvoj kalendar."
+      }
+    },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
       "package": "com.skript.app",
@@ -53,7 +58,9 @@
         "expo-audio",
         {
           "microphonePermission": "Skript koristi mikrofon da snimi glasovnu belešku posle razgovora.",
-          "recordAudioAndroid": true
+          "recordAudioAndroid": true,
+          "enableBackgroundRecording": true,
+          "enableBackgroundPlayback": false
         }
       ],
       [

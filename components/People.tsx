@@ -28,7 +28,7 @@ type PeopleProps = {
 
 export function People({ slug, view, onView }: PeopleProps) {
   const data = usePeople(slug);
-  const meetings = useMeetings(data.event?.id ?? null);
+  const meetings = useMeetings(data.event ?? null);
   const [meetWith, setMeetWith] = useState<{ userId: string; name: string | null } | null>(null);
 
   if (!data.event && !data.ready) {
@@ -67,7 +67,7 @@ export function People({ slug, view, onView }: PeopleProps) {
   // Isti red ispod svake osobe: žuto dok sastanak čeka, zeleno kad je zakazan.
   const meetingLine = (userId: string) => {
     const meeting = meetings.byPerson.get(userId);
-    return meeting ? <MeetingBlock meeting={meeting} eventDays={eventDays} onChanged={() => void meetings.reload()} /> : null;
+    return meeting ? <MeetingBlock meeting={meeting} eventDays={eventDays} onChanged={() => void meetings.reload()} event={data.event ?? null} /> : null;
   };
   const meetButton = (person: { userId: string; name: string | null }) =>
     meetings.byPerson.has(person.userId) ? null : (

@@ -75,7 +75,7 @@ export function VoiceNote({ existingNote, existingDate, email, onReady, onSave }
         }
       }
       try {
-        await setAudioModeAsync({ allowsRecording: false });
+        await setAudioModeAsync({ allowsRecording: false, allowsBackgroundRecording: false });
       } catch {
         // Sesija mikrofona se gasi i bez ove izmene.
       }
@@ -103,7 +103,8 @@ export function VoiceNote({ existingNote, existingDate, email, onReady, onSave }
         setPhase('denied');
         return;
       }
-      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      // Snimanje ide dalje i kad se ekran zaključa usred beleške.
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true, allowsBackgroundRecording: true });
       await recorder.prepareToRecordAsync();
       recorder.record({ forDuration: limitSeconds });
       setDraft(null);
