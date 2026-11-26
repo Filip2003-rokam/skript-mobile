@@ -1,6 +1,7 @@
 import { supabase } from '../supabase';
 import type { EventRow } from '../../types/database';
 import { getSession } from './authService';
+import { appLanguage, t } from '../i18n';
 
 export type { EventRow };
 
@@ -34,6 +35,7 @@ export function eventPhase(startsOn: string | null, days: number | null, now = n
 
 export function formatStartDate(isoDate: string): string {
   const [year, month, day] = isoDate.split('-');
+  if (appLanguage() === 'en') return `${Number(day)}/${Number(month)}/${year}`;
   return `${Number(day)}. ${Number(month)}. ${year}.`;
 }
 
@@ -44,6 +46,7 @@ export function eventInitials(value: string): string {
 }
 
 function dayMonth(date: Date): string {
+  if (appLanguage() === 'en') return `${date.getDate()}/${date.getMonth() + 1}`;
   return `${date.getDate()}. ${date.getMonth() + 1}.`;
 }
 
@@ -61,12 +64,12 @@ export function eventPlaceLine(event: EventRow): string {
 }
 
 export function eventStatusLine(event: EventRow, live: number): string {
-  if (!event.starts_on || !event.days) return 'Datum početka nije poznat.';
+  if (!event.starts_on || !event.days) return t('event.startUnknown');
   const timing = eventPhase(event.starts_on, event.days);
-  if (timing.phase === 'before') return `Počinje ${formatStartDate(event.starts_on)}`;
-  if (timing.phase === 'after') return 'Event je završen';
-  if (live < 1) return `Dan ${timing.day} · Trenutno nema sesija`;
-  return `Dan ${timing.day} · ${live} sesija upravo traje`;
+  if (timing.phase === 'before') return t('event.starts', { date: formatStartDate(event.starts_on) });
+  if (timing.phase === 'after') return t('event.ended');
+  if (live < 1) return t('event.dayNoSessions', { day: timing.day });
+  return t('event.dayLive', { day: timing.day, count: live });
 }
 
 function clockMinutes(value: string): number {
@@ -76,7 +79,7 @@ function clockMinutes(value: string): number {
 
 async function userId(): Promise<string> {
   const session = await getSession();
-  if (!session) throw new Error('Nisi prijavljen.');
+  if (!session) throw new Error(t('errors.signedOut'));
   return session.user.id;
 }
 

@@ -6,6 +6,7 @@ import { Card } from '../ui/Card';
 import { colors, fontSize, fonts, space, trackingWide } from '../../constants/theme';
 import { remindersEnabled, setRemindersEnabled } from '../../lib/services/reminderService';
 import { InlineError } from '../ui/State';
+import { t } from '../../lib/i18n';
 
 export function ReminderSetting() {
   const [on, setOn] = useState(true);
@@ -22,7 +23,7 @@ export function ReminderSetting() {
           setError(null);
         })
         .catch(() => {
-          if (active) setError('Ne mogu da pročitam podešavanje. Zatvori aplikaciju i pokreni je ponovo.');
+          if (active) setError(t('reminder.readFailed'));
         })
         .finally(() => {
           if (active) setReady(true);
@@ -40,7 +41,7 @@ export function ReminderSetting() {
       await setRemindersEnabled(next);
     } catch {
       setOn(!next);
-      setError('Ne mogu da sačuvam podešavanje. Pokušaj ponovo.');
+      setError(t('reminder.saveFailed'));
     }
   }
 
@@ -48,12 +49,12 @@ export function ReminderSetting() {
     <Card variant="surface" style={styles.card}>
       <View style={styles.kicker}>
         <Feather name="bell" size={fontSize.fs13} color={colors.text2} />
-        <Text style={styles.kickerText}>Podsetnik za follow-up</Text>
+        <Text style={styles.kickerText}>{t('reminder.title')}</Text>
       </View>
       <View style={styles.row}>
-        <Text style={styles.label}>Ujutru, u 9:00</Text>
+        <Text style={styles.label}>{t('reminder.when')}</Text>
         <Switch
-          accessibilityLabel="Podsetnici za follow-up"
+          accessibilityLabel={t('reminder.toggle')}
           disabled={!ready}
           value={on}
           onValueChange={(next) => void toggle(next)}
@@ -61,7 +62,7 @@ export function ReminderSetting() {
           thumbColor={colors.surface}
         />
       </View>
-      <Text style={styles.hint}>Tog dana stiže obaveštenje koje otvara kontakt.</Text>
+      <Text style={styles.hint}>{t('reminder.hint')}</Text>
       {error ? <InlineError text={error} /> : null}
     </Card>
   );

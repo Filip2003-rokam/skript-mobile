@@ -1,6 +1,7 @@
 import { supabase } from '../supabase';
 import { getSession } from './authService';
 import { cancelFollowUp, syncFollowUp } from './reminderService';
+import { t } from '../i18n';
 
 export type ContactListItem = {
   id: string;
@@ -105,7 +106,7 @@ export async function getContact(id: string): Promise<Contact | null> {
 
 export async function createContact(data: ContactWrite): Promise<string> {
   const session = await getSession();
-  if (!session) throw new Error('Nisi prijavljen.');
+  if (!session) throw new Error(t('errors.signedOut'));
   const { data: row, error } = await supabase
     .from('contacts')
     .insert({

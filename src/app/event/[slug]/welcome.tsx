@@ -15,6 +15,7 @@ import {
   getMyAttendance,
   type EventRow,
 } from '../../../../lib/services/eventService';
+import { t } from '../../../../lib/i18n';
 
 export default function EventWelcomeScreen() {
   const { slug, enter } = useLocalSearchParams<{ slug: string; enter?: string }>();
@@ -96,8 +97,8 @@ export default function EventWelcomeScreen() {
       <Screen>
         <EmptyState
           icon={<Feather name="camera" size={size.iconMd} color={colors.ink} />}
-          text="Ovaj event ne postoji. Vrati se i proveri kod."
-          action="Nazad"
+          text={t('errors.eventMissingCode')}
+          action={t('common.back')}
           onAction={() => router.back()}
         />
       </Screen>
@@ -109,8 +110,8 @@ export default function EventWelcomeScreen() {
       <Screen>
         <EmptyState
           icon={<Feather name="alert-circle" size={size.iconMd} color={colors.ink} />}
-          text={error ?? 'Ne mogu da otvorim event. Proveri vezu i pokušaj ponovo.'}
-          action="Pokušaj ponovo"
+          text={error ?? t('errors.eventOpen')}
+          action={t('common.retry')}
           onAction={() => setAttempt((value) => value + 1)}
         />
       </Screen>

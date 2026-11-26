@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { followUpAtNine } from '../contactDates';
+import { t } from '../i18n';
 
 const settingKey = 'follow-up-reminders';
 const prefix = 'follow-up-';
@@ -61,11 +62,11 @@ export async function syncFollowUp(contact: FollowUpTarget): Promise<void> {
   const at = followUpAtNine(contact.followUpDate);
   if (!at) return;
   if (!(await prepare())) return;
-  const name = contact.fullName.trim() || 'kontakt';
+  const name = contact.fullName.trim() || t('reminder.someone');
   await Notifications.scheduleNotificationAsync({
     identifier: reminderId(contact.id),
     content: {
-      title: `Vreme je da se javiš: ${name}`,
+      title: t('reminder.notification', { name }),
       data: { url: `/contact/${contact.id}` },
       sound: true,
     },

@@ -13,6 +13,7 @@ import { Ask, ChoiceChips, Mine, StepLabel, choiceLabels } from '../../../../com
 import { authErrorMessage } from '../../../../lib/services/authService';
 import { getMyEventProfile, saveMyEventProfile } from '../../../../lib/services/attendeeService';
 import { getEventBySlug } from '../../../../lib/services/eventService';
+import { t } from '../../../../lib/i18n';
 
 function toggle(list: string[], key: string) {
   return list.includes(key) ? list.filter((item) => item !== key) : [...list, key];
@@ -104,32 +105,32 @@ export default function EventProfileScreen() {
       <Screen>
         <EmptyState
           icon={<Feather name={missing ? 'camera' : 'alert-circle'} size={size.iconMd} color={colors.ink} />}
-          text={missing ? 'Ovaj event ne postoji. Vrati se i proveri kod.' : (error ?? 'Ne mogu da učitam profil. Proveri vezu i pokušaj ponovo.')}
-          action={missing ? 'Nazad' : 'Pokušaj ponovo'}
+          text={missing ? t('errors.eventMissingCode') : (error ?? t('errors.profileLoad'))}
+          action={missing ? t('common.back') : t('common.retry')}
           onAction={() => (missing ? router.back() : setAttempt((value) => value + 1))}
         />
       </Screen>
     );
   }
 
-  const companyAnswer = company.trim() || 'Preskočeno';
+  const companyAnswer = company.trim() || t('eventProfile.skipped');
 
   return (
     <Screen scroll>
       {error ? <InlineError text={error} /> : null}
       <View style={styles.thread}>
-      <Ask text="Kratko podešavanje da nađem prave ljude. Šta te dovodi ovde? Izaberi sve što važi." />
+      <Ask text={t('eventProfile.intro')} />
       {step === 0 ? (
         <>
           <ChoiceChips options={whyOptions} selected={why} onPress={(key) => setWhy((list) => toggle(list, key))} />
-          <Button label="Nastavi" size="sm" disabled={why.length === 0} onPress={() => setStep(1)} />
+          <Button label={t('common.continue')} size="sm" disabled={why.length === 0} onPress={() => setStep(1)} />
         </>
       ) : (
         <Mine text={choiceLabels(whyOptions, why)} />
       )}
       {step >= 1 ? (
         <>
-          <Ask text="Čime se baviš?" />
+          <Ask text={t('eventProfile.whatDoYouDo')} />
           {step === 1 ? (
             <ChoiceChips options={roleOptions} selected={role ? [role] : []} onPress={(key) => { setRole(key); setStep(2); }} />
           ) : (
@@ -139,13 +140,13 @@ export default function EventProfileScreen() {
       ) : null}
       {step >= 2 ? (
         <>
-          <Ask text="Tvoja firma?" />
+          <Ask text={t('eventProfile.company')} />
           {step === 2 ? (
             <>
-              <TextField hideLabel label="Firma" placeholder="Ime firme" value={company} onChangeText={setCompany} autoCapitalize="words" />
+              <TextField hideLabel label={t('fields.company')} placeholder={t('eventProfile.companyPlaceholder')} value={company} onChangeText={setCompany} autoCapitalize="words" />
               <View style={styles.row}>
-                <Button label="Nastavi" size="sm" disabled={!company.trim()} onPress={() => setStep(3)} />
-                <Button label="Preskoči" size="sm" variant="secondary" onPress={() => { setCompany(''); setStep(3); }} />
+                <Button label={t('common.continue')} size="sm" disabled={!company.trim()} onPress={() => setStep(3)} />
+                <Button label={t('common.skip')} size="sm" variant="secondary" onPress={() => { setCompany(''); setStep(3); }} />
               </View>
             </>
           ) : (
@@ -155,12 +156,12 @@ export default function EventProfileScreen() {
       ) : null}
       {step >= 3 ? (
         <>
-          <Ask text="Šta nudiš, a gde ti treba pomoć?" />
-          <StepLabel text="Nudim" />
+          <Ask text={t('eventProfile.offersNeeds')} />
+          <StepLabel text={t('eventProfile.offer')} />
           <ChoiceChips options={offerOptions} selected={offers} onPress={(key) => setOffers((list) => toggle(list, key))} />
-          <StepLabel text="Treba mi pomoć oko" />
+          <StepLabel text={t('eventProfile.need')} />
           <ChoiceChips options={needOptions} selected={needs} onPress={(key) => setNeeds((list) => toggle(list, key))} />
-          <Button label="Gotovo" size="sm" loading={saving} disabled={offers.length === 0 && needs.length === 0} onPress={finish} />
+          <Button label={t('common.done')} size="sm" loading={saving} disabled={offers.length === 0 && needs.length === 0} onPress={finish} />
         </>
       ) : null}
       </View>

@@ -7,15 +7,16 @@ import { EventLogo } from '../ui/EventLogo';
 import { colors, fontSize, fonts, pressScale, size, space } from '../../constants/theme';
 import { eventInitials, eventPlaceLine } from '../../lib/services/eventService';
 import type { EventStat } from '../../lib/services/profileService';
+import { appLocale, t } from '../../lib/i18n';
 
 export function EventCards({ events, current, onOpen }: { events: EventStat[]; current: string | null; onOpen: (slug: string) => void }) {
-  const ordered = [...events].sort((a, b) => a.name.localeCompare(b.name, 'sr'));
+  const ordered = [...events].sort((a, b) => a.name.localeCompare(b.name, appLocale()));
   if (ordered.length === 0) {
     return (
       <EmptyState
         icon={<Feather name="calendar" size={size.iconMd} color={colors.ink} />}
-        text="Još nema eventa. Skeniraj QR kod da uđeš."
-        action="Skeniraj"
+        text={t('empty.noEventsProfile')}
+        action={t('common.scan')}
         onAction={() => router.push('/scan')}
       />
     );
@@ -26,7 +27,7 @@ export function EventCards({ events, current, onOpen }: { events: EventStat[]; c
         <Pressable
           key={event.id}
           accessibilityRole="button"
-          accessibilityLabel={event.slug === current ? `${event.name}, trenutni event` : event.name}
+          accessibilityLabel={event.slug === current ? t('profile.currentEvent', { name: event.name }) : event.name}
           onPress={() => onOpen(event.slug)}
           style={({ pressed }) => [pressed && { transform: [{ scale: pressScale }] }]}
         >
@@ -42,9 +43,9 @@ export function EventCards({ events, current, onOpen }: { events: EventStat[]; c
               <Feather name="arrow-right" size={size.iconSm} color={colors.text2} />
             </View>
             <View style={styles.stats}>
-              <Stat value={event.contacts} label="Kontakti" />
-              <Stat value={event.connections} label="Veze" />
-              <Stat value={event.saved} label="Sačuvani" />
+              <Stat value={event.contacts} label={t('profile.statContacts')} />
+              <Stat value={event.connections} label={t('profile.statConnections')} />
+              <Stat value={event.saved} label={t('profile.statSaved')} />
             </View>
           </View>
           </Card>

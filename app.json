@@ -55,6 +55,21 @@
           "microphonePermission": "Skript koristi mikrofon da snimi glasovnu belešku posle razgovora.",
           "recordAudioAndroid": true
         }
+      ],
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": [
+              "sr",
+              "en"
+            ],
+            "android": [
+              "sr",
+              "en"
+            ]
+          }
+        }
       ]
     ],
     "experiments": {
@@ -71,6 +86,10 @@
         "projectId": "41f96230-ad1b-4be6-b233-bd8227d2501e"
       }
     },
-    "owner": "filip03"
+    "owner": "filip03",
+    "locales": {
+      "sr": "./languages/sr.json",
+      "en": "./languages/en.json"
+    }
   }
 }

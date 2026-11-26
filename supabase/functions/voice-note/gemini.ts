@@ -14,7 +14,14 @@ export type VoiceDraft = {
   phone: string;
 };
 
-export async function transcribeAudio(audio: string, mime: string, today: string): Promise<VoiceDraft | null> {
+export type Lang = 'sr' | 'en';
+
+// Jezik kojim model piše belešku i mejl.
+function writeIn(lang: Lang): string {
+  return lang === 'en' ? 'Piši na engleskom.' : 'Piši na srpskom, latinica, na ti.';
+}
+
+export async function transcribeAudio(audio: string, mime: string, today: string, lang: Lang = 'sr'): Promise<VoiceDraft | null> {
   const key = Deno.env.get('GEMINI_API_KEY');
   if (!key) {
     console.error('GEMINI_API_KEY nije podešen.');
@@ -30,7 +37,7 @@ export async function transcribeAudio(audio: string, mime: string, today: string
       contents: [{
         role: 'user',
         parts: [
-          { text: prompt(today) },
+          { text: prompt(today, lang) },
           { inlineData: { mimeType: mime, data: audio } },
         ],
       }],
@@ -67,7 +74,7 @@ export async function transcribeAudio(audio: string, mime: string, today: string
   return parseDraft(text);
 }
 
-export async function draftFromText(note: string, name: string, company: string, event: string, tone: string): Promise<{ subject: string; body: string } | null> {
+export async function draftFromText(note: string, name: string, company: string, event: string, tone: string, lang: Lang = 'sr'): Promise<{ subject: string; body: string } | null> {
   const key = Deno.env.get('GEMINI_API_KEY');
   if (!key) {
     console.error('GEMINI_API_KEY nije podešen.');
@@ -79,7 +86,7 @@ export async function draftFromText(note: string, name: string, company: string,
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
     signal: AbortSignal.timeout(geminiTimeoutMs),
     body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: textPrompt(note, name, company, event, tone) }] }],
+      contents: [{ role: 'user', parts: [{ text: textPrompt(note, name, company, event, tone, lang) }] }],
       generationConfig: {
         temperature: tone === 'plain' ? 0.2 : 0.4,
         responseMimeType: 'application/json',
@@ -100,10 +107,10 @@ export async function draftFromText(note: string, name: string, company: string,
   return parseMail(raw);
 }
 
-function textPrompt(note: string, name: string, company: string, event: string, tone: string): string {
-  const style = tone === 'shorter' ? 'Neka mejl bude kraći, u dve ili tri rečenice.' : tone === 'formal' ? 'Neka mejl bude formalniji, i dalje na ti.' : 'Neka mejl bude kratak i prijatan.';
+function textPrompt(note: string, name: string, company: string, event: string, tone: string, lang: Lang): string {
+  const style = tone === 'shorter' ? 'Neka mejl bude kraći, u dve ili tri rečenice.' : tone === 'formal' ? (lang === 'en' ? 'Neka mejl bude formalniji.' : 'Neka mejl bude formalniji, i dalje na ti.') : 'Neka mejl bude kratak i prijatan.';
   return [
-    'Pišeš follow-up mejl posle razgovora na konferenciji. Srpski, latinica, na ti.',
+    `Pišeš follow-up mejl posle razgovora na konferenciji. ${writeIn(lang)}`,
     `Ime: ${name || 'nepoznato'}. Firma: ${company || 'nije navedena'}. Event: ${event || 'nije naveden'}.`,
     `Beleška: ${note}`,
     style,
@@ -125,9 +132,9 @@ function parseMail(raw: string): { subject: string; body: string } | null {
   }
 }
 
-function prompt(today: string): string {
+function prompt(today: string, lang: Lang): string {
   return [
-    'Čuješ glasovnu belešku posle razgovora na konferenciji. Piši na srpskom, latinica, na ti.',
+    `Čuješ glasovnu belešku posle razgovora na konferenciji. ${writeIn(lang)}`,
     'Vrati samo ono što je izgovoreno. Ne izmišljaj ime, firmu, brojke, dogovore ni detalje kojih nema u snimku.',
     'note: kratka beleška razgovora. topic: tema u nekoliko reči.',
     `follow_up_date: YYYY-MM-DD. Ako datum nije izgovoren, predloži tri radna dana od danas. Danas je ${today}. Preskoči subotu i nedelju.`,

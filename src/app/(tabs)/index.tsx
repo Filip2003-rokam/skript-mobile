@@ -12,6 +12,7 @@ import { colors, fontSize, fonts, size, space } from '../../../constants/theme';
 import { useCurrentEvent } from '../../../lib/currentEvent';
 import { authErrorMessage } from '../../../lib/services/authService';
 import { getMyEvents, type EventRow } from '../../../lib/services/eventService';
+import { t } from '../../../lib/i18n';
 
 function NoEventHome() {
   const { setSlug } = useCurrentEvent();
@@ -47,7 +48,7 @@ function NoEventHome() {
         <EmptyState
           icon={<Feather name="alert-circle" size={size.iconMd} color={colors.ink} />}
           text={error}
-          action="Pokušaj ponovo"
+          action={t('common.retry')}
           onAction={retry}
         />
       ) : null}
@@ -55,14 +56,14 @@ function NoEventHome() {
       {events && events.length === 0 ? (
         <EmptyState
           icon={<Feather name="camera" size={size.iconMd} color={colors.ink} />}
-          text="Nema eventa na nalogu. Skeniraj QR kod da uđeš."
-          action="Skeniraj"
+          text={t('empty.noEvents')}
+          action={t('common.scan')}
           onAction={() => router.push('/scan')}
         />
       ) : null}
       {events && events.length > 0 ? (
         <View style={styles.list}>
-          <Text style={styles.listTitle}>Moji eventi</Text>
+          <Text style={styles.listTitle}>{t('home.myEvents')}</Text>
           {events.map((event) => (
             <Button
               key={event.id}
@@ -73,7 +74,7 @@ function NoEventHome() {
               }}
             />
           ))}
-          <Button label="Skeniraj drugi event" variant="ghost" onPress={() => router.push('/scan')} />
+          <Button label={t('home.scanAnother')} variant="ghost" onPress={() => router.push('/scan')} />
         </View>
       ) : null}
     </Screen>

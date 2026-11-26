@@ -18,12 +18,13 @@ import { getContact, updateContact, type Contact } from '../../lib/services/cont
 import { getEventBySlug, type EventRow } from '../../lib/services/eventService';
 import { getMyProfile } from '../../lib/services/profileService';
 import { issueSwapToken, revokeSwapToken, swapContact, swapRefreshMs } from '../../lib/services/swapService';
+import { t } from '../../lib/i18n';
 
 export default function SwapScreen() {
   const { slug } = useCurrentEvent();
   const [permission, requestPermission] = useCameraPermissions();
   const [event, setEvent] = useState<EventRow | null>(null);
-  const [person, setPerson] = useState('Učesnik');
+  const [person, setPerson] = useState(t('swap.attendee'));
   const [token, setToken] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [saved, setSaved] = useState<Contact | null>(null);
@@ -55,7 +56,7 @@ export default function SwapScreen() {
         const profile = await getMyProfile();
         if (!active) return;
         setEvent(row);
-        setPerson(profile.fullName?.trim() || 'Učesnik');
+        setPerson(profile.fullName?.trim() || t('swap.attendee'));
         await refresh(row.id);
       })
       .catch((cause) => {
@@ -84,7 +85,7 @@ export default function SwapScreen() {
     if (locked.current || !event) return;
     const result = readSkriptQr(value);
     if (result.kind !== 'swap') {
-      setNotice('Ovo nije kod za razmenu. Skeniraj QR sa ekrana Razmeni kontakt.');
+      setNotice(t('swap.notSwapCode'));
       return;
     }
     locked.current = true;
@@ -93,7 +94,7 @@ export default function SwapScreen() {
     try {
       const contactId = await swapContact(result.token);
       const contact = await getContact(contactId);
-      if (!contact) throw new Error('Kontakt nije napravljen. Pokušaj ponovo.');
+      if (!contact) throw new Error(t('errors.contactNotCreated'));
       await revokeSwapToken(event.id);
       setToken(null);
       setSaved(contact);
@@ -107,7 +108,7 @@ export default function SwapScreen() {
   if (!slug) {
     return (
       <Screen>
-        <EmptyState icon={<Feather name="calendar" size={size.iconMd} color={colors.ink} />} text="Prvo uđi na event. Razmena važi samo među učesnicima." action="Skeniraj event" onAction={() => router.push('/scan')} />
+        <EmptyState icon={<Feather name="calendar" size={size.iconMd} color={colors.ink} />} text={t('swap.joinFirst')} action={t('swap.scanEvent')} onAction={() => router.push('/scan')} />
       </Screen>
     );
   }
@@ -125,8 +126,8 @@ export default function SwapScreen() {
       <Screen>
         <EmptyState
           icon={<Feather name="alert-circle" size={size.iconMd} color={colors.ink} />}
-          text={error ?? 'Ne mogu da otvorim razmenu. Proveri da si na ovom eventu i pokušaj ponovo.'}
-          action="Pokušaj ponovo"
+          text={error ?? t('swap.openFailed')}
+          action={t('common.retry')}
           onAction={() => setAttempt((value) => value + 1)}
         />
       </Screen>
@@ -149,27 +150,27 @@ export default function SwapScreen() {
 
   return (
     <Screen scroll>
-      <Text style={styles.title}>Razmena kontakata</Text>
+      <Text style={styles.title}>{t('swap.title')}</Text>
       {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
       {token ? <SwapCode token={token} person={person} eventName={event.name} /> : null}
-      <Text style={styles.note}>Kod važi pet minuta i menja se dok je ovaj ekran otvoren. Fotografija kasnije ne radi.</Text>
+      <Text style={styles.note}>{t('swap.codeNote')}</Text>
       {scanning ? (
         <View style={styles.scan}>
-          <Text style={styles.scanning}>Skeniram…</Text>
+          <Text style={styles.scanning}>{t('swap.scanning')}</Text>
           {!permission ? null : permission.granted ? (
             <CameraView style={styles.camera} facing="back" barcodeScannerSettings={{ barcodeTypes: ['qr'] }} onBarcodeScanned={({ data }) => void onScan(data)} />
           ) : (
-            <Button label={permission.canAskAgain ? 'Dozvoli kameru' : 'Otvori podešavanja'} onPress={() => (permission.canAskAgain ? requestPermission() : Linking.openSettings())} />
+            <Button label={permission.canAskAgain ? t('camera.allow') : t('camera.openSettings')} onPress={() => (permission.canAskAgain ? requestPermission() : Linking.openSettings())} />
           )}
           {notice ? <Text style={styles.note}>{notice}</Text> : null}
-          <Button label="Zatvori skener" variant="ghost" onPress={() => setScanning(false)} />
+          <Button label={t('swap.closeScanner')} variant="ghost" onPress={() => setScanning(false)} />
         </View>
       ) : (
-        <Button label="Skeniraj njihov" onPress={() => { locked.current = false; setScanning(true); }}>
+        <Button label={t('swap.scanTheirs')} onPress={() => { locked.current = false; setScanning(true); }}>
           <Feather name="camera" size={size.iconMd} color={colors.onInk} />
         </Button>
       )}
-      <Button label="Nazad" variant="ghost" onPress={() => router.back()} />
+      <Button label={t('common.back')} variant="ghost" onPress={() => router.back()} />
     </Screen>
   );
 }

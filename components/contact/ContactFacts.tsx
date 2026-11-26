@@ -3,6 +3,7 @@ import { Avatar } from '../ui/Avatar';
 import { colors, fontSize, fonts, size, space, trackingWide } from '../../constants/theme';
 import { toDisplayDate } from '../../lib/contactDates';
 import type { Contact } from '../../lib/services/contactService';
+import { t } from '../../lib/i18n';
 
 function linkUrl(value: string) {
   return /^https?:\/\//i.test(value) ? value : `https://${value}`;
@@ -23,13 +24,13 @@ export function ContactHeading({ name, event }: { name: string; event: string | 
 export function ContactFacts({ contact }: { contact: Contact }) {
   return (
     <View style={styles.facts}>
-      <Fact label="Uloga" value={contact.jobTitle} />
-      <Fact label="Firma" value={contact.company} />
-      <Fact label="Mejl" value={contact.email} onPress={contact.email ? () => void Linking.openURL(`mailto:${contact.email}`) : undefined} />
-      <Fact label="Telefon" value={contact.phone} onPress={contact.phone ? () => void Linking.openURL(`tel:${contact.phone?.replace(/\s/g, '')}`) : undefined} />
-      <Fact label="LinkedIn" value={contact.linkedinUrl} onPress={contact.linkedinUrl ? () => void Linking.openURL(linkUrl(contact.linkedinUrl ?? '')) : undefined} />
-      <Fact label="Beleška" value={contact.note} />
-      <Fact label="Follow-up" value={toDisplayDate(contact.followUpDate) || null} />
+      <Fact label={t('fields.role')} value={contact.jobTitle} />
+      <Fact label={t('fields.company')} value={contact.company} />
+      <Fact label={t('fields.email')} value={contact.email} onPress={contact.email ? () => void Linking.openURL(`mailto:${contact.email}`) : undefined} />
+      <Fact label={t('fields.phone')} value={contact.phone} onPress={contact.phone ? () => void Linking.openURL(`tel:${contact.phone?.replace(/\s/g, '')}`) : undefined} />
+      <Fact label={t('fields.linkedin')} value={contact.linkedinUrl} onPress={contact.linkedinUrl ? () => void Linking.openURL(linkUrl(contact.linkedinUrl ?? '')) : undefined} />
+      <Fact label={t('fields.note')} value={contact.note} />
+      <Fact label={t('fields.followUp')} value={toDisplayDate(contact.followUpDate) || null} />
     </View>
   );
 }

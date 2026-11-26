@@ -1,0 +1,6 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Skript koristi kameru da skenira QR kod eventa.",
+    "NSMicrophoneUsageDescription": "Skript koristi mikrofon da snimi glasovnu belešku posle razgovora."
+  }
+}

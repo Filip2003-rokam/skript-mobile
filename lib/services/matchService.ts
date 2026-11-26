@@ -1,6 +1,7 @@
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
 import { getSession } from './authService';
+import { appLanguage, appLocale, t } from '../i18n';
 
 export type Suggestion = {
   id: string;
@@ -44,7 +45,7 @@ type AttendeeRow = {
 
 export async function getSuggestions(eventId: string): Promise<Suggestion[]> {
   const session = await getSession();
-  if (!session) throw new Error('Nisi prijavljen.');
+  if (!session) throw new Error(t('errors.signedOut'));
 
   const { data, error } = await supabase
     .from('match_suggestions')
@@ -90,14 +91,14 @@ export async function getSuggestions(eventId: string): Promise<Suggestion[]> {
         inRoom: attendee?.in_room ?? false,
       };
     })
-    .sort((a, b) => b.score - a.score || (a.name ?? '').localeCompare(b.name ?? '', 'sr'));
+    .sort((a, b) => b.score - a.score || (a.name ?? '').localeCompare(b.name ?? '', appLocale()));
 }
 
 export async function refreshSuggestions(eventId: string): Promise<Suggestion[]> {
   const session = await getSession();
-  if (!session) throw new Error('Nisi prijavljen.');
+  if (!session) throw new Error(t('errors.signedOut'));
 
-  const { error } = await supabase.functions.invoke('match-attendees', { body: { event_id: eventId } });
+  const { error } = await supabase.functions.invoke('match-attendees', { body: { event_id: eventId, lang: appLanguage() } });
   if (error) throw new Error(await functionMessage(error));
   return getSuggestions(eventId);
 }
@@ -108,8 +109,8 @@ async function functionMessage(error: unknown): Promise<string> {
       const body = (await error.context.json()) as { error?: unknown };
       if (typeof body.error === 'string' && body.error.trim()) return body.error;
     } catch {
-      return 'Predlozi trenutno nisu dostupni. Pokušaj ponovo.';
+      return t('match.unavailable');
     }
   }
-  return 'Predlozi trenutno nisu dostupni. Pokušaj ponovo.';
+  return t('match.unavailable');
 }

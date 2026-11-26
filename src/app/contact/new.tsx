@@ -12,6 +12,7 @@ import { authErrorMessage } from '../../../lib/services/authService';
 import { createContact, type Contact, type ContactWrite } from '../../../lib/services/contactService';
 import { getEventBySlug } from '../../../lib/services/eventService';
 import { noteWithTopic, type VoiceDraft } from '../../../lib/services/voiceNoteService';
+import { t } from '../../../lib/i18n';
 
 export default function NewContactScreen() {
   const { slug } = useCurrentEvent();
@@ -39,7 +40,7 @@ export default function NewContactScreen() {
         if (!active) return;
         if (!event) {
           setEventId(null);
-          setLoadError('Ovaj event ne postoji. Vrati se i skeniraj QR kod.');
+          setLoadError(t('errors.eventMissingScan'));
           return;
         }
         setEventId(event.id);
@@ -92,7 +93,7 @@ export default function NewContactScreen() {
   if (loadError && !eventId) {
     return (
       <Screen>
-        <Button label="Nazad" variant="ghost" onPress={() => router.back()} />
+        <Button label={t('common.back')} variant="ghost" onPress={() => router.back()} />
         <ErrorState text={loadError} onRetry={() => setAttempt((value) => value + 1)} />
       </Screen>
     );
@@ -100,8 +101,8 @@ export default function NewContactScreen() {
 
   return (
     <Screen scroll>
-      <Button label="Nazad" variant="ghost" onPress={() => router.back()} />
-      <Text style={styles.title}>Nov kontakt</Text>
+      <Button label={t('common.back')} variant="ghost" onPress={() => router.back()} />
+      <Text style={styles.title}>{t('contact.newTitle')}</Text>
       <VoiceNote onReady={fillFromVoice} />
       <ContactForm key={formKey} contact={seed} saving={saving} error={error} onSubmit={(data) => void save(data)} />
     </Screen>

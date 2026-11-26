@@ -7,6 +7,7 @@ import { Card } from '../ui/Card';
 import { colors, fontSize, fonts, size, space } from '../../constants/theme';
 import type { ConnectionStatus } from '../../lib/services/connectionService';
 import { actionError, displayName, Kicker, RoleLine } from './personBits';
+import { t } from '../../lib/i18n';
 
 type RequestCardProps = {
   name: string | null;
@@ -40,7 +41,7 @@ export function RequestCard(props: RequestCardProps) {
   if (props.status === 'declined') {
     return (
       <Card>
-        <Text style={styles.aside}>Odbijeno. Kontakt podaci se ne dele.</Text>
+        <Text style={styles.aside}>{t('request.declined')}</Text>
       </Card>
     );
   }
@@ -51,28 +52,28 @@ export function RequestCard(props: RequestCardProps) {
         <View style={styles.header}>
           <Avatar name={person} size={size.buttonSm} />
           <View style={styles.identity}>
-            <Text style={styles.title}>{person.split(' ')[0]} želi da se poveže</Text>
+            <Text style={styles.title}>{person.split(' ')[0]} {t('request.wantsToConnect')}</Text>
             <RoleLine role={props.role} company={props.company} />
           </View>
         </View>
         {props.message ? (
           <View style={styles.block}>
-            <Kicker text="NAPISAO/LA JE" />
+            <Kicker text={t('request.wrote')} />
             <Text style={styles.message}>"{props.message}"</Text>
           </View>
         ) : null}
         {props.status === 'pending' ? (
           <View style={styles.actions}>
-            <Button size="sm" label="Prihvati" disabled={busy} onPress={() => void answer('accepted')}>
+            <Button size="sm" label={t('request.accept')} disabled={busy} onPress={() => void answer('accepted')}>
               <Feather name="check" size={size.iconSm} color={colors.onInk} />
             </Button>
-            <Button size="sm" variant="secondary" label="Ne sada" disabled={busy} onPress={() => void answer('declined')} />
+            <Button size="sm" variant="secondary" label={t('common.notNow')} disabled={busy} onPress={() => void answer('declined')} />
           </View>
         ) : (
           <View style={styles.block}>
             {props.email ? <ContactLink icon="mail" value={props.email} url={`mailto:${props.email}`} /> : null}
             {props.phone ? <ContactLink icon="phone" value={props.phone} url={`tel:${props.phone.replace(/\s/g, '')}`} /> : null}
-            <Text style={styles.saved}>Sačuvano u kontakte</Text>
+            <Text style={styles.saved}>{t('request.savedToContacts')}</Text>
           </View>
         )}
         {error ? <Text style={styles.error}>{error}</Text> : null}

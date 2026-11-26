@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, Text, V
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fontSize, fonts, radius, shadow, size, space, trackingTight } from '../../constants/theme';
 import { keyboardBehavior } from './Screen';
+import { t } from '../../lib/i18n';
 
 type SheetProps = {
   open: boolean;
@@ -24,7 +25,7 @@ export function Sheet({ open, onClose, title, scroll = false, children }: SheetP
   return (
     <Modal visible={open} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
       <KeyboardAvoidingView behavior={keyboardBehavior} style={styles.modal}>
-        <Pressable accessibilityLabel="Zatvori" style={[StyleSheet.absoluteFill, styles.scrim]} onPress={onClose} />
+        <Pressable accessibilityLabel={t('common.close')} style={[StyleSheet.absoluteFill, styles.scrim]} onPress={onClose} />
         <View style={[styles.sheet, { marginBottom: Math.max(insets.bottom, space.tight * 2) }]}>
           <View style={styles.handle} />
           {title ? <Text style={styles.title}>{title}</Text> : null}

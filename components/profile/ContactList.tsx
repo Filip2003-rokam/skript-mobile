@@ -12,6 +12,7 @@ import { colors, fontSize, fonts, pressScale, radius, shadow, size, space, track
 import { followUpIsDue, toDisplayDate } from '../../lib/contactDates';
 import { authErrorMessage } from '../../lib/services/authService';
 import { listContacts, type ContactListItem } from '../../lib/services/contactService';
+import { appLocale, t } from '../../lib/i18n';
 
 export function ContactList({ version }: { version: number }) {
   const [search, setSearch] = useState('');
@@ -47,12 +48,12 @@ export function ContactList({ version }: { version: number }) {
   const shown = due ? rows.filter((row) => followUpIsDue(row.followUpDate, row.followUpDone)) : rows;
   const groups = new Map<string, ContactListItem[]>();
   for (const row of shown) {
-    const key = row.eventName ?? 'Bez eventa';
+    const key = row.eventName ?? t('contacts.noEvent');
     const list = groups.get(key);
     if (list) list.push(row);
     else groups.set(key, [row]);
   }
-  const names = [...groups.keys()].sort((a, b) => (a === 'Bez eventa' ? 1 : b === 'Bez eventa' ? -1 : a.localeCompare(b, 'sr')));
+  const names = [...groups.keys()].sort((a, b) => (a === t('contacts.noEvent') ? 1 : b === t('contacts.noEvent') ? -1 : a.localeCompare(b, appLocale())));
 
   return (
     <View style={styles.list}>
@@ -62,23 +63,23 @@ export function ContactList({ version }: { version: number }) {
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder="Pretraga kontakata"
+            placeholder={t('contacts.search')}
             placeholderTextColor={colors.text3}
-            accessibilityLabel="Pretraga kontakata"
+            accessibilityLabel={t('contacts.search')}
             style={styles.input}
           />
         </View>
-        <Button variant="icon" accessibilityLabel="Nov kontakt" onPress={() => router.push('/contact/new')}>
+        <Button variant="icon" accessibilityLabel={t('contact.newTitle')} onPress={() => router.push('/contact/new')}>
           <Feather name="plus" size={size.iconMd} color={colors.ink} />
         </Button>
       </View>
-      <Chip label="Follow-up na redu" selected={due} icon={<Feather name="bell" size={size.iconSm} color={colors.ink} />} onPress={() => setDue((value) => !value)} />
+      <Chip label={t('contacts.followUpDue')} selected={due} icon={<Feather name="bell" size={size.iconSm} color={colors.ink} />} onPress={() => setDue((value) => !value)} />
       {version === 0 || (!loaded && rows.length === 0 && !error) ? <LoadingState fill={false} /> : null}
       {error && rows.length === 0 ? (
         <EmptyState
           icon={<Feather name="alert-circle" size={size.iconMd} color={colors.ink} />}
           text={error}
-          action="Pokušaj ponovo"
+          action={t('common.retry')}
           onAction={() => setAttempt((value) => value + 1)}
         />
       ) : null}
@@ -86,7 +87,7 @@ export function ContactList({ version }: { version: number }) {
       {loaded && shown.length === 0 && !error ? (
         <EmptyState
           icon={<Feather name="book" size={size.iconMd} color={colors.ink} />}
-          text={rows.length ? 'Nema kontakata za ovu pretragu. Obriši reč ili isključi filter.' : 'Još nema kontakata. Dodaj prvi preko plusa.'}
+          text={rows.length ? t('contacts.noResults') : t('contacts.none')}
         />
       ) : null}
       {names.map((name) => (
@@ -123,7 +124,7 @@ function FollowUp({ contact }: { contact: ContactListItem }) {
   return (
     <View style={styles.followRow}>
       {!contact.followUpDone ? <Feather name="bell" size={fontSize.fs11} color={due ? colors.ink : colors.text2} /> : null}
-      <Text numberOfLines={1} style={[styles.follow, due && styles.followDue]}>{contact.followUpDone ? 'Follow-up poslat' : `Follow-up · ${date}`}</Text>
+      <Text numberOfLines={1} style={[styles.follow, due && styles.followDue]}>{contact.followUpDone ? t('contact.followUpSent') : t('contacts.followUpOn', { date })}</Text>
     </View>
   );
 }

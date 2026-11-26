@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { EmptyState } from '../ui/EmptyState';
 import { colors, size, space } from '../../constants/theme';
 import { PersonCard } from './PersonCard';
+import { t } from '../../lib/i18n';
 
 type Person = {
   userId: string;
@@ -26,7 +27,7 @@ export function Roster({ people, empty, onFind, trailing }: RosterProps) {
       <EmptyState
         icon={<Feather name="users" size={size.iconMd} color={colors.ink} />}
         text={empty}
-        action="Nađi još ljudi"
+        action={t('people.findMore')}
         onAction={onFind}
       />
     );
@@ -43,7 +44,7 @@ export function Roster({ people, empty, onFind, trailing }: RosterProps) {
           trailing={trailing?.(person)}
         />
       ))}
-      <Button size="sm" variant="secondary" label="Nađi još ljudi" onPress={onFind} style={styles.more} />
+      <Button size="sm" variant="secondary" label={t('people.findMore')} onPress={onFind} style={styles.more} />
     </View>
   );
 }

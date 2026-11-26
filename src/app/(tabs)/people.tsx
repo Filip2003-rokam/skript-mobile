@@ -8,6 +8,7 @@ import { Screen } from '../../../components/ui/Screen';
 import { ErrorState, LoadingState } from '../../../components/ui/State';
 import { colors, size } from '../../../constants/theme';
 import { useCurrentEvent } from '../../../lib/currentEvent';
+import { t } from '../../../lib/i18n';
 
 const views: PeopleView[] = ['suggestions', 'saved', 'requests', 'connected'];
 
@@ -65,8 +66,8 @@ export default function PeopleScreen() {
         <View style={styles.center}>
           <EmptyState
             icon={<Feather name="users" size={size.iconMd} color={colors.ink} />}
-            text="Nema izabranog eventa. Skeniraj QR kod da vidiš ljude."
-            action="Skeniraj"
+            text={t('empty.noEventPeople')}
+            action={t('common.scan')}
             onAction={() => router.push('/scan')}
           />
         </View>

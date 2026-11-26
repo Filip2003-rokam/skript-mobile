@@ -1,13 +1,14 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { colors, fontSize, fonts, pressScale, radius, shadow, size, space } from '../../constants/theme';
+import { t } from '../../lib/i18n';
 
 // Kao u demou: sve kartice imaju isti miran izgled, a izabrana dobija tačku ispod.
 const tabs = {
-  index: { label: 'Početna', icon: 'home' as const },
-  agenda: { label: 'Agenda', icon: 'calendar' as const },
-  people: { label: 'Ljudi', icon: 'users' as const },
-  profile: { label: 'Profil', icon: 'user' as const },
+  index: { get label() { return t('tabs.home'); }, icon: 'home' as const },
+  agenda: { get label() { return t('tabs.agenda'); }, icon: 'calendar' as const },
+  people: { get label() { return t('tabs.people'); }, icon: 'users' as const },
+  profile: { get label() { return t('tabs.me'); }, icon: 'user' as const },
 };
 
 type TabKey = keyof typeof tabs;

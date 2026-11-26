@@ -1,10 +1,44 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
-import { draftFromText, transcribeAudio } from './gemini.ts';
+import { draftFromText, transcribeAudio, type Lang } from './gemini.ts';
 
 const dailyLimit = 20;
 const maxAudioChars = 2_000_000;
 const zone = 'Europe/Belgrade';
 const allowedMime = new Set(['audio/mp4', 'audio/m4a', 'audio/aac', 'audio/mpeg', 'audio/wav', 'audio/webm', 'audio/x-m4a']);
+// Poruke za telefon, na jeziku koji aplikacija pošalje (lang).
+const messages: Record<Lang, Record<string, string>> = {
+  sr: {
+    noAudio: 'Snimak nije stigao. Pokušaj ponovo.',
+    signedOut: 'Nisi prijavljen.',
+    limitText: 'Danas je već iskorišćeno dvadeset nacrta. Pokušaj ponovo sutra.',
+    limitAudio: 'Danas je već iskorišćeno dvadeset glasovnih beleški. Pokušaj ponovo sutra.',
+    noDraft: 'Nacrt nije napisan. Proveri belešku i pokušaj ponovo.',
+    notUnderstood: 'Nisam razumeo snimak. Govori bliže mikrofonu i pokušaj ponovo.',
+    failed: 'Beleška nije obrađena. Pokušaj ponovo.',
+    noMessage: 'Poruka nije stigla. Pokušaj ponovo.',
+    emptyNote: 'Napiši belešku pa pokušaj ponovo.',
+    longNote: 'Beleška je predugačka. Skrati je i pokušaj ponovo.',
+    format: 'Format snimka nije podržan. Snimi belešku ponovo.',
+    empty: 'Snimak je prazan. Pritisni Snimi i govori do 30 sekundi.',
+    long: 'Snimak je predugačak. Snimi najviše 30 sekundi.',
+  },
+  en: {
+    noAudio: 'The recording did not arrive. Try again.',
+    signedOut: 'You are not signed in.',
+    limitText: 'You already used twenty drafts today. Try again tomorrow.',
+    limitAudio: 'You already used twenty voice notes today. Try again tomorrow.',
+    noDraft: 'The draft was not written. Check the note and try again.',
+    notUnderstood: 'I did not understand the recording. Speak closer to the microphone and try again.',
+    failed: 'The note was not processed. Try again.',
+    noMessage: 'The message did not arrive. Try again.',
+    emptyNote: 'Write a note, then try again.',
+    longNote: 'The note is too long. Shorten it and try again.',
+    format: 'This recording format is not supported. Record the note again.',
+    empty: 'The recording is empty. Tap Record and speak for up to 30 seconds.',
+    long: 'The recording is too long. Record at most 30 seconds.',
+  },
+};
+
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -12,15 +46,17 @@ const cors = {
 
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
-  if (request.method !== 'POST') return json({ error: 'Snimak nije stigao. Pokušaj ponovo.' }, 400);
+  if (request.method !== 'POST') return json({ error: messages.sr.noAudio }, 400);
 
+  let lang: Lang = 'sr';
   try {
     const admin = serviceClient();
-    const userId = await callerId(admin, request);
-    if (!userId) return json({ error: 'Nisi prijavljen.' }, 401);
-
     const body = await readBody(request);
-    if ('error' in body) return json({ error: body.error }, 400);
+    lang = body.lang;
+    const m = messages[lang];
+    const userId = await callerId(admin, request);
+    if (!userId) return json({ error: m.signedOut }, 401);
+    if ('error' in body) return json({ error: m[body.error] }, 400);
 
     const since = startOfZonedDay(zone);
     const { data: runs, error: countError } = await admin
@@ -30,9 +66,7 @@ Deno.serve(async (request) => {
       .gte('created_at', since);
     if (countError) throw countError;
     if ((runs?.length ?? 0) >= dailyLimit) {
-      const limit = body.kind === 'text'
-        ? 'Danas je već iskorišćeno dvadeset nacrta. Pokušaj ponovo sutra.'
-        : 'Danas je već iskorišćeno dvadeset glasovnih beleški. Pokušaj ponovo sutra.';
+      const limit = body.kind === 'text' ? m.limitText : m.limitAudio;
       return json({ error: limit }, 429);
     }
 
@@ -42,12 +76,12 @@ Deno.serve(async (request) => {
     // Snimak i tekst žive samo u ovom zahtevu. Ne idu u Storage ni u tabelu. Ostaje dnevni brojač.
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
     if (body.kind === 'text') {
-      const mail = await draftFromText(body.text, body.name, body.company, body.event, body.tone);
-      if (!mail) return json({ error: 'Nacrt nije napisan. Proveri belešku i pokušaj ponovo.' }, 422);
+      const mail = await draftFromText(body.text, body.name, body.company, body.event, body.tone, lang);
+      if (!mail) return json({ error: m.noDraft }, 422);
       return json({ note: body.text, topic: '', follow_up_date: null, email_subject: mail.subject, email_body: mail.body, full_name: body.name, job_title: '', company: body.company, email: '', phone: '' });
     }
-    const draft = await transcribeAudio(body.audio, body.mime, today);
-    if (!draft) return json({ error: 'Nisam razumeo snimak. Govori bliže mikrofonu i pokušaj ponovo.' }, 422);
+    const draft = await transcribeAudio(body.audio, body.mime, today, lang);
+    if (!draft) return json({ error: m.notUnderstood }, 422);
 
     return json({
       note: draft.note,
@@ -63,7 +97,7 @@ Deno.serve(async (request) => {
     });
   } catch (cause) {
     console.error(cause instanceof Error ? cause.message : cause);
-    return json({ error: 'Beleška nije obrađena. Pokušaj ponovo.' }, 500);
+    return json({ error: messages[lang].failed }, 500);
   }
 });
 
@@ -98,31 +132,34 @@ async function callerId(admin: SupabaseClient, request: Request): Promise<string
   return data.user.id;
 }
 
-type Incoming =
+type ErrorKey = 'noMessage' | 'emptyNote' | 'longNote' | 'format' | 'empty' | 'long';
+type Incoming = { lang: Lang } & (
   | { kind: 'audio'; audio: string; mime: string }
   | { kind: 'text'; text: string; name: string; company: string; event: string; tone: string }
-  | { error: string };
+  | { error: ErrorKey }
+);
 
 async function readBody(request: Request): Promise<Incoming> {
-  let body: { audio_base64?: unknown; mime_type?: unknown; text?: unknown; name?: unknown; company?: unknown; event?: unknown; tone?: unknown };
+  let body: { audio_base64?: unknown; mime_type?: unknown; text?: unknown; name?: unknown; company?: unknown; event?: unknown; tone?: unknown; lang?: unknown };
   try {
     body = (await request.json()) as typeof body;
   } catch {
-    return { error: 'Poruka nije stigla. Pokušaj ponovo.' };
+    return { lang: 'sr', error: 'noMessage' };
   }
+  const lang: Lang = body.lang === 'en' ? 'en' : 'sr';
   if (typeof body.text === 'string') {
     const text = body.text.trim();
-    if (!text) return { error: 'Napiši belešku pa pokušaj ponovo.' };
-    if (text.length > 4000) return { error: 'Beleška je predugačka. Skrati je i pokušaj ponovo.' };
+    if (!text) return { lang, error: 'emptyNote' };
+    if (text.length > 4000) return { lang, error: 'longNote' };
     const tone = body.tone === 'shorter' || body.tone === 'formal' ? body.tone : 'plain';
-    return { kind: 'text', text, name: clipField(body.name), company: clipField(body.company), event: clipField(body.event), tone };
+    return { lang, kind: 'text', text, name: clipField(body.name), company: clipField(body.company), event: clipField(body.event), tone };
   }
   const mime = typeof body.mime_type === 'string' ? body.mime_type.trim().toLowerCase() : '';
   const audio = typeof body.audio_base64 === 'string' ? body.audio_base64.replace(/\s/g, '') : '';
-  if (!allowedMime.has(mime)) return { error: 'Format snimka nije podržan. Snimi belešku ponovo.' };
-  if (!audio) return { error: 'Snimak je prazan. Pritisni Snimi i govori do 30 sekundi.' };
-  if (audio.length > maxAudioChars) return { error: 'Snimak je predugačak. Snimi najviše 30 sekundi.' };
-  return { kind: 'audio', audio, mime };
+  if (!allowedMime.has(mime)) return { lang, error: 'format' };
+  if (!audio) return { lang, error: 'empty' };
+  if (audio.length > maxAudioChars) return { lang, error: 'long' };
+  return { lang, kind: 'audio', audio, mime };
 }
 
 function clipField(value: unknown): string {

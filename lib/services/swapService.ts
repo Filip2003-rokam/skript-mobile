@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import { getSession } from './authService';
+import { t } from '../i18n';
 
 const minutes = 5;
 
@@ -9,7 +10,7 @@ export function swapQr(token: string): string {
 
 export async function issueSwapToken(eventId: string): Promise<string> {
   const session = await getSession();
-  if (!session) throw new Error('Nisi prijavljen. Prijavi se i pokušaj ponovo.');
+  if (!session) throw new Error(t('errors.signedOutRetry'));
   const token = freshToken();
   const { error: cleared } = await supabase.from('swap_tokens').delete().eq('event_id', eventId).is('used_at', null);
   if (cleared) throw cleared;
@@ -24,10 +25,10 @@ export async function revokeSwapToken(eventId: string): Promise<void> {
 
 export async function swapContact(token: string): Promise<string> {
   const session = await getSession();
-  if (!session) throw new Error('Nisi prijavljen. Prijavi se i pokušaj ponovo.');
+  if (!session) throw new Error(t('errors.signedOutRetry'));
   const { data, error } = await supabase.rpc('swap_contact', { token });
   if (error) throw new Error(rpcMessage(error));
-  if (typeof data !== 'string' || !data) throw new Error('Kontakt nije napravljen. Pokušaj ponovo.');
+  if (typeof data !== 'string' || !data) throw new Error(t('errors.contactNotCreated'));
   return data;
 }
 
@@ -35,12 +36,12 @@ export const swapRefreshMs = (minutes - 1) * 60 * 1000;
 
 function freshToken(): string {
   const cryptoRef = globalThis.crypto;
-  if (!cryptoRef?.randomUUID) throw new Error('Telefon ne može da napravi kod. Zatvori ekran i otvori ga ponovo.');
+  if (!cryptoRef?.randomUUID) throw new Error(t('swap.codeFailed'));
   return cryptoRef.randomUUID().replace(/-/g, '');
 }
 
 function rpcMessage(error: { message?: string }): string {
   const text = error.message ?? '';
   const cleaned = text.replace(/^.*ERROR:\s*/i, '').split('\n')[0].trim();
-  return cleaned || 'Razmena nije uspela. Pokušaj ponovo.';
+  return cleaned || t('swap.failed');
 }

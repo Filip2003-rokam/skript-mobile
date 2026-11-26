@@ -2,6 +2,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router, type Href } from 'expo-router';
 import { colors, fontSize, fonts, pressScale, radius, size, space } from '../../constants/theme';
+import { t } from '../../lib/i18n';
 
 export type TryCard = {
   key: string;
@@ -17,43 +18,43 @@ export function buildTryCards(liveTitle: string | null, nextTitle: string | null
   return [
     {
       key: 'now',
-      tag: 'Uživo',
+      tag: t('session.live'),
       icon: 'radio',
       live: Boolean(liveTitle),
-      title: 'Šta se dešava sada?',
-      detail: liveTitle ?? 'Nema sesije u toku',
+      title: t('home.nowTitle'),
+      detail: liveTitle ?? t('home.noLive'),
       onPress: () => router.push('/agenda'),
     },
     {
       key: 'next',
-      tag: 'Agenda',
+      tag: t('tabs.agenda'),
       icon: 'calendar',
-      title: 'Šta je sledeće?',
-      detail: nextTitle ?? 'Nema sledeće sesije',
+      title: t('home.nextTitle'),
+      detail: nextTitle ?? t('home.noNext'),
       onPress: () => router.push('/agenda'),
     },
     {
       key: 'people',
-      tag: 'Ljudi',
+      tag: t('tabs.people'),
       icon: 'users',
-      title: 'Koga da upoznam?',
-      detail: suggestions === 0 ? 'Nema predloga' : suggestions === 1 ? '1 predlog' : `${suggestions} predloga`,
+      title: t('home.meetTitle'),
+      detail: suggestions === 0 ? t('home.noSuggestions') : t('home.suggestionCount', { count: suggestions }),
       onPress: () => router.push({ pathname: '/people', params: { view: 'suggestions' } }),
     },
     {
       key: 'swap',
-      tag: 'Razmena',
+      tag: t('home.swapTag'),
       icon: 'repeat',
-      title: 'Razmeni kontakt',
+      title: t('home.swap'),
       detail: null,
       onPress: () => router.push('/swap' as Href),
     },
     {
       key: 'follow',
-      tag: 'Kontakti',
+      tag: t('home.contactsTag'),
       icon: 'book',
-      title: 'Moji follow-up-ovi',
-      detail: followUps === 0 ? 'Nema na redu' : followUps === 1 ? '1 na redu' : `${followUps} na redu`,
+      title: t('home.followUpsTitle'),
+      detail: followUps === 0 ? t('home.noneDue') : t('home.dueCount', { count: followUps }),
       onPress: () => router.push('/profile'),
     },
   ];

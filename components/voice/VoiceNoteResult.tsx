@@ -6,6 +6,7 @@ import { colors, fontSize, fonts, radius, size, space } from '../../constants/th
 import { fromDisplayDate } from '../../lib/contactDates';
 import { formatDraft, noteWithTopic } from '../../lib/services/voiceNoteService';
 import { FollowUpDraftActions } from './FollowUpDraftActions';
+import { t } from '../../lib/i18n';
 
 type VoiceNoteResultProps = {
   note: string;
@@ -30,7 +31,7 @@ export function VoiceNoteResult({ note, topic, followUp, subject, body, email, s
   function save() {
     const date = dateText.trim();
     const iso = date ? fromDisplayDate(date) : null;
-    setDateError(date && !iso ? 'Unesi datum kao DD.MM.GGGG.' : null);
+    setDateError(date && !iso ? t('errors.dateFormat') : null);
     if (date && !iso) return;
     onSave({
       note: noteWithTopic(noteText, topicText),
@@ -41,21 +42,21 @@ export function VoiceNoteResult({ note, topic, followUp, subject, body, email, s
 
   return (
     <View style={styles.form}>
-      <TextField label="Tema" value={topicText} onChangeText={setTopicText} />
-      <TextField label="Beleška" value={noteText} onChangeText={setNoteText} multiline style={styles.note} />
+      <TextField label={t('fields.topic')} value={topicText} onChangeText={setTopicText} />
+      <TextField label={t('fields.note')} value={noteText} onChangeText={setNoteText} multiline style={styles.note} />
       <TextField
-        label="Follow-up"
+        label={t('fields.followUp')}
         value={dateText}
         onChangeText={setDateText}
-        placeholder="DD.MM.GGGG"
+        placeholder={t('fields.datePlaceholder')}
         keyboardType="numbers-and-punctuation"
         error={dateError ?? undefined}
       />
-      <TextField label="Predmet mejla" value={subjectText} onChangeText={setSubjectText} />
-      <TextField label="Tekst mejla" value={bodyText} onChangeText={setBodyText} multiline style={styles.note} />
+      <TextField label={t('fields.emailSubject')} value={subjectText} onChangeText={setSubjectText} />
+      <TextField label={t('fields.emailBody')} value={bodyText} onChangeText={setBodyText} multiline style={styles.note} />
       <FollowUpDraftActions email={email} subject={subjectText} body={bodyText} />
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Button label="Sačuvaj u kontakt" loading={saving} onPress={save} />
+      <Button label={t('voice.saveToContact')} loading={saving} onPress={save} />
     </View>
   );
 }

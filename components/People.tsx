@@ -12,6 +12,7 @@ import { Requests } from './people/Requests';
 import { Roster } from './people/Roster';
 import { Suggestions } from './people/Suggestions';
 import { usePeople } from './people/usePeople';
+import { t } from '../lib/i18n';
 
 export type PeopleView = 'suggestions' | 'saved' | 'requests' | 'connected';
 
@@ -38,8 +39,8 @@ export function People({ slug, view, onView }: PeopleProps) {
         <View style={styles.center}>
           <EmptyState
             icon={<Feather name={data.error ? 'alert-circle' : 'users'} size={size.iconMd} color={colors.ink} />}
-            text={data.error ?? 'Ovaj event ne postoji. Skeniraj QR kod ponovo.'}
-            action={data.error ? 'Pokušaj ponovo' : 'Skeniraj'}
+            text={data.error ?? t('errors.eventMissingRescan')}
+            action={data.error ? t('common.retry') : t('common.scan')}
             onAction={() => (data.error ? data.retry() : router.push('/scan'))}
           />
         </View>
@@ -50,10 +51,10 @@ export function People({ slug, view, onView }: PeopleProps) {
   const savedIds = new Set(data.saved.map((person) => person.userId));
   const pending = data.incoming.filter((person) => person.status === 'pending').length;
   const tabs = [
-    { id: 'suggestions', label: 'Predlozi' },
-    { id: 'saved', label: 'Sačuvani' },
-    { id: 'requests', label: 'Zahtevi', count: pending > 0 ? pending : undefined },
-    { id: 'connected', label: 'Povezani' },
+    { id: 'suggestions', label: t('people.suggestions') },
+    { id: 'saved', label: t('people.saved') },
+    { id: 'requests', label: t('people.requests'), count: pending > 0 ? pending : undefined },
+    { id: 'connected', label: t('people.connected') },
   ];
 
   return (
@@ -84,10 +85,10 @@ export function People({ slug, view, onView }: PeopleProps) {
       {view === 'saved' ? (
         <Roster
           people={data.saved}
-          empty="Još nikog nisi sačuvao."
+          empty={t('people.noSaved')}
           onFind={() => onView('suggestions')}
           trailing={(person) => (
-            <Button size="sm" variant="secondary" label="Sačuvano" onPress={() => void data.toggleSave(person.userId)}>
+            <Button size="sm" variant="secondary" label={t('common.saved')} onPress={() => void data.toggleSave(person.userId)}>
               <Feather name="bookmark" size={size.iconSm} color={colors.ink} />
             </Button>
           )}
@@ -107,9 +108,9 @@ export function People({ slug, view, onView }: PeopleProps) {
       {view === 'connected' ? (
         <Roster
           people={data.connected}
-          empty="Još nema veza."
+          empty={t('people.noConnections')}
           onFind={() => onView('suggestions')}
-          trailing={() => <Text style={styles.linked}>Povezani</Text>}
+          trailing={() => <Text style={styles.linked}>{t('people.connected')}</Text>}
         />
       ) : null}
     </Screen>

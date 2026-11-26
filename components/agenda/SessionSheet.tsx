@@ -3,6 +3,7 @@ import { Avatar } from '../ui/Avatar';
 import { Sheet } from '../ui/Sheet';
 import { colors, fontSize, fonts, radius, size, space, trackingTight } from '../../constants/theme';
 import { sessionClock, sessionEndClock, type SessionMark, type SessionRow } from '../../lib/services/sessionService';
+import { t } from '../../lib/i18n';
 
 type SessionSheetProps = {
   session: SessionRow | null;
@@ -15,7 +16,7 @@ export function SessionSheet({ session, mark, open, onClose }: SessionSheetProps
   const time = session ? sessionClock(session.start_time) : '';
   const end = session ? sessionEndClock(session.start_time, session.duration_min) : '';
   const span = time && end ? `${time}–${end}` : time;
-  const where = [session?.room, session?.day ? `Dan ${session.day}` : '', span].filter(Boolean).join(' · ');
+  const where = [session?.room, session?.day ? t('agenda.dayN', { day: session.day }) : '', span].filter(Boolean).join(' · ');
   return (
     <Sheet open={open && session != null} onClose={onClose}>
       {session ? (
@@ -40,11 +41,11 @@ function Status({ mark }: { mark: SessionMark }) {
     return (
       <View style={styles.live}>
         <View style={styles.dot} />
-        <Text style={styles.liveText}>Uživo</Text>
+        <Text style={styles.liveText}>{t('session.live')}</Text>
       </View>
     );
   }
-  return <Text style={mark === 'ended' ? styles.ended : styles.upcoming}>{mark === 'ended' ? 'Završeno' : 'Uskoro'}</Text>;
+  return <Text style={mark === 'ended' ? styles.ended : styles.upcoming}>{mark === 'ended' ? t('session.ended') : t('session.soon')}</Text>;
 }
 
 const styles = StyleSheet.create({

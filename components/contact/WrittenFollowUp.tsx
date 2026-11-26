@@ -6,6 +6,7 @@ import { Chip } from '../ui/Chip';
 import { FollowUpDraftActions } from '../voice/FollowUpDraftActions';
 import { colors, fontSize, fonts, size, space, trackingWide } from '../../constants/theme';
 import { draftFollowUp, splitDraft, type FollowUpTone } from '../../lib/services/voiceNoteService';
+import { t } from '../../lib/i18n';
 
 type WrittenFollowUpProps = {
   note: string | null;
@@ -30,7 +31,7 @@ export function WrittenFollowUp({ note, draft, name, company, eventName, email, 
   async function write(next: FollowUpTone) {
     const source = note?.trim() ?? '';
     if (!source) {
-      setError('Napiši belešku o razgovoru, pa onda follow-up.');
+      setError(t('followUp.writeNoteFirst'));
       return;
     }
     setBusy(true);
@@ -42,7 +43,7 @@ export function WrittenFollowUp({ note, draft, name, company, eventName, email, 
       setBody(result.body);
       await onDraft(result.followUpDraft);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Nacrt nije napisan. Pokušaj ponovo.');
+      setError(cause instanceof Error ? cause.message : t('followUp.draftFailed'));
     } finally {
       setBusy(false);
     }
@@ -56,24 +57,24 @@ export function WrittenFollowUp({ note, draft, name, company, eventName, email, 
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.kicker}>Follow-up</Text>
-      <Text style={styles.to}>Za: <Text style={styles.who}>{name}</Text></Text>
-      <Button label="Napiši follow-up" variant="secondary" loading={busy} onPress={() => void write('plain')} />
+      <Text style={styles.kicker}>{t('fields.followUp')}</Text>
+      <Text style={styles.to}>{t('followUp.to')} <Text style={styles.who}>{name}</Text></Text>
+      <Button label={t('followUp.write')} variant="secondary" loading={busy} onPress={() => void write('plain')} />
       {subject || body ? (
         <>
-          {subject ? <Text style={styles.subject}><Text style={styles.to}>Predmet: </Text>{subject}</Text> : null}
+          {subject ? <Text style={styles.subject}><Text style={styles.to}>{t('followUp.subject')} </Text>{subject}</Text> : null}
           {body ? <Text style={styles.body}>{body}</Text> : null}
           <View style={styles.row}>
-            <Chip label="Kraće" selected={tone === 'shorter'} disabled={busy} onPress={() => void write('shorter')} />
-            <Chip label="Formalnije" selected={tone === 'formal'} disabled={busy} onPress={() => void write('formal')} />
+            <Chip label={t('followUp.shorter')} selected={tone === 'shorter'} disabled={busy} onPress={() => void write('shorter')} />
+            <Chip label={t('followUp.formal')} selected={tone === 'formal'} disabled={busy} onPress={() => void write('formal')} />
           </View>
-          <FollowUpDraftActions email={email} subject={subject} body={body} copyLabel="Kopiraj" />
+          <FollowUpDraftActions email={email} subject={subject} body={body} copyLabel={t('common.copy')} />
         </>
       ) : null}
-      <Button label={done ? 'Označeno kao poslato' : 'Označi kao poslato'} variant="ghost" disabled={done} onPress={() => void onMarkSent()}>
+      <Button label={done ? t('followUp.markedSent') : t('followUp.markSent')} variant="ghost" disabled={done} onPress={() => void onMarkSent()}>
         <Feather name="check" size={size.iconSm} color={colors.ink} />
       </Button>
-      {done ? <Text style={styles.sent}>Mejl se ne šalje sam.</Text> : null}
+      {done ? <Text style={styles.sent}>{t('followUp.notSentAuto')}</Text> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );

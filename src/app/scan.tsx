@@ -8,6 +8,7 @@ import { Screen } from '../../components/ui/Screen';
 import { TextField } from '../../components/ui/TextField';
 import { colors, fontSize, fonts, radius, size, space } from '../../constants/theme';
 import { readSkriptQr } from '../../lib/skriptQr';
+import { t } from '../../lib/i18n';
 
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -42,16 +43,16 @@ export default function ScanScreen() {
       return;
     }
     if (result.kind === 'user' || result.kind === 'swap') {
-      setNotice('Ovo je kod osobe. Otvori Razmeni kontakt na eventu.');
+      setNotice(t('scan.personCode'));
       return;
     }
-    setNotice('Ovo nije Skript QR kod. Skeniraj kod eventa.');
+    setNotice(t('scan.notSkript'));
   }
 
   function enterByCode() {
     const next = code.trim();
     if (!next) {
-      setCodeError('Unesi kod eventa.');
+      setCodeError(t('scan.enterCode'));
       return;
     }
     setCodeError(null);
@@ -60,7 +61,7 @@ export default function ScanScreen() {
 
   return (
     <Screen scroll>
-      <Text style={styles.title}>Skeniraj QR</Text>
+      <Text style={styles.title}>{t('scan.title')}</Text>
       {!permission ? (
         <ActivityIndicator color={colors.ink} />
       ) : permission.granted ? (
@@ -74,18 +75,18 @@ export default function ScanScreen() {
         <View style={styles.denied}>
           <Text style={styles.body}>
             {permission.canAskAgain
-              ? 'Skriptu treba kamera da pročita QR kod eventa.'
-              : 'Kamera je odbijena. Otvori podešavanja telefona, uključi kameru za Skript i vrati se ovde.'}
+              ? t('scan.cameraNeeded')
+              : t('scan.cameraDenied')}
           </Text>
           <Button
-            label={permission.canAskAgain ? 'Dozvoli kameru' : 'Otvori podešavanja'}
+            label={permission.canAskAgain ? t('camera.allow') : t('camera.openSettings')}
             onPress={() => (permission.canAskAgain ? requestPermission() : Linking.openSettings())}
           />
         </View>
       )}
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
-      <TextField label="Kod eventa" value={code} onChangeText={setCode} error={codeError ?? undefined} autoCapitalize="none" />
-      <Button label="Uđi" onPress={enterByCode} />
+      <TextField label={t('scan.eventCode')} value={code} onChangeText={setCode} error={codeError ?? undefined} autoCapitalize="none" />
+      <Button label={t('scan.enter')} onPress={enterByCode} />
     </Screen>
   );
 }

@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { TabBar } from '../../../components/ui/TabBar';
 import { colors, space } from '../../../constants/theme';
+import { t } from '../../../lib/i18n';
 
 export default function TabLayout() {
   return (
@@ -25,10 +26,10 @@ export default function TabLayout() {
         },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Početna' }} />
-      <Tabs.Screen name="agenda" options={{ title: 'Agenda' }} />
-      <Tabs.Screen name="people" options={{ title: 'Ljudi' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profil' }} />
+      <Tabs.Screen name="index" options={{ title: t('tabs.home') }} />
+      <Tabs.Screen name="agenda" options={{ title: t('tabs.agenda') }} />
+      <Tabs.Screen name="people" options={{ title: t('tabs.people') }} />
+      <Tabs.Screen name="profile" options={{ title: t('tabs.me') }} />
     </Tabs>
   );
 }

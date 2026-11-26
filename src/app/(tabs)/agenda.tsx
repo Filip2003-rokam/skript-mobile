@@ -7,6 +7,7 @@ import { Screen } from '../../../components/ui/Screen';
 import { ErrorState, LoadingState } from '../../../components/ui/State';
 import { colors, size, space } from '../../../constants/theme';
 import { useCurrentEvent } from '../../../lib/currentEvent';
+import { t } from '../../../lib/i18n';
 
 export default function AgendaScreen() {
   const { slug, ready, error, reload } = useCurrentEvent();
@@ -33,8 +34,8 @@ export default function AgendaScreen() {
         <View style={styles.center}>
           <EmptyState
             icon={<Feather name="calendar" size={size.iconMd} color={colors.ink} />}
-            text="Nema izabranog eventa. Skeniraj QR kod da otvoriš agendu."
-            action="Skeniraj"
+            text={t('empty.noEventAgenda')}
+            action={t('common.scan')}
             onAction={() => router.push('/scan')}
           />
         </View>

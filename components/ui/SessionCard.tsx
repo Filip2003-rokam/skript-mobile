@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, fontSize, fonts, opacity, pressScale, radius, shadow, size, space, tileText, trackingTight } from '../../constants/theme';
 import { sessionClock, sessionEndClock, type SessionMark, type SessionRow } from '../../lib/services/sessionService';
+import { t } from '../../lib/i18n';
 
 type SessionCardProps = {
   session: SessionRow;
@@ -33,8 +34,8 @@ export function SessionCard({ session, mark = 'upcoming', onPress }: SessionCard
     >
       <View style={styles.body}>
         <Text style={styles.meta} numberOfLines={1}>
-          {mark === 'live' ? <Text style={styles.liveText}>Uživo · </Text> : null}
-          {mark === 'ended' ? <Text style={styles.endedText}>Završeno · </Text> : null}
+          {mark === 'live' ? <Text style={styles.liveText}>{`${t('session.live')} · `}</Text> : null}
+          {mark === 'ended' ? <Text style={styles.endedText}>{`${t('session.ended')} · `}</Text> : null}
           <Text style={styles.when}>{when}</Text>
           {session.room ? ` · ${session.room}` : ''}
         </Text>

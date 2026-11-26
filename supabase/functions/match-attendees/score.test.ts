@@ -1,4 +1,4 @@
-import { scoreCandidate, type MatchProfile } from './score';
+import { fallbackOpeners, scoreCandidate, type MatchProfile } from './score';
 
 function person(partial: Partial<MatchProfile> = {}): MatchProfile {
   return {
@@ -90,5 +90,22 @@ describe('scoreCandidate', () => {
       needs: ['Developers', 'Marketing', 'Clients'],
     });
     expect(scoreCandidate(me, candidate)?.score).toBe(10);
+  });
+});
+
+describe('english', () => {
+  const dev: MatchProfile = { name: 'Ana', role: 'Founder', company: 'Northwind', why: ['Sell'], offers: ['Software development'], needs: [], inRoom: false };
+  const buyer: MatchProfile = { name: 'Marko Petrović', role: 'Product', company: 'Acme', why: ['Buy'], offers: [], needs: ['Developers'], inRoom: false };
+
+  it('writes the match reason in English', () => {
+    const score = scoreCandidate(dev, buyer, 'en');
+    expect(score?.matched_mine).toBe('You build software');
+    expect(score?.matched_theirs).toBe('They need a dev team');
+  });
+
+  it('writes both openers in English', () => {
+    const [first, second] = fallbackOpeners(dev, buyer, 'They need a dev team', 'en');
+    expect(first).toBe("Hi Marko, I'm with Northwind. I see you're at Acme. Mind if I ask how it's going?");
+    expect(second).toContain('Skript matched us on "they need a dev team"');
   });
 });

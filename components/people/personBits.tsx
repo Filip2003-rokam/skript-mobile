@@ -1,10 +1,11 @@
 import { StyleSheet, Text } from 'react-native';
 import { colors, fontSize, fonts, trackingWide } from '../../constants/theme';
 import { authErrorMessage } from '../../lib/services/authService';
+import { t } from '../../lib/i18n';
 
 export function displayName(name: string | null) {
   const trimmed = name?.trim();
-  return trimmed ? trimmed : 'Nepoznata osoba';
+  return trimmed ? trimmed : t('person.unknown');
 }
 
 export function actionError(error: unknown): string {

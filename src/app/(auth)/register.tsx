@@ -7,6 +7,7 @@ import { TextField } from '../../../components/ui/TextField';
 import { colors, fontSize, fonts, space } from '../../../constants/theme';
 import { authErrorMessage, signUp } from '../../../lib/services/authService';
 import { validateRegister, type AuthFields } from '../../../lib/validation';
+import { t } from '../../../lib/i18n';
 
 export default function RegisterScreen() {
   const [fullName, setFullName] = useState('');
@@ -26,7 +27,7 @@ export default function RegisterScreen() {
     try {
       const session = await signUp(email, password, fullName);
       if (!session) {
-        setFormError('Nalog je napravljen. Prijavi se.');
+        setFormError(t('auth.accountCreated'));
         setLoading(false);
       }
     } catch (error) {
@@ -41,12 +42,12 @@ export default function RegisterScreen() {
   }
 
   return (
-    <AuthPanel title="Napravi nalog" onClose={close}>
+    <AuthPanel title={t('auth.createAccount')} onClose={close}>
       <View style={styles.form}>
-        <TextField quiet label="Ime" value={fullName} onChangeText={setFullName} error={fields.fullName} autoComplete="name" />
+        <TextField quiet label={t('fields.name')} value={fullName} onChangeText={setFullName} error={fields.fullName} autoComplete="name" />
         <TextField
           quiet
-          label="Mejl"
+          label={t('fields.email')}
           value={email}
           onChangeText={setEmail}
           error={fields.email}
@@ -57,7 +58,7 @@ export default function RegisterScreen() {
         />
         <TextField
           quiet
-          label="Lozinka"
+          label={t('fields.password')}
           value={password}
           onChangeText={setPassword}
           error={fields.password}
@@ -67,8 +68,8 @@ export default function RegisterScreen() {
         />
       </View>
       {formError ? <Text style={styles.error}>{formError}</Text> : null}
-      <Button label="Napravi nalog" loading={loading} onPress={submit} />
-      <Button label="Već imaš nalog? Prijavi se" variant="ghost" onPress={() => router.back()} />
+      <Button label={t('auth.createAccount')} loading={loading} onPress={submit} />
+      <Button label={t('auth.haveAccount')} variant="ghost" onPress={() => router.back()} />
     </AuthPanel>
   );
 }

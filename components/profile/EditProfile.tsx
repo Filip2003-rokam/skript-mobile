@@ -5,6 +5,7 @@ import { Sheet } from '../ui/Sheet';
 import { TextField } from '../ui/TextField';
 import { colors, fontSize, fonts } from '../../constants/theme';
 import type { MyProfile } from '../../lib/services/profileService';
+import { t } from '../../lib/i18n';
 
 type EditProfileProps = {
   profile: MyProfile;
@@ -23,7 +24,7 @@ export function EditProfile({ profile, open, saving, error, onClose, onSave }: E
 
   function submit() {
     if (!name.trim()) {
-      setNameError('Ime je obavezno.');
+      setNameError(t('errors.nameRequired'));
       return;
     }
     setNameError(null);
@@ -31,13 +32,13 @@ export function EditProfile({ profile, open, saving, error, onClose, onSave }: E
   }
 
   return (
-    <Sheet open={open} title="Izmeni profil" onClose={onClose}>
-      <TextField quiet label="Ime" value={name} onChangeText={setName} error={nameError ?? undefined} />
-      <TextField quiet label="Telefon" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-      <TextField quiet label="LinkedIn" value={linkedin} onChangeText={setLinkedin} autoCapitalize="none" />
+    <Sheet open={open} title={t('profile.edit')} onClose={onClose}>
+      <TextField quiet label={t('fields.name')} value={name} onChangeText={setName} error={nameError ?? undefined} />
+      <TextField quiet label={t('fields.phone')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+      <TextField quiet label={t('fields.linkedin')} value={linkedin} onChangeText={setLinkedin} autoCapitalize="none" />
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Button label="Sačuvaj izmene" loading={saving} onPress={submit} />
-      <Button label="Otkaži" variant="ghost" onPress={onClose} />
+      <Button label={t('profile.saveChanges')} loading={saving} onPress={submit} />
+      <Button label={t('common.cancel')} variant="ghost" onPress={onClose} />
     </Sheet>
   );
 }

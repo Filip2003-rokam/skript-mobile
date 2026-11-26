@@ -1,3 +1,4 @@
+import { t } from './i18n';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export type AuthFields = {
@@ -13,10 +14,10 @@ export function isValidEmail(email: string): boolean {
 export function validateLogin(email: string, password: string): AuthFields {
   const errors: AuthFields = {};
   if (!isValidEmail(email)) {
-    errors.email = 'Unesi ispravnu imejl adresu.';
+    errors.email = t('errors.emailInvalid');
   }
   if (password.length < 8) {
-    errors.password = 'Lozinka mora imati najmanje 8 znakova.';
+    errors.password = t('errors.passwordShort');
   }
   return errors;
 }
@@ -24,7 +25,7 @@ export function validateLogin(email: string, password: string): AuthFields {
 export function validateRegister(fullName: string, email: string, password: string): AuthFields {
   const errors = validateLogin(email, password);
   if (!fullName.trim()) {
-    errors.fullName = 'Unesi ime.';
+    errors.fullName = t('errors.nameEmpty');
   }
   return errors;
 }

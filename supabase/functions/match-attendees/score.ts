@@ -15,28 +15,64 @@ export type MatchScore = {
   matched_theirs: string;
 };
 
-const mine: Record<string, string> = {
-  'Software development': 'Praviš softver',
-  Design: 'Dizajniraš proizvode',
-  Funding: 'Investiraš',
-  'Sales intros': 'Praviš prodajne kontakte',
-  Marketing: 'Radiš marketing',
-  Mentoring: 'Mentoruješ osnivače',
-  Clients: 'Tražiš klijente',
-  Developers: 'Tražiš programere',
-  Partners: 'Tražiš partnere',
-  Hiring: 'Zapošljavaš',
+export type Lang = 'sr' | 'en';
+
+// Ista pravila, dve rečenice: srpski (na „ti“) i engleski.
+const mineText: Record<Lang, Record<string, string>> = {
+  sr: {
+    'Software development': 'Praviš softver',
+    Design: 'Dizajniraš proizvode',
+    Funding: 'Investiraš',
+    'Sales intros': 'Praviš prodajne kontakte',
+    Marketing: 'Radiš marketing',
+    Mentoring: 'Mentoruješ osnivače',
+    Clients: 'Tražiš klijente',
+    Developers: 'Tražiš programere',
+    Partners: 'Tražiš partnere',
+    Hiring: 'Zapošljavaš',
+    Raising: 'Skupljaš novac',
+  },
+  en: {
+    'Software development': 'You build software',
+    Design: 'You design products',
+    Funding: 'You invest',
+    'Sales intros': 'You make sales intros',
+    Marketing: 'You do marketing',
+    Mentoring: 'You mentor founders',
+    Clients: 'You are looking for clients',
+    Developers: 'You are looking for developers',
+    Partners: 'You are looking for partners',
+    Hiring: 'You are hiring',
+    Raising: 'You are raising money',
+  },
 };
 
-const theirs: Record<string, string> = {
-  'Software development': 'Treba im razvojni tim',
-  Funding: 'Skuplja seed rundu',
-  Clients: 'Traži klijente',
-  Partners: 'Traži partnere',
-  Developers: 'Traži programere',
-  Marketing: 'Treba im marketing',
-  Design: 'Treba im dizajn',
-  Mentoring: 'Traži mentora',
+const theirsText: Record<Lang, Record<string, string>> = {
+  sr: {
+    'Software development': 'Treba im razvojni tim',
+    Funding: 'Skuplja seed rundu',
+    Clients: 'Traži klijente',
+    Partners: 'Traži partnere',
+    Developers: 'Traži programere',
+    Marketing: 'Treba im marketing',
+    Design: 'Treba im dizajn',
+    Mentoring: 'Traži mentora',
+  },
+  en: {
+    'Software development': 'They need a dev team',
+    Funding: 'Raising a seed round',
+    Clients: 'Looking for clients',
+    Partners: 'Looking for partners',
+    Developers: 'Looking for developers',
+    Marketing: 'They need marketing',
+    Design: 'They need design',
+    Mentoring: 'Looking for a mentor',
+  },
+};
+
+const offerText: Record<Lang, Record<string, string>> = {
+  sr: { Funding: 'Investira u seed', 'Software development': 'Pravi softver', 'Pilot customer': 'Može biti prvi kupac' },
+  en: { Funding: 'Invests in seed', 'Software development': 'Builds software', 'Pilot customer': 'Could be a first customer' },
 };
 
 const offerToNeed: Record<string, string> = {
@@ -72,11 +108,10 @@ function sells(person: MatchProfile): boolean {
   return has(person.why, 'Sell') || has(person.why, 'Find clients') || has(person.offers, 'Software development');
 }
 
-function offerPhrase(tag: string): string {
-  if (tag === 'Funding') return 'Investira u seed';
-  if (tag === 'Software development') return 'Pravi softver';
-  if (tag === 'Pilot customer') return 'Može biti prvi kupac';
-  return theirs[tag] ?? `Nudi ${tag.toLowerCase()}`;
+function offerPhrase(tag: string, lang: Lang): string {
+  const fixed = offerText[lang][tag] ?? theirsText[lang][tag];
+  if (fixed) return fixed;
+  return lang === 'en' ? `Offers ${tag.toLowerCase()}` : `Nudi ${tag.toLowerCase()}`;
 }
 
 function clip(text: string): string {
@@ -84,7 +119,9 @@ function clip(text: string): string {
   return value.length <= 200 ? value : `${value.slice(0, 199)}…`;
 }
 
-export function scoreCandidate(me: MatchProfile, candidate: MatchProfile): MatchScore | null {
+export function scoreCandidate(me: MatchProfile, candidate: MatchProfile, lang: Lang = 'sr'): MatchScore | null {
+  const mine = mineText[lang];
+  const theirs = theirsText[lang];
   if (isInvestor(me)) {
     const founder = isRaising(candidate) && has(candidate.needs, 'Funding') && !isInvestor(candidate);
     if (!founder) return null;
@@ -108,12 +145,12 @@ export function scoreCandidate(me: MatchProfile, candidate: MatchProfile): Match
     const offered = offeredForNeed(need, candidate);
     if (!offered) continue;
     raw += 2;
-    pair ??= { mine: mine[need] ?? need, theirs: offerPhrase(offered) };
+    pair ??= { mine: mine[need] ?? need, theirs: offerPhrase(offered, lang) };
   }
 
   if (isRaising(me) && isInvestor(candidate)) {
     raw += 4;
-    pair = { mine: 'Skupljaš novac', theirs: offerPhrase('Funding') };
+    pair = { mine: mine.Raising, theirs: offerPhrase('Funding', lang) };
   }
 
   if (raw === 0 || !pair) return null;
@@ -133,11 +170,24 @@ export function fallbackWhy(score: MatchScore): string {
   return `${score.matched_mine} ↔ ${score.matched_theirs}`;
 }
 
-export function fallbackOpeners(me: MatchProfile, candidate: MatchProfile, matchedTheirs: string): [string, string] {
+export function fallbackOpeners(me: MatchProfile, candidate: MatchProfile, matchedTheirs: string, lang: Lang = 'sr'): [string, string] {
+  const company = me.company?.trim();
+  const theirCompany = candidate.company?.trim();
+  const phraseRaw = matchedTheirs ? matchedTheirs.charAt(0).toLowerCase() + matchedTheirs.slice(1) : '';
+  if (lang === 'en') {
+    const first = candidate.name.trim().split(/\s+/)[0] || 'there';
+    const intro = company ? `I'm with ${company}` : "I'm here for the summit";
+    const place = theirCompany ? ` I see you're at ${theirCompany}.` : '';
+    const phrase = phraseRaw || 'this';
+    return [
+      clip(`Hi ${first}, ${intro}.${place} Mind if I ask how it's going?`),
+      clip(`Hi ${first}, Skript matched us on "${phrase}". Do you have five minutes after this session?`),
+    ];
+  }
   const first = candidate.name.trim().split(/\s+/)[0] || 'ćao';
-  const intro = me.company?.trim() ? `ja sam iz firme ${me.company.trim()}` : 'ovde sam zbog samita';
-  const place = candidate.company?.trim() ? ` Vidim da si u ${candidate.company.trim()}.` : '';
-  const phrase = matchedTheirs ? matchedTheirs.charAt(0).toLowerCase() + matchedTheirs.slice(1) : 'ovome';
+  const intro = company ? `ja sam iz firme ${company}` : 'ovde sam zbog samita';
+  const place = theirCompany ? ` Vidim da si u ${theirCompany}.` : '';
+  const phrase = phraseRaw || 'ovome';
   return [
     clip(`Zdravo ${first}, ${intro}.${place} Mogu li da pitam kako ide?`),
     clip(`Zdravo ${first}, Skript nas je spojio oko „${phrase}“. Imaš li pet minuta posle ove sesije?`),

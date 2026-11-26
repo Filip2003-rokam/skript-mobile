@@ -17,6 +17,9 @@ import { CurrentEventProvider } from '../../lib/currentEvent';
 import { takeEntry } from '../../lib/pendingEntry';
 import { authErrorMessage, getSession, onAuthChange } from '../../lib/services/authService';
 import { listenForNotificationOpens, registerForPush } from '../../lib/services/notificationService';
+import { useTranslation } from 'react-i18next';
+import { loadSavedLanguage } from '../../lib/i18n';
+import { t } from '../../lib/i18n';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,6 +34,13 @@ export default function RootLayout() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  // Jezik iz „Ja“ se učita pre prvog ekrana. Promena jezika ponovo nacrta celo stablo (key ispod).
+  const { i18n } = useTranslation();
+  const [languageReady, setLanguageReady] = useState(false);
+
+  useEffect(() => {
+    loadSavedLanguage().finally(() => setLanguageReady(true));
+  }, []);
 
   useEffect(() => {
     if (loaded || fontError) {
@@ -80,14 +90,14 @@ export default function RootLayout() {
     return listenForNotificationOpens();
   }, [loaded, fontError, session?.user.id]);
 
-  if (!loaded && !fontError) {
+  if ((!loaded && !fontError) || !languageReady) {
     return null;
   }
 
   if (fontError) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorText}>Fontovi nisu učitani. Proveri vezu i pokreni aplikaciju ponovo.</Text>
+        <Text style={styles.errorText}>{t('errors.fonts')}</Text>
       </View>
     );
   }
@@ -104,13 +114,13 @@ export default function RootLayout() {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>{sessionError}</Text>
-        <Button label="Pokušaj ponovo" onPress={() => { setSession(undefined); setSessionError(null); setAttempt((value) => value + 1); }} />
+        <Button label={t('common.retry')} onPress={() => { setSession(undefined); setSessionError(null); setAttempt((value) => value + 1); }} />
       </View>
     );
   }
 
   return (
-    <CurrentEventProvider>
+    <CurrentEventProvider key={i18n.language}>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.appBg } }}>
         <Stack.Screen name="scan" />
         <Stack.Screen name="event/[slug]/welcome" />

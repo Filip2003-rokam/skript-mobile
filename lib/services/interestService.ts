@@ -1,6 +1,7 @@
 import type { InterestKind } from '../../types/database';
 import { supabase } from '../supabase';
 import { getSession } from './authService';
+import { t } from '../i18n';
 
 export const openInterestLimit = 5;
 
@@ -12,25 +13,25 @@ export type InterestPerson = {
   company: string | null;
 };
 
-const limitMessage = 'Imaš već 5 otvorenih interesovanja. Povuci jedno pa pokušaj ponovo.';
+const limitMessage = () => t('interest.limit');
 
 type InterestDb = { id: string; target_user_id: string; kind: InterestKind };
 type Pair = { requester_id: string; receiver_id: string };
 
 async function userId(): Promise<string> {
   const session = await getSession();
-  if (!session) throw new Error('Nisi prijavljen.');
+  if (!session) throw new Error(t('errors.signedOut'));
   return session.user.id;
 }
 
 function savedError(error: { message?: string; details?: string; hint?: string; code?: string }): Error {
   const text = `${error.message ?? ''} ${error.details ?? ''} ${error.hint ?? ''}`;
-  if (text.includes('5 otvorenih interesovanja')) return new Error(limitMessage);
-  if (error.code === '23505') return new Error('Ovo već postoji.');
+  if (text.includes('5 otvorenih interesovanja')) return new Error(limitMessage());
+  if (error.code === '23505') return new Error(t('interest.exists'));
   if (error.code === '42501' || text.toLowerCase().includes('row-level security')) {
-    return new Error('Oboje morate biti učesnici ovog eventa.');
+    return new Error(t('interest.bothAttendees'));
   }
-  return new Error('Interesovanje nije sačuvano. Pokušaj ponovo.');
+  return new Error(t('interest.notSaved'));
 }
 
 async function writeInterest(eventId: string, targetUserId: string, kind: InterestKind): Promise<void> {
@@ -55,7 +56,7 @@ export async function skipPerson(eventId: string, targetUserId: string): Promise
 export async function removeInterest(interestId: string): Promise<void> {
   const id = await userId();
   const { error } = await supabase.from('interests').delete().eq('id', interestId).eq('user_id', id);
-  if (error) throw new Error('Interesovanje nije obrisano. Pokušaj ponovo.');
+  if (error) throw new Error(t('interest.notDeleted'));
 }
 
 export async function listMine(eventId: string): Promise<{ open: InterestPerson[]; skipped: InterestPerson[] }> {

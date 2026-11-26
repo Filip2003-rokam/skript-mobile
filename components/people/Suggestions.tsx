@@ -10,6 +10,7 @@ import type { Suggestion } from '../../lib/services/matchService';
 import { PersonCard } from './PersonCard';
 import { PersonMatchCard } from './PersonMatchCard';
 import { Kicker } from './personBits';
+import { t } from '../../lib/i18n';
 
 type SuggestionsProps = {
   suggestions: Suggestion[];
@@ -28,13 +29,13 @@ export function Suggestions(props: SuggestionsProps) {
   const [all, setAll] = useState(false);
   const shown = all ? props.suggestions : props.suggestions.slice(0, 3);
   const rest = props.suggestions.length - shown.length;
-  const label = props.refreshing ? 'Tražim prave ljude…' : props.suggestions.length === 0 ? 'Napravi predloge' : 'Osveži predloge';
+  const label = props.refreshing ? t('suggestions.searching') : props.suggestions.length === 0 ? t('suggestions.make') : t('suggestions.refresh');
 
   const showList = props.suggestions.length > 0;
 
   return (
     <View style={styles.list}>
-      {showList ? <Text style={styles.note}>Iz tvog profila. Zainteresovan deli kontakt tek kad i druga strana pristane.</Text> : null}
+      {showList ? <Text style={styles.note}>{t('suggestions.hint')}</Text> : null}
       {showList ? (
         <Button
           size="sm"
@@ -50,8 +51,8 @@ export function Suggestions(props: SuggestionsProps) {
       {!props.refreshing && !props.refreshError && !showList ? (
         <EmptyState
           icon={<Feather name="users" size={size.iconMd} color={colors.ink} />}
-          text="Još nema poklapanja."
-          action="Napravi predloge"
+          text={t('suggestions.none')}
+          action={t('suggestions.make')}
           onAction={props.onRefresh}
         />
       ) : null}
@@ -72,8 +73,8 @@ export function Suggestions(props: SuggestionsProps) {
           onToggleSave={() => props.onToggleSave(item.suggestedUserId)}
         />
       ))}
-      {rest > 0 ? <Button size="sm" variant="secondary" label={`Prikaži još ${rest}`} onPress={() => setAll(true)} /> : null}
-      {props.skipped.length > 0 ? <Kicker text="Preskočeni" /> : null}
+      {rest > 0 ? <Button size="sm" variant="secondary" label={t('suggestions.showMore', { count: rest })} onPress={() => setAll(true)} /> : null}
+      {props.skipped.length > 0 ? <Kicker text={t('suggestions.skipped')} /> : null}
       {props.skipped.map((person) => (
         <PersonCard
           key={person.id}
@@ -81,7 +82,7 @@ export function Suggestions(props: SuggestionsProps) {
           role={person.role}
           company={person.company}
           trailing={
-            <Button size="sm" variant="secondary" label="Vrati" onPress={() => void props.onRestore(person.id)} />
+            <Button size="sm" variant="secondary" label={t('suggestions.restore')} onPress={() => void props.onRestore(person.id)} />
           }
         />
       ))}

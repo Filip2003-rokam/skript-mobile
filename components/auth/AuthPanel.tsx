@@ -6,6 +6,7 @@ import { colors, fontSize, fonts, radius, shadow, size, space, trackingTight } f
 import { Button } from '../ui/Button';
 import { keyboardBehavior } from '../ui/Screen';
 import { SkriptMark } from '../ui/SkriptMark';
+import { t } from '../../lib/i18n';
 
 type AuthPanelProps = {
   title: string;
@@ -24,7 +25,7 @@ export function AuthPanel({ title, onClose, children }: AuthPanelProps) {
             <Text style={styles.title}>{title}</Text>
             <View style={styles.brand}>
               <SkriptMark size={fontSize.fs22} />
-              <Button variant="icon" accessibilityLabel="Zatvori" onPress={onClose}>
+              <Button variant="icon" accessibilityLabel={t('common.close')} onPress={onClose}>
                 <Feather name="x" size={size.iconMd} color={colors.ink} />
               </Button>
             </View>

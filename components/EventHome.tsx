@@ -15,6 +15,7 @@ import { colors, fontSize, fonts, size, space, trackingWide } from '../constants
 import { authErrorMessage } from '../lib/services/authService';
 import { getEventBySlug, type EventRow } from '../lib/services/eventService';
 import { sessionIsLive, upcomingSessions } from '../lib/services/sessionService';
+import { t } from '../lib/i18n';
 
 export function EventHome({ slug }: { slug: string }) {
   const [event, setEvent] = useState<EventRow | null>(null);
@@ -77,8 +78,8 @@ export function EventHome({ slug }: { slug: string }) {
         <View style={styles.center}>
           <EmptyState
             icon={<Feather name={error ? 'alert-circle' : 'camera'} size={size.iconMd} color={colors.ink} />}
-            text={error ?? 'Ovaj event ne postoji. Skeniraj QR kod ponovo.'}
-            action={error ? 'Pokušaj ponovo' : 'Skeniraj'}
+            text={error ?? t('errors.eventMissingRescan')}
+            action={error ? t('common.retry') : t('common.scan')}
             onAction={() => (error ? setAttempt((value) => value + 1) : router.push('/scan'))}
           />
         </View>
@@ -96,19 +97,19 @@ export function EventHome({ slug }: { slug: string }) {
       <View style={styles.hero}>
         <Text style={styles.eventName}>{event.name}</Text>
         <HomeMark color={event.color} />
-        <Text style={styles.question}>Šta ti treba na konferenciji?</Text>
+        <Text style={styles.question}>{t('home.question')}</Text>
         <StatusPills live={live.length} linksToday={facts.linksToday} />
       </View>
       {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
-      <Section title="Probaj">
+      <Section title={t('home.try')}>
         <TryCards cards={buildTryCards(live[0]?.title ?? null, next[0]?.title ?? null, facts.suggestions, facts.followUps)} />
       </Section>
-      <Section title="Brzo">
+      <Section title={t('home.quick')}>
         <View style={styles.quick}>
-          <Chip label="Razmeni kontakt" icon={icon('repeat')} onPress={() => router.push('/swap' as Href)} />
-          <Chip label="Skeniraj QR" icon={icon('camera')} onPress={() => router.push('/scan')} />
-          <Chip label="Moji kontakti" icon={icon('book')} onPress={() => router.push('/profile')} />
-          <Chip label="Profil za event" icon={icon('edit-2')} onPress={() => router.push({ pathname: '/event/[slug]/profile', params: { slug } })} />
+          <Chip label={t('home.swap')} icon={icon('repeat')} onPress={() => router.push('/swap' as Href)} />
+          <Chip label={t('scan.title')} icon={icon('camera')} onPress={() => router.push('/scan')} />
+          <Chip label={t('home.myContacts')} icon={icon('book')} onPress={() => router.push('/profile')} />
+          <Chip label={t('home.eventProfile')} icon={icon('edit-2')} onPress={() => router.push({ pathname: '/event/[slug]/profile', params: { slug } })} />
         </View>
       </Section>
     </Screen>

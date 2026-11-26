@@ -1,41 +1,53 @@
+import { t } from '../lib/i18n';
+
 export type Choice = { key: string; label: string };
 
+// Ključ ide u bazu i ostaje engleski. Natpis se čita na crtanju, pa prati izabrani jezik.
+function choice(group: string, key: string, slug: string): Choice {
+  return {
+    key,
+    get label() {
+      return t(`options.${group}.${slug}`);
+    },
+  };
+}
+
 export const whyOptions: Choice[] = [
-  { key: 'Sell', label: 'Prodajem' },
-  { key: 'Find clients', label: 'Tražim klijente' },
-  { key: 'Buy', label: 'Kupujem' },
-  { key: 'Invest', label: 'Investiram' },
-  { key: 'Raise', label: 'Skupljam novac' },
-  { key: 'Hire', label: 'Zapošljavam' },
-  { key: 'Find partners', label: 'Tražim partnere' },
-  { key: 'Learn', label: 'Učim' },
+  choice('why', 'Sell', 'sell'),
+  choice('why', 'Find clients', 'find_clients'),
+  choice('why', 'Buy', 'buy'),
+  choice('why', 'Invest', 'invest'),
+  choice('why', 'Raise', 'raise'),
+  choice('why', 'Hire', 'hire'),
+  choice('why', 'Find partners', 'find_partners'),
+  choice('why', 'Learn', 'learn'),
 ];
 
 export const roleOptions: Choice[] = [
-  { key: 'Founder', label: 'Osnivač' },
-  { key: 'Investor', label: 'Investitor' },
-  { key: 'Sales', label: 'Prodaja' },
-  { key: 'Product', label: 'Proizvod' },
-  { key: 'Engineering', label: 'Razvoj' },
-  { key: 'Marketing', label: 'Marketing' },
-  { key: 'Student', label: 'Student' },
-  { key: 'Other', label: 'Drugo' },
+  choice('role', 'Founder', 'founder'),
+  choice('role', 'Investor', 'investor'),
+  choice('role', 'Sales', 'sales'),
+  choice('role', 'Product', 'product'),
+  choice('role', 'Engineering', 'engineering'),
+  choice('role', 'Marketing', 'marketing'),
+  choice('role', 'Student', 'student'),
+  choice('role', 'Other', 'other'),
 ];
 
 export const offerOptions: Choice[] = [
-  { key: 'Software development', label: 'Razvoj softvera' },
-  { key: 'Design', label: 'Dizajn' },
-  { key: 'Funding', label: 'Investicije' },
-  { key: 'Sales intros', label: 'Prodajni kontakti' },
-  { key: 'Marketing', label: 'Marketing' },
-  { key: 'Mentoring', label: 'Mentorstvo' },
+  choice('offer', 'Software development', 'software_development'),
+  choice('offer', 'Design', 'design'),
+  choice('offer', 'Funding', 'funding'),
+  choice('offer', 'Sales intros', 'sales_intros'),
+  choice('offer', 'Marketing', 'marketing'),
+  choice('offer', 'Mentoring', 'mentoring'),
 ];
 
 export const needOptions: Choice[] = [
-  { key: 'Clients', label: 'Klijenti' },
-  { key: 'Funding', label: 'Investicije' },
-  { key: 'Developers', label: 'Programeri' },
-  { key: 'Partners', label: 'Partneri' },
-  { key: 'Hiring', label: 'Zapošljavanje' },
-  { key: 'Marketing', label: 'Marketing' },
+  choice('need', 'Clients', 'clients'),
+  choice('need', 'Funding', 'funding'),
+  choice('need', 'Developers', 'developers'),
+  choice('need', 'Partners', 'partners'),
+  choice('need', 'Hiring', 'hiring'),
+  choice('need', 'Marketing', 'marketing'),
 ];

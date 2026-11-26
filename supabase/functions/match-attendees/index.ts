@@ -3,11 +3,32 @@ import {
   fallbackOpeners,
   fallbackWhy,
   scoreCandidate,
+  type Lang,
   type MatchProfile,
   type MatchScore,
 } from './score.ts';
 
 const dailyLimit = 5;
+
+// Poruke za telefon, na jeziku koji aplikacija pošalje (lang).
+const messages: Record<Lang, Record<string, string>> = {
+  sr: {
+    noEvent: 'Nedostaje event.',
+    signedOut: 'Nisi prijavljen.',
+    off: 'Predlozi nisu uključeni za ovaj event.',
+    notAttendee: 'Nisi učesnik ovog eventa.',
+    limit: 'Danas si već tražio predloge pet puta. Pokušaj ponovo sutra.',
+    failed: 'Predlozi trenutno nisu dostupni. Pokušaj ponovo.',
+  },
+  en: {
+    noEvent: 'The event is missing.',
+    signedOut: 'You are not signed in.',
+    off: 'Suggestions are not turned on for this event.',
+    notAttendee: 'You are not an attendee of this event.',
+    limit: 'You already asked for suggestions five times today. Try again tomorrow.',
+    failed: 'Suggestions are not available right now. Try again.',
+  },
+};
 const geminiTimeoutMs = 20_000;
 const defaultModel = 'gemini-3.6-flash';
 const cors = {
@@ -35,19 +56,23 @@ type Copy = { why: string; openers: [string, string] };
 
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
-  if (request.method !== 'POST') return json({ error: 'Nedostaje event.' }, 400);
+  if (request.method !== 'POST') return json({ error: messages.sr.noEvent }, 400);
 
+  let lang: Lang = 'sr';
   try {
-    const eventId = await readEventId(request);
-    if (!eventId) return json({ error: 'Nedostaje event.' }, 400);
+    const input = await readInput(request);
+    lang = input.lang;
+    const m = messages[lang];
+    const eventId = input.eventId;
+    if (!eventId) return json({ error: m.noEvent }, 400);
 
     const admin = serviceClient();
     const userId = await callerId(admin, request);
-    if (!userId) return json({ error: 'Nisi prijavljen.' }, 401);
+    if (!userId) return json({ error: m.signedOut }, 401);
 
     const { data: event, error: eventError } = await admin.from('events').select('matching_enabled').eq('id', eventId).maybeSingle();
     if (eventError) throw eventError;
-    if (!event) return json({ error: 'Predlozi nisu uključeni za ovaj event.' }, 400);
+    if (!event) return json({ error: m.off }, 400);
 
     const { data: attendance, error: mineError } = await admin
       .from('event_attendees')
@@ -56,8 +81,8 @@ Deno.serve(async (request) => {
       .eq('user_id', userId)
       .maybeSingle();
     if (mineError) throw mineError;
-    if (!attendance) return json({ error: 'Nisi učesnik ovog eventa.' }, 403);
-    if (!event.matching_enabled) return json({ error: 'Predlozi nisu uključeni za ovaj event.' }, 400);
+    if (!attendance) return json({ error: m.notAttendee }, 403);
+    if (!event.matching_enabled) return json({ error: m.off }, 400);
 
     const since = startOfZonedDay('Europe/Belgrade');
     const { data: runs, error: countError } = await admin
@@ -69,19 +94,19 @@ Deno.serve(async (request) => {
     if (countError) throw countError;
     // Pet poziva prolazi. Šesti vidi već upisanih pet i dobija 429.
     if ((runs?.length ?? 0) >= dailyLimit) {
-      return json({ error: 'Danas si već tražio predloge pet puta. Pokušaj ponovo sutra.' }, 429);
+      return json({ error: m.limit }, 429);
     }
 
     const { error: runError } = await admin.from('match_runs').insert({ event_id: eventId, user_id: userId });
     if (runError) throw runError;
 
     const me = profileFrom(attendance, '');
-    const ranked = await rankCandidates(admin, eventId, userId, me);
-    const copy = await writeCopy(ranked);
+    const ranked = await rankCandidates(admin, eventId, userId, me, lang);
+    const copy = await writeCopy(ranked, lang);
     const rows = ranked.map((item) => {
       const text = copy.get(item.userId) ?? {
         why: fallbackWhy(item.score),
-        openers: fallbackOpeners(me, item.profile, item.score.matched_theirs),
+        openers: fallbackOpeners(me, item.profile, item.score.matched_theirs, lang),
       };
       return {
         event_id: eventId,
@@ -105,7 +130,7 @@ Deno.serve(async (request) => {
     return json({ suggestions: rows });
   } catch (cause) {
     console.error(cause);
-    return json({ error: 'Predlozi trenutno nisu dostupni. Pokušaj ponovo.' }, 500);
+    return json({ error: messages[lang].failed }, 500);
   }
 });
 
@@ -140,12 +165,13 @@ async function callerId(admin: SupabaseClient, request: Request): Promise<string
   return data.user.id;
 }
 
-async function readEventId(request: Request): Promise<string | null> {
+async function readInput(request: Request): Promise<{ eventId: string | null; lang: Lang }> {
   try {
-    const body = (await request.json()) as { event_id?: unknown };
-    return typeof body.event_id === 'string' && body.event_id.trim() ? body.event_id.trim() : null;
+    const body = (await request.json()) as { event_id?: unknown; lang?: unknown };
+    const eventId = typeof body.event_id === 'string' && body.event_id.trim() ? body.event_id.trim() : null;
+    return { eventId, lang: body.lang === 'en' ? 'en' : 'sr' };
   } catch {
-    return null;
+    return { eventId: null, lang: 'sr' };
   }
 }
 
@@ -161,7 +187,7 @@ function profileFrom(row: AttendeeRow, name: string): MatchProfile {
   };
 }
 
-async function rankCandidates(admin: SupabaseClient, eventId: string, userId: string, me: MatchProfile): Promise<Ranked[]> {
+async function rankCandidates(admin: SupabaseClient, eventId: string, userId: string, me: MatchProfile, lang: Lang): Promise<Ranked[]> {
   const { data: attendees, error } = await admin
     .from('event_attendees')
     .select('user_id, why, role, company, offers, needs, in_room')
@@ -187,8 +213,8 @@ async function rankCandidates(admin: SupabaseClient, eventId: string, userId: st
   return others
     .filter((row) => !blocked.has(row.user_id))
     .flatMap((row) => {
-      const profile = profileFrom(row, names.get(row.user_id) || 'Učesnik');
-      const score = scoreCandidate(me, profile);
+      const profile = profileFrom(row, names.get(row.user_id) || (lang === 'en' ? 'Attendee' : 'Učesnik'));
+      const score = scoreCandidate(me, profile, lang);
       return score ? [{ userId: row.user_id, profile, score }] : [];
     })
     .sort((a, b) => b.score.score - a.score.score || a.profile.name.localeCompare(b.profile.name, 'sr'))
@@ -215,7 +241,7 @@ async function blockedIds(admin: SupabaseClient, eventId: string, userId: string
   return blocked;
 }
 
-async function writeCopy(ranked: Ranked[]): Promise<Map<string, Copy>> {
+async function writeCopy(ranked: Ranked[], lang: Lang): Promise<Map<string, Copy>> {
   const fallback = new Map<string, Copy>();
   if (ranked.length === 0) return fallback;
   const key = Deno.env.get('GEMINI_API_KEY');
@@ -232,7 +258,7 @@ async function writeCopy(ranked: Ranked[]): Promise<Map<string, Copy>> {
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
       signal: AbortSignal.timeout(geminiTimeoutMs),
       body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt(ranked) }] }],
+        contents: [{ role: 'user', parts: [{ text: prompt(ranked, lang) }] }],
         generationConfig: {
           temperature: 0.4,
           responseMimeType: 'application/json',
@@ -279,7 +305,9 @@ async function geminiError(response: Response, key: string): Promise<string> {
   return key ? message.replaceAll(key, '') : message;
 }
 
-function prompt(ranked: Ranked[]): string {
+function prompt(ranked: Ranked[], lang: Lang): string {
+  const language = lang === 'en' ? 'na engleskom' : 'na srpskom, latinica';
+  const example = lang === 'en' ? '„You build software, and Northwind needs a dev team.“' : '„Ti praviš softver, a Northwindu treba razvojni tim.“';
   const people = ranked.map((item) => ({
     user_id: item.userId,
     ime: item.profile.name,
@@ -292,10 +320,10 @@ function prompt(ranked: Ranked[]): string {
   }));
   return [
     'Napiši tekst za već izabrane kandidate. Ne dodaji i ne izbacuj ljude. Svaki user_id prepiši tačno iz liste.',
-    'Za svakog vrati why: jednu konkretnu rečenicu na srpskom, zašto da se upoznamo, bez laskanja.',
-    'Obraćaj se korisniku sa „ti“, npr. „Ti praviš softver, a Northwindu treba razvojni tim.“',
+    `Za svakog vrati why: jednu konkretnu rečenicu ${language}, zašto da se upoznamo, bez laskanja.`,
+    `Obraćaj se korisniku direktno (na srpskom sa „ti“), npr. ${example}`,
     'Piši samo na osnovu podataka koje dobiješ (uloga, firma, šta nudi, šta traži, poklapanje). Ne izmišljaj potrebe, brojke ni detalje o firmama.',
-    'I openers: tačno dve kratke prve poruke na srpskom, prirodne, do 200 znakova, bez laskanja.',
+    `I openers: tačno dve kratke prve poruke ${language}, prirodne, do 200 znakova, bez laskanja.`,
     'Odgovor je samo JSON niz objekata sa user_id, why i openers.',
     JSON.stringify(people),
   ].join('\n');

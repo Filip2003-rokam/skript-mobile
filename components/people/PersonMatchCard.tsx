@@ -7,6 +7,7 @@ import { Chip } from '../ui/Chip';
 import { colors, fontSize, fonts, radius, size, space, trackingTight } from '../../constants/theme';
 import { MatchOpeners } from './MatchOpeners';
 import { actionError, displayName, Kicker, RoleLine } from './personBits';
+import { t } from '../../lib/i18n';
 
 type PersonMatchCardProps = {
   name: string | null;
@@ -67,12 +68,12 @@ export function PersonMatchCard(props: PersonMatchCardProps) {
         <View style={styles.identity}>
           <Text style={styles.scoreLine}>
             <Text style={styles.score}>{props.score}/10</Text>
-            {' poklapanje'}
-            {props.saved ? ' · Sačuvano' : ''}
+            {` ${t('match.matchWord')}`}
+            {props.saved ? ` · ${t('common.saved')}` : ''}
           </Text>
           <Text numberOfLines={1} style={styles.name}>{person}</Text>
           <RoleLine compact role={props.role} company={props.company} />
-          <Kicker text="Zašto da se upoznate" />
+          <Kicker text={t('match.whyMeet')} />
           {props.why ? <Text numberOfLines={open ? undefined : 2} style={styles.why}>{props.why}</Text> : null}
         </View>
         <View style={styles.side}>
@@ -81,10 +82,10 @@ export function PersonMatchCard(props: PersonMatchCardProps) {
         </View>
       </Pressable>
       <View style={styles.actions}>
-        <Button size="sm" label="Zainteresovan" disabled={acting} onPress={() => void run(props.onInterest)} style={styles.action}>
+        <Button size="sm" label={t('match.interested')} disabled={acting} onPress={() => void run(props.onInterest)} style={styles.action}>
           <Feather name="heart" size={size.iconSm} color={colors.onInk} />
         </Button>
-        <Button size="sm" variant="secondary" label="Preskoči" disabled={acting} onPress={() => void run(props.onSkip)} style={styles.action}>
+        <Button size="sm" variant="secondary" label={t('common.skip')} disabled={acting} onPress={() => void run(props.onSkip)} style={styles.action}>
           <Feather name="x" size={size.iconSm} color={colors.ink} />
         </Button>
       </View>
@@ -92,7 +93,7 @@ export function PersonMatchCard(props: PersonMatchCardProps) {
         <>
           {props.matchedMine && props.matchedTheirs ? (
             <View style={styles.block}>
-              <Kicker text="Poklapanje" />
+              <Kicker text={t('match.match')} />
               <View style={styles.chips}>
                 <Chip label={props.matchedMine} selected small />
                 <Text style={styles.arrow}>↔</Text>
@@ -101,10 +102,10 @@ export function PersonMatchCard(props: PersonMatchCardProps) {
             </View>
           ) : null}
           <View style={styles.more}>
-            <Button size="sm" variant="secondary" label={props.saved ? 'Sačuvano' : 'Sačuvaj'} disabled={saving} onPress={() => void toggleSave()}>
+            <Button size="sm" variant="secondary" label={props.saved ? t('common.saved') : t('common.save')} disabled={saving} onPress={() => void toggleSave()}>
               <Feather name="bookmark" size={size.iconSm} color={colors.ink} />
             </Button>
-            <Button size="sm" variant="secondary" label="Kako da počnem?" onPress={() => setTips((value) => !value)}>
+            <Button size="sm" variant="secondary" label={t('match.howStart')} onPress={() => setTips((value) => !value)}>
               <Feather name="zap" size={size.iconSm} color={colors.ink} />
             </Button>
           </View>

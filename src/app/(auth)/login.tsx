@@ -7,6 +7,7 @@ import { TextField } from '../../../components/ui/TextField';
 import { colors, fontSize, fonts, space } from '../../../constants/theme';
 import { authErrorMessage, signIn } from '../../../lib/services/authService';
 import { validateLogin, type AuthFields } from '../../../lib/validation';
+import { t } from '../../../lib/i18n';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -36,11 +37,11 @@ export default function LoginScreen() {
   }
 
   return (
-    <AuthPanel title="Prijavi se" onClose={close}>
+    <AuthPanel title={t('auth.signIn')} onClose={close}>
       <View style={styles.form}>
         <TextField
           quiet
-          label="Mejl"
+          label={t('fields.email')}
           value={email}
           onChangeText={setEmail}
           error={fields.email}
@@ -51,7 +52,7 @@ export default function LoginScreen() {
         />
         <TextField
           quiet
-          label="Lozinka"
+          label={t('fields.password')}
           value={password}
           onChangeText={setPassword}
           error={fields.password}
@@ -61,9 +62,9 @@ export default function LoginScreen() {
         />
       </View>
       {formError ? <Text style={styles.error}>{formError}</Text> : null}
-      <Button label="Prijavi se" loading={loading} onPress={submit} />
-      <Button label="Napravi nalog" variant="ghost" onPress={() => router.push('/register')} />
-      <Button label="Imam kod eventa" variant="ghost" onPress={() => router.push('/scan')} />
+      <Button label={t('auth.signIn')} loading={loading} onPress={submit} />
+      <Button label={t('auth.createAccount')} variant="ghost" onPress={() => router.push('/register')} />
+      <Button label={t('auth.haveEventCode')} variant="ghost" onPress={() => router.push('/scan')} />
     </AuthPanel>
   );
 }

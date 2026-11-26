@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import { getSession } from './authService';
+import { t } from '../i18n';
 
 export type SavedPerson = {
   userId: string;
@@ -10,7 +11,7 @@ export type SavedPerson = {
 
 async function userId(): Promise<string> {
   const session = await getSession();
-  if (!session) throw new Error('Nisi prijavljen.');
+  if (!session) throw new Error(t('errors.signedOut'));
   return session.user.id;
 }
 

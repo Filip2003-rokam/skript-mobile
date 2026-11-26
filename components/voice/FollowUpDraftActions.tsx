@@ -4,6 +4,7 @@ import * as Clipboard from 'expo-clipboard';
 import { Button } from '../ui/Button';
 import { colors, fontSize, fonts, space } from '../../constants/theme';
 import { formatDraft } from '../../lib/services/voiceNoteService';
+import { t } from '../../lib/i18n';
 
 type FollowUpDraftActionsProps = {
   email?: string | null;
@@ -12,14 +13,14 @@ type FollowUpDraftActionsProps = {
   copyLabel?: string;
 };
 
-export function FollowUpDraftActions({ email, subject, body, copyLabel = 'Kopiraj nacrt' }: FollowUpDraftActionsProps) {
+export function FollowUpDraftActions({ email, subject, body, copyLabel = t('voice.copyDraft') }: FollowUpDraftActionsProps) {
   const [notice, setNotice] = useState<string | null>(null);
   const draft = formatDraft(subject, body);
   if (!draft) return null;
 
   async function copy() {
     await Clipboard.setStringAsync(draft ?? '');
-    setNotice('Nacrt je kopiran. Mejl se ne šalje sam.');
+    setNotice(t('voice.draftCopied'));
   }
 
   async function openMail() {
@@ -27,9 +28,9 @@ export function FollowUpDraftActions({ email, subject, body, copyLabel = 'Kopira
     const url = `mailto:${email?.trim() ?? ''}?${query}`;
     try {
       await Linking.openURL(url);
-      setNotice('Mejl je otvoren u aplikaciji. Pošalji ga sam.');
+      setNotice(t('voice.mailOpened'));
     } catch {
-      setNotice('Mejl aplikacija se nije otvorila. Kopiraj nacrt i pošalji ga ručno.');
+      setNotice(t('voice.mailFailed'));
     }
   }
 
@@ -37,7 +38,7 @@ export function FollowUpDraftActions({ email, subject, body, copyLabel = 'Kopira
     <View style={styles.wrap}>
       <View style={styles.row}>
         <Button label={copyLabel} size="sm" variant="secondary" onPress={() => void copy()} />
-        <Button label="Otvori u mejlu" size="sm" variant="secondary" onPress={() => void openMail()} />
+        <Button label={t('voice.openMail')} size="sm" variant="secondary" onPress={() => void openMail()} />
       </View>
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
     </View>

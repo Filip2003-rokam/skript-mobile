@@ -7,6 +7,7 @@ import { colors, fontSize, fonts, radius, size, space } from '../constants/theme
 import { fromDisplayDate, toDisplayDate } from '../lib/contactDates';
 import type { Contact, ContactWrite } from '../lib/services/contactService';
 import { formatDraft, splitDraft } from '../lib/services/voiceNoteService';
+import { t } from '../lib/i18n';
 
 type ContactFormProps = {
   contact?: Partial<Contact> | null;
@@ -39,8 +40,8 @@ export function ContactForm({ contact, saving = false, error, onSubmit }: Contac
     const name = fullName.trim();
     const date = followUp.trim();
     const iso = date ? fromDisplayDate(date) : null;
-    setNameError(name ? null : 'Ime je obavezno.');
-    setDateError(date && !iso ? 'Unesi datum kao DD.MM.GGGG.' : null);
+    setNameError(name ? null : t('errors.nameRequired'));
+    setDateError(date && !iso ? t('errors.dateFormat') : null);
     if (!name || (date && !iso)) return;
     onSubmit({
       fullName: name,
@@ -58,26 +59,26 @@ export function ContactForm({ contact, saving = false, error, onSubmit }: Contac
 
   return (
     <View style={styles.form}>
-      <TextField label="Ime" value={fullName} onChangeText={setFullName} error={nameError ?? undefined} />
-      <TextField label="Uloga" value={jobTitle} onChangeText={setJobTitle} />
-      <TextField label="Firma" value={company} onChangeText={setCompany} />
-      <TextField label="Mejl" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
-      <TextField label="Telefon" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-      <TextField label="LinkedIn" value={linkedinUrl} onChangeText={setLinkedinUrl} autoCapitalize="none" />
-      <TextField label="Beleška" value={note} onChangeText={setNote} multiline style={styles.note} />
+      <TextField label={t('fields.name')} value={fullName} onChangeText={setFullName} error={nameError ?? undefined} />
+      <TextField label={t('fields.role')} value={jobTitle} onChangeText={setJobTitle} />
+      <TextField label={t('fields.company')} value={company} onChangeText={setCompany} />
+      <TextField label={t('fields.email')} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+      <TextField label={t('fields.phone')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+      <TextField label={t('fields.linkedin')} value={linkedinUrl} onChangeText={setLinkedinUrl} autoCapitalize="none" />
+      <TextField label={t('fields.note')} value={note} onChangeText={setNote} multiline style={styles.note} />
       <TextField
-        label="Follow-up"
+        label={t('fields.followUp')}
         value={followUp}
         onChangeText={setFollowUp}
-        placeholder="DD.MM.GGGG"
+        placeholder={t('fields.datePlaceholder')}
         keyboardType="numbers-and-punctuation"
         error={dateError ?? undefined}
       />
-      <TextField label="Predmet mejla" value={subject} onChangeText={setSubject} />
-      <TextField label="Tekst mejla" value={mailBody} onChangeText={setMailBody} multiline style={styles.note} />
+      <TextField label={t('fields.emailSubject')} value={subject} onChangeText={setSubject} />
+      <TextField label={t('fields.emailBody')} value={mailBody} onChangeText={setMailBody} multiline style={styles.note} />
       <FollowUpDraftActions email={email} subject={subject} body={mailBody} />
       {error ? <Text style={styles.dateError}>{error}</Text> : null}
-      <Button label="Sačuvaj" loading={saving} onPress={submit} />
+      <Button label={t('common.save')} loading={saving} onPress={submit} />
     </View>
   );
 }

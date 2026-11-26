@@ -3,6 +3,7 @@ import { Feather } from '@expo/vector-icons';
 import { colors, fontSize, fonts, size, space } from '../../constants/theme';
 import { Button } from './Button';
 import { EmptyState } from './EmptyState';
+import { t } from '../../lib/i18n';
 
 export function LoadingState({ fill = true }: { fill?: boolean }) {
   return (
@@ -18,7 +19,7 @@ export function ErrorState({ text, onRetry }: { text: string; onRetry?: () => vo
       <EmptyState
         icon={<Feather name="alert-circle" size={size.iconMd} color={colors.ink} />}
         text={text}
-        action={onRetry ? 'Pokušaj ponovo' : undefined}
+        action={onRetry ? t('common.retry') : undefined}
         onAction={onRetry}
       />
     </View>
@@ -29,7 +30,7 @@ export function InlineError({ text, onRetry }: { text: string; onRetry?: () => v
   return (
     <View style={styles.inline}>
       <Text style={styles.error}>{text}</Text>
-      {onRetry ? <Button label="Pokušaj ponovo" size="sm" variant="secondary" onPress={onRetry} /> : null}
+      {onRetry ? <Button label={t('common.retry')} size="sm" variant="secondary" onPress={onRetry} /> : null}
     </View>
   );
 }

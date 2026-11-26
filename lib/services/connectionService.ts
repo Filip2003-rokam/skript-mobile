@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import { getSession } from './authService';
+import { t } from '../i18n';
 
 export type ConnectionStatus = 'pending' | 'accepted' | 'declined';
 export type ConnectionSource = 'match' | 'qr';
@@ -36,7 +37,7 @@ type PersonBits = {
 
 async function userId(): Promise<string> {
   const session = await getSession();
-  if (!session) throw new Error('Nisi prijavljen.');
+  if (!session) throw new Error(t('errors.signedOut'));
   return session.user.id;
 }
 
@@ -151,7 +152,7 @@ export async function respond(connectionId: string, status: 'accepted' | 'declin
 // Prihvaćene veze od ponoći po vremenu telefona. Obe strane ulaze u zbir.
 export async function countAcceptedToday(eventId: string, now = new Date()): Promise<number> {
   const session = await getSession();
-  if (!session) throw new Error('Nisi prijavljen.');
+  if (!session) throw new Error(t('errors.signedOut'));
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const { count, error } = await supabase
     .from('connections')
@@ -166,7 +167,7 @@ export async function countAcceptedToday(eventId: string, now = new Date()): Pro
 
 export async function countIncoming(eventId: string): Promise<number> {
   const session = await getSession();
-  if (!session) throw new Error('Nisi prijavljen.');
+  if (!session) throw new Error(t('errors.signedOut'));
   const { count, error } = await supabase
     .from('connections')
     .select('id', { count: 'exact', head: true })

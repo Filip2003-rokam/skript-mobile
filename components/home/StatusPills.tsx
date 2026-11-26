@@ -1,12 +1,13 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, fontSize, fonts, radius, size, space } from '../../constants/theme';
+import { t } from '../../lib/i18n';
 
 export function StatusPills({ live, linksToday }: { live: number; linksToday: number }) {
   if (live < 1 && linksToday < 1) return null;
   return (
     <View style={styles.row}>
-      {live > 0 ? <Pill live label={`${live} uživo`} /> : null}
-      {linksToday > 0 ? <Pill label={`${linksToday} novih veza danas`} /> : null}
+      {live > 0 ? <Pill live label={t('home.liveCount', { count: live })} /> : null}
+      {linksToday > 0 ? <Pill label={t('home.linksToday', { count: linksToday })} /> : null}
     </View>
   );
 }

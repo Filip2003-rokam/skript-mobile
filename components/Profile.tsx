@@ -18,8 +18,15 @@ import { ContactList } from './profile/ContactList';
 import { ReminderSetting } from './profile/ReminderSetting';
 import { EditProfile } from './profile/EditProfile';
 import { EventCards } from './profile/EventCards';
+import { appLanguage, setAppLanguage, t } from '../lib/i18n';
+import { Segmented } from './ui/Segmented';
 
-const notices: Record<string, string> = { saved: 'Sačuvano', edited: 'Izmenjeno', deleted: 'Obrisano' };
+// Getteri: tekst se čita na crtanju, pa prati izabrani jezik.
+const notices: Record<string, string> = {
+  get saved() { return t('common.saved'); },
+  get edited() { return t('common.edited'); },
+  get deleted() { return t('common.deleted'); },
+};
 
 export function Profile({ notice }: { notice?: string }) {
   const { slug, setSlug } = useCurrentEvent();
@@ -95,7 +102,7 @@ export function Profile({ notice }: { notice?: string }) {
       await updateMyProfile({ fullName, phone, linkedinUrl });
       setAccount(await getMyProfile());
       setEditing(false);
-      setMessage('Sačuvano');
+      setMessage(t('common.saved'));
     } catch (cause) {
       setEditError(authErrorMessage(cause));
     } finally {
@@ -130,7 +137,7 @@ export function Profile({ notice }: { notice?: string }) {
     );
   }
 
-  const name = account?.fullName?.trim() || 'Bez imena';
+  const name = account?.fullName?.trim() || t('profile.noName');
   const eventName = events.find((event) => event.slug === slug)?.name;
 
   return (
@@ -146,37 +153,48 @@ export function Profile({ notice }: { notice?: string }) {
         </View>
       </View>
       <View style={styles.actions}>
-        <Button label="Izmeni profil" variant="secondary" onPress={() => setEditing(true)}>
+        <Button label={t('profile.edit')} variant="secondary" onPress={() => setEditing(true)}>
           <Feather name="edit-2" size={size.iconSm} color={colors.ink} />
         </Button>
         {slug ? (
-          <Button label="Razmeni kontakt" variant="secondary" onPress={() => router.push('/swap' as Href)}>
+          <Button label={t('home.swap')} variant="secondary" onPress={() => router.push('/swap' as Href)}>
             <Feather name="repeat" size={size.iconSm} color={colors.ink} />
           </Button>
         ) : null}
-        <Button label="Odjavi se" variant="ghost" loading={leaving} onPress={() => void leave()}>
+        <Button label={t('profile.signOut')} variant="ghost" loading={leaving} onPress={() => void leave()}>
           <Feather name="log-out" size={size.iconSm} color={colors.ink} />
         </Button>
       </View>
       <View style={styles.block}>
-        <Text style={styles.section}>Moji eventi</Text>
+        <Text style={styles.section}>{t('home.myEvents')}</Text>
         <EventCards events={events} current={slug} onOpen={(next) => void setSlug(next)} />
       </View>
       <View style={styles.block}>
-        <Text style={styles.section}>Profil za mreženje</Text>
-        <Text style={styles.meta}>{slug ? network || 'Još nema profila za ovaj event. Otvori podešavanje u četiri koraka.' : 'Izaberi event iz liste.'}</Text>
+        <Text style={styles.section}>{t('profile.networking')}</Text>
+        <Text style={styles.meta}>{slug ? network || t('profile.noEventProfile') : t('profile.pickEvent')}</Text>
         {networkError ? <InlineError text={networkError} /> : null}
         {slug ? (
-          <Button label="Izmeni u četiri koraka" size="sm" variant="secondary" onPress={() => router.push({ pathname: '/event/[slug]/profile', params: { slug } })} style={styles.update} />
+          <Button label={t('profile.editSteps')} size="sm" variant="secondary" onPress={() => router.push({ pathname: '/event/[slug]/profile', params: { slug } })} style={styles.update} />
         ) : null}
       </View>
       <View style={styles.block}>
-        <Text style={styles.section}>Svi kontakti</Text>
+        <Text style={styles.section}>{t('profile.allContacts')}</Text>
         <ContactList version={version} />
       </View>
       <View style={styles.block}>
-        <Text style={styles.section}>Podsetnik</Text>
+        <Text style={styles.section}>{t('profile.reminder')}</Text>
         <ReminderSetting />
+      </View>
+      <View style={styles.block}>
+        <Text style={styles.section}>{t('language.title')}</Text>
+        <Segmented
+          value={appLanguage()}
+          options={[
+            { id: 'sr', label: t('language.sr') },
+            { id: 'en', label: t('language.en') },
+          ]}
+          onChange={(id) => void setAppLanguage(id === 'en' ? 'en' : 'sr')}
+        />
       </View>
       <View style={styles.sign}>
         <Text style={styles.by}>by</Text>

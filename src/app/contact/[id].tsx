@@ -13,6 +13,7 @@ import { VoiceNote } from '../../../components/voice/VoiceNote';
 import { colors, fontSize, fonts, size, space } from '../../../constants/theme';
 import { authErrorMessage } from '../../../lib/services/authService';
 import { deleteContact, getContact, updateContact, type Contact, type ContactWrite } from '../../../lib/services/contactService';
+import { t } from '../../../lib/i18n';
 
 export default function ContactScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -63,7 +64,7 @@ export default function ContactScreen() {
       await updateContact(contactId, data);
       setContact(await getContact(contactId));
       setEditing(false);
-      setNotice('Izmenjeno');
+      setNotice(t('common.edited'));
     } catch (cause) {
       setFormError(authErrorMessage(cause));
     } finally {
@@ -75,7 +76,7 @@ export default function ContactScreen() {
     try {
       await updateContact(contactId, value);
       setContact(await getContact(contactId));
-      setNotice('Izmenjeno');
+      setNotice(t('common.edited'));
     } catch (cause) {
       throw new Error(authErrorMessage(cause));
     }
@@ -86,17 +87,17 @@ export default function ContactScreen() {
     try {
       await updateContact(contactId, { followUpDone: done });
       setContact((current) => (current ? { ...current, followUpDone: done } : current));
-      setNotice('Izmenjeno');
+      setNotice(t('common.edited'));
     } catch (cause) {
       setError(authErrorMessage(cause));
     }
   }
 
   function confirmDelete() {
-    Alert.alert('Obrisati kontakt?', 'Kontakt se trajno briše.', [
-      { text: 'Ne sada', style: 'cancel' },
+    Alert.alert(t('contact.deleteTitle'), t('contact.deleteBody'), [
+      { text: t('common.notNow'), style: 'cancel' },
       {
-        text: 'Obriši',
+        text: t('common.delete'),
         style: 'destructive',
         onPress: () => {
           deleteContact(contactId)
@@ -117,7 +118,7 @@ export default function ContactScreen() {
   if (error && !contact) {
     return (
       <Screen>
-        <Button label="Nazad" variant="ghost" onPress={() => router.back()} />
+        <Button label={t('common.back')} variant="ghost" onPress={() => router.back()} />
         <ErrorState text={error} onRetry={() => setAttempt((value) => value + 1)} />
       </Screen>
     );
@@ -127,8 +128,8 @@ export default function ContactScreen() {
       <Screen>
         <EmptyState
           icon={<Feather name="user" size={size.iconMd} color={colors.ink} />}
-          text="Kontakt nije pronađen. Vrati se na listu kontakata."
-          action="Nazad"
+          text={t('contact.notFound')}
+          action={t('common.back')}
           onAction={() => router.back()}
         />
       </Screen>
@@ -137,7 +138,7 @@ export default function ContactScreen() {
 
   return (
     <Screen scroll>
-      <Button label="Nazad" variant="ghost" onPress={() => router.back()} />
+      <Button label={t('common.back')} variant="ghost" onPress={() => router.back()} />
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
       <ContactHeading name={contact.fullName} event={contact.eventName} />
       <ContactFacts contact={contact} />
@@ -156,7 +157,7 @@ export default function ContactScreen() {
         onMarkSent={() => toggleSent(true)}
       />
       <View style={styles.switchRow}>
-        <Text style={styles.switchLabel}>Follow-up poslat</Text>
+        <Text style={styles.switchLabel}>{t('contact.followUpSent')}</Text>
         <Switch
           value={contact.followUpDone}
           onValueChange={(done) => void toggleSent(done)}
@@ -167,8 +168,8 @@ export default function ContactScreen() {
       <VoiceNote existingNote={contact.note} existingDate={contact.followUpDate} email={contact.email} onSave={saveVoice} />
       {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
       <View style={styles.actions}>
-        <Button label="Izmeni" variant="secondary" onPress={() => setEditing(true)} />
-        <Button label="Obriši" variant="ghost" onPress={confirmDelete} />
+        <Button label={t('common.edit')} variant="secondary" onPress={() => setEditing(true)} />
+        <Button label={t('common.delete')} variant="ghost" onPress={confirmDelete} />
       </View>
       {editing ? (
         <ContactEditModal contact={contact} saving={saving} error={formError} onClose={() => setEditing(false)} onSubmit={(data) => void save(data)} />

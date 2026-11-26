@@ -9,11 +9,12 @@ import { openInterestLimit, type InterestPerson } from '../../lib/services/inter
 import { actionError, Kicker } from './personBits';
 import { PersonCard } from './PersonCard';
 import { RequestCard } from './RequestCard';
+import { t } from '../../lib/i18n';
 
 const statusLabel: Record<ConnectionStatus, string> = {
-  pending: 'čeka',
-  accepted: 'prihvaćen',
-  declined: 'odbijen',
+  get pending() { return t('requests.statusPending'); },
+  get accepted() { return t('requests.statusAccepted'); },
+  get declined() { return t('requests.statusDeclined'); },
 };
 
 type RequestsProps = {
@@ -40,8 +41,8 @@ export function Requests({ incoming, outgoing, open, onAccept, onDecline, onWith
       {noQr && open.length === 0 ? (
         <EmptyState
           icon={<Feather name="users" size={size.iconMd} color={colors.ink} />}
-          text="Još nema zahteva."
-          action="Nađi još ljudi"
+          text={t('requests.none')}
+          action={t('people.findMore')}
           onAction={onFind}
         />
       ) : null}
@@ -59,7 +60,7 @@ export function Requests({ incoming, outgoing, open, onAccept, onDecline, onWith
           onDecline={() => onDecline(person.id)}
         />
       ))}
-      {qrOutgoing.length > 0 ? <Kicker text="Poslati zahtevi" /> : null}
+      {qrOutgoing.length > 0 ? <Kicker text={t('requests.sent')} /> : null}
       {qrOutgoing.map((person) => (
         <PersonCard
           key={person.id}
@@ -69,7 +70,7 @@ export function Requests({ incoming, outgoing, open, onAccept, onDecline, onWith
           trailing={<Text style={styles.status}>{statusLabel[person.status]}</Text>}
         />
       ))}
-      <Text style={styles.wait}>Na odgovor čeka {open.length} od {openInterestLimit} interesovanja.</Text>
+      <Text style={styles.wait}>{t('requests.waiting')} {open.length} od {openInterestLimit} interesovanja.</Text>
       {open.map((person) => (
         <OpenInterest key={person.id} person={person} onWithdraw={onWithdraw} />
       ))}
@@ -99,7 +100,7 @@ function OpenInterest({ person, onWithdraw }: { person: InterestPerson; onWithdr
         name={person.name}
         role={person.role}
         company={person.company}
-        trailing={<Button size="sm" variant="secondary" label="Povuci" disabled={busy} onPress={() => void withdraw()} />}
+        trailing={<Button size="sm" variant="secondary" label={t('requests.withdraw')} disabled={busy} onPress={() => void withdraw()} />}
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>

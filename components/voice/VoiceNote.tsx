@@ -14,6 +14,7 @@ import { colors, fontSize, fonts, radius, size, space } from '../../constants/th
 import { toDisplayDate } from '../../lib/contactDates';
 import { noteWithTopic, transcribeVoiceNote, type VoiceDraft } from '../../lib/services/voiceNoteService';
 import { VoiceNoteResult } from './VoiceNoteResult';
+import { t } from '../../lib/i18n';
 
 const limitSeconds = 30;
 
@@ -47,15 +48,15 @@ export function VoiceNote({ existingNote, existingDate, email, onReady, onSave }
     try {
       if (recorder.getStatus().isRecording) await recorder.stop();
       uri = recorder.uri ?? recorder.getStatus().url;
-      if (!uri) throw new Error('Snimak je prazan. Pritisni Snimi i govori do 30 sekundi.');
+      if (!uri) throw new Error(t('voice.empty'));
       const audio = await new File(uri).base64();
-      if (!audio) throw new Error('Snimak je prazan. Pritisni Snimi i govori do 30 sekundi.');
+      if (!audio) throw new Error(t('voice.empty'));
       const mime = uri.endsWith('.webm') ? 'audio/webm' : uri.endsWith('.wav') ? 'audio/wav' : 'audio/mp4';
       const result = await transcribeVoiceNote(audio, mime);
       if (onReady) {
         onReady(result);
         setDraft(null);
-        setNotice(result.fullName ? 'Podaci su upisani u formu. Proveri ih i sačuvaj.' : 'Podaci su upisani u formu. Ime nije izgovoreno, upiši ga i sačuvaj.');
+        setNotice(result.fullName ? t('voice.filled') : t('voice.filledNoName'));
         setPhase('idle');
       } else {
         setDraft(result);
@@ -64,7 +65,7 @@ export function VoiceNote({ existingNote, existingDate, email, onReady, onSave }
       }
     } catch (cause) {
       setPhase('error');
-      setMessage(cause instanceof Error && cause.message ? cause.message : 'Beleška nije obrađena. Pokušaj ponovo.');
+      setMessage(cause instanceof Error && cause.message ? cause.message : t('voice.notProcessed'));
     } finally {
       if (uri) {
         try {
@@ -109,7 +110,7 @@ export function VoiceNote({ existingNote, existingDate, email, onReady, onSave }
       setPhase('recording');
     } catch {
       setPhase('error');
-      setMessage('Snimanje nije uspelo. Proveri mikrofon i pokušaj ponovo.');
+      setMessage(t('voice.recordFailed'));
     }
   }
 
@@ -121,11 +122,11 @@ export function VoiceNote({ existingNote, existingDate, email, onReady, onSave }
       }
       if (!recordingRef.current) {
         setPhase('error');
-        setMessage('Snimanje nije počelo. Pritisni Snimi i pokušaj ponovo.');
+        setMessage(t('voice.startFailed'));
       }
     } catch {
       setPhase('error');
-      setMessage('Snimanje nije zaustavljeno. Pritisni Snimi i pokušaj ponovo.');
+      setMessage(t('voice.stopFailed'));
     }
   }
 
@@ -138,7 +139,7 @@ export function VoiceNote({ existingNote, existingDate, email, onReady, onSave }
       setDraft(null);
       setPhase('idle');
     } catch (cause) {
-      setSaveError(cause instanceof Error && cause.message ? cause.message : 'Kontakt nije sačuvan. Pokušaj ponovo.');
+      setSaveError(cause instanceof Error && cause.message ? cause.message : t('voice.contactNotSaved'));
     } finally {
       setSaving(false);
     }
@@ -154,20 +155,20 @@ export function VoiceNote({ existingNote, existingDate, email, onReady, onSave }
             <Feather name="mic" size={size.iconLg} color={colors.ink} />
           </View>
           <Text style={styles.time}>0:{String(seconds).padStart(2, '0')} / 0:30</Text>
-          <Button label="Zaustavi" variant="secondary" onPress={() => void stop()} />
+          <Button label={t('voice.stop')} variant="secondary" onPress={() => void stop()} />
         </View>
       ) : phase === 'processing' ? (
         <View style={styles.row}>
           <ActivityIndicator color={colors.ink} />
-          <Text style={styles.status}>Obrađujem belešku…</Text>
+          <Text style={styles.status}>{t('voice.processing')}</Text>
         </View>
       ) : (
-        <Button label="Snimi glasovnu belešku" variant="secondary" onPress={() => void start()} />
+        <Button label={t('voice.record')} variant="secondary" onPress={() => void start()} />
       )}
       {phase === 'denied' ? (
         <>
-          <Text style={styles.error}>Nema dozvole za mikrofon. Uključi mikrofon za Skript u podešavanjima telefona, pa pokušaj ponovo.</Text>
-          <Button label="Otvori podešavanja" variant="ghost" onPress={() => void Linking.openSettings()} />
+          <Text style={styles.error}>{t('voice.noMic')}</Text>
+          <Button label={t('camera.openSettings')} variant="ghost" onPress={() => void Linking.openSettings()} />
         </>
       ) : null}
       {phase === 'error' && message ? <Text style={styles.error}>{message}</Text> : null}

@@ -1,6 +1,7 @@
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
 import { getSession } from './authService';
+import { appLanguage, t } from '../i18n';
 
 export type VoiceDraft = {
   note: string;
@@ -16,26 +17,27 @@ export type VoiceDraft = {
   phone: string;
 };
 
-const fallback = 'Beleška nije obrađena. Proveri vezu i pokušaj ponovo.';
+const fallback = () => t('voice.fallback');
 
 export function formatDraft(subject: string, body: string): string | null {
   const title = subject.trim();
   const text = body.trim();
   if (!title && !text) return null;
   if (!title) return text;
-  if (!text) return `Predmet: ${title}`;
-  return `Predmet: ${title}\n\n${text}`;
+  if (!text) return `${t('voice.subjectPrefix')}: ${title}`;
+  return `${t('voice.subjectPrefix')}: ${title}\n\n${text}`;
 }
 
 export function splitDraft(draft: string | null): { subject: string; body: string } {
   if (!draft?.trim()) return { subject: '', body: '' };
-  const match = /^Predmet: ([^\n]*)\n\n([\s\S]*)$/.exec(draft);
+  // Nacrt može biti sačuvan na bilo kom od dva jezika.
+  const match = /^(?:Predmet|Subject): ([^\n]*)\n\n([\s\S]*)$/.exec(draft);
   if (!match) return { subject: '', body: draft.trim() };
   return { subject: match[1].trim(), body: match[2].trim() };
 }
 
 export function noteWithTopic(note: string, topic: string, existing?: string | null): string | null {
-  const topicLine = topic.trim() ? `Tema: ${topic.trim()}` : '';
+  const topicLine = topic.trim() ? `${t('voice.topicPrefix')}: ${topic.trim()}` : '';
   const parts = [existing?.trim(), note.trim(), topicLine].filter((part): part is string => Boolean(part));
   return parts.length ? parts.join('\n\n') : null;
 }
@@ -44,30 +46,30 @@ export type FollowUpTone = 'plain' | 'shorter' | 'formal';
 
 export async function draftFollowUp(input: { note: string; name: string; company: string | null; event: string | null; tone: FollowUpTone }): Promise<{ subject: string; body: string; followUpDraft: string | null }> {
   const session = await getSession();
-  if (!session) throw new Error('Nisi prijavljen. Prijavi se i pokušaj ponovo.');
+  if (!session) throw new Error(t('errors.signedOutRetry'));
   const { data, error } = await supabase.functions.invoke('voice-note', {
-    body: { text: input.note, name: input.name, company: input.company ?? '', event: input.event ?? '', tone: input.tone },
+    body: { text: input.note, name: input.name, company: input.company ?? '', event: input.event ?? '', tone: input.tone, lang: appLanguage() },
   });
   if (error) throw new Error(await functionMessage(error));
   const row = data as Record<string, unknown> | null;
   const subject = text(row?.email_subject);
   const body = text(row?.email_body);
-  if (!subject && !body) throw new Error('Nacrt nije napisan. Proveri belešku i pokušaj ponovo.');
+  if (!subject && !body) throw new Error(t('voice.draftFailed'));
   return { subject, body, followUpDraft: formatDraft(subject, body) };
 }
 
 export async function transcribeVoiceNote(audioBase64: string, mimeType: string): Promise<VoiceDraft> {
   const session = await getSession();
-  if (!session) throw new Error('Nisi prijavljen. Prijavi se i pokušaj ponovo.');
+  if (!session) throw new Error(t('errors.signedOutRetry'));
 
   const { data, error } = await supabase.functions.invoke('voice-note', {
-    body: { audio_base64: audioBase64, mime_type: mimeType },
+    body: { audio_base64: audioBase64, mime_type: mimeType, lang: appLanguage() },
   });
   if (error) throw new Error(await functionMessage(error));
 
   const row = data as Record<string, unknown> | null;
   const note = text(row?.note);
-  if (!note) throw new Error('Nisam razumeo snimak. Govori bliže mikrofonu i pokušaj ponovo.');
+  if (!note) throw new Error(t('voice.notUnderstood'));
   const subject = text(row?.email_subject);
   const body = text(row?.email_body);
   return {
@@ -100,8 +102,8 @@ async function functionMessage(error: unknown): Promise<string> {
       const body = (await error.context.json()) as { error?: unknown };
       if (typeof body.error === 'string' && body.error.trim()) return body.error;
     } catch {
-      return fallback;
+      return fallback();
     }
   }
-  return fallback;
+  return fallback();
 }

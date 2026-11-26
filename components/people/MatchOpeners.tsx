@@ -5,6 +5,7 @@ import * as Clipboard from 'expo-clipboard';
 import { Button } from '../ui/Button';
 import { colors, fontSize, fonts, radius, size, space } from '../../constants/theme';
 import { actionError, Kicker } from './personBits';
+import { t } from '../../lib/i18n';
 
 export function MatchOpeners({ lines }: { lines: string[] }) {
   const [copied, setCopied] = useState<number | null>(null);
@@ -22,11 +23,11 @@ export function MatchOpeners({ lines }: { lines: string[] }) {
 
   return (
     <View style={styles.box}>
-      <Kicker text="Pokušaj da kažeš" />
+      <Kicker text={t('match.trySaying')} />
       {lines.map((line, index) => (
         <View key={line} style={styles.line}>
           <Text style={styles.opener}>"{line}"</Text>
-          <Button size="sm" variant="ghost" label={copied === index ? 'Kopirano' : 'Kopiraj'} onPress={() => void copy(line, index)}>
+          <Button size="sm" variant="ghost" label={copied === index ? t('common.copied') : t('common.copy')} onPress={() => void copy(line, index)}>
             <Feather name={copied === index ? 'check' : 'copy'} size={size.iconSm} color={colors.ink} />
           </Button>
         </View>

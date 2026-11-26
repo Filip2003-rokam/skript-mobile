@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { t } from './i18n';
 
 const storageKey = 'current-event-slug';
-const storageError = 'Ne mogu da otvorim sačuvani event. Zatvori aplikaciju i pokreni je ponovo.';
+const storageError = () => t('errors.savedEvent');
 
 type CurrentEventValue = {
   slug: string | null;
@@ -29,7 +30,7 @@ export function CurrentEventProvider({ children }: { children: ReactNode }) {
         setError(null);
       })
       .catch(() => {
-        if (active) setError(storageError);
+        if (active) setError(storageError());
       })
       .finally(() => {
         if (active) setReady(true);

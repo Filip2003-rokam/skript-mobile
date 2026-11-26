@@ -5,6 +5,7 @@ import { SessionCard } from '../ui/SessionCard';
 import { colors, fontSize, fonts, size, space } from '../../constants/theme';
 import { sessionClock, sessionMark, type SessionRow } from '../../lib/services/sessionService';
 import type { EventRow } from '../../lib/services/eventService';
+import { t } from '../../lib/i18n';
 
 type AgendaListProps = {
   event: EventRow;
@@ -34,7 +35,7 @@ export function AgendaList({ event, sessions, day, room, now, onOpen }: AgendaLi
         <View style={styles.section}>
           <View style={styles.liveHeading}>
             <View style={styles.dot} />
-            <Text style={styles.liveTitle}>Upravo traje</Text>
+            <Text style={styles.liveTitle}>{t('agenda.happeningNow')}</Text>
           </View>
           {live.map((session) => (
             <SessionCard key={session.id} session={session} mark="live" onPress={() => onOpen(session)} />
@@ -55,7 +56,7 @@ export function AgendaList({ event, sessions, day, room, now, onOpen }: AgendaLi
         </View>
       ))}
       {visible.length === 0 ? (
-        <EmptyState icon={<Feather name="calendar" size={size.iconMd} color={colors.ink} />} text="Nema sesija za ove filtere." />
+        <EmptyState icon={<Feather name="calendar" size={size.iconMd} color={colors.ink} />} text={t('agenda.noSessions')} />
       ) : null}
     </>
   );

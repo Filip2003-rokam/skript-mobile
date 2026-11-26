@@ -7,6 +7,7 @@ import { Card } from '../ui/Card';
 import { VoiceNote } from '../voice/VoiceNote';
 import { colors, fontSize, fonts, size, space, trackingTight } from '../../constants/theme';
 import type { Contact } from '../../lib/services/contactService';
+import { t } from '../../lib/i18n';
 
 type SavedSwapProps = {
   contact: Contact;
@@ -19,7 +20,7 @@ export function SavedSwap({ contact, onLater, onSave }: SavedSwapProps) {
   const role = [contact.jobTitle, contact.company].filter(Boolean).join(' · ');
   return (
     <View style={styles.wrap}>
-      <Text style={styles.title}>Sačuvano u kontakte</Text>
+      <Text style={styles.title}>{t('request.savedToContacts')}</Text>
       <Card variant="surface" style={styles.person}>
         <Avatar name={contact.fullName} size={size.buttonSm} />
         <View style={styles.identity}>
@@ -30,11 +31,11 @@ export function SavedSwap({ contact, onLater, onSave }: SavedSwapProps) {
       </Card>
       {offer ? (
         <>
-          <Text style={styles.body}>Za nedelju dana nećeš se sećati o čemu ste pričali. Reci sada, do 30 sekundi: Skript to zapiše i napiše follow-up.</Text>
-          <Button label="Snimi glasovnu belešku" onPress={() => setOffer(false)}>
+          <Text style={styles.body}>{t('swap.voicePrompt')}</Text>
+          <Button label={t('voice.record')} onPress={() => setOffer(false)}>
             <Feather name="mic" size={size.iconMd} color={colors.onInk} />
           </Button>
-          <Button label="Kasnije" variant="ghost" onPress={onLater} />
+          <Button label={t('common.later')} variant="ghost" onPress={onLater} />
         </>
       ) : (
         <VoiceNote existingNote={contact.note} existingDate={contact.followUpDate} email={contact.email} onSave={onSave} />

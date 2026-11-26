@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, fontSize, fonts, radius, shadow, size, space } from '../../constants/theme';
+import { t } from '../../lib/i18n';
 
 type Option = { value: string; label: string };
 
@@ -18,16 +19,16 @@ export function AgendaFilters({ days, day, onDay, rooms, room, onRoom }: AgendaF
   return (
     <View style={styles.row}>
       <FilterSelect
-        label="Dan"
-        value={`Dan ${day}`}
-        options={days.map((value) => ({ value: String(value), label: `Dan ${value}` }))}
+        label={t('agenda.day')}
+        value={t('agenda.dayN', { day })}
+        options={days.map((value) => ({ value: String(value), label: t('agenda.dayN', { day: value }) }))}
         selected={String(day)}
         onChange={(value) => onDay(Number(value))}
       />
       <FilterSelect
-        label="Sala"
-        value={room ?? 'Sve sale'}
-        options={[{ value: '', label: 'Sve sale' }, ...rooms.map((name) => ({ value: name, label: name }))]}
+        label={t('agenda.room')}
+        value={room ?? t('agenda.allRooms')}
+        options={[{ value: '', label: t('agenda.allRooms') }, ...rooms.map((name) => ({ value: name, label: name }))]}
         selected={room ?? ''}
         onChange={(value) => onRoom(value || null)}
       />
@@ -45,7 +46,7 @@ function FilterSelect({ label, value, options, selected, onChange }: { label: st
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <View style={styles.modal}>
-          <Pressable accessibilityLabel="Zatvori" style={styles.scrim} onPress={() => setOpen(false)} />
+          <Pressable accessibilityLabel={t('common.close')} style={styles.scrim} onPress={() => setOpen(false)} />
           <View style={styles.menu}>
             {options.map((option) => (
               <Pressable

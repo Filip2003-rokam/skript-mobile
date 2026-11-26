@@ -13,6 +13,7 @@ import { colors, size, space } from '../constants/theme';
 import { authErrorMessage } from '../lib/services/authService';
 import { eventPhase, getEventBySlug, type EventRow } from '../lib/services/eventService';
 import { listSessions, sessionMark, type SessionRow } from '../lib/services/sessionService';
+import { t } from '../lib/i18n';
 
 const minute = 60_000;
 
@@ -99,8 +100,8 @@ export function Agenda({ slug }: { slug: string }) {
         <View style={styles.center}>
           <EmptyState
             icon={<Feather name={error ? 'alert-circle' : 'calendar'} size={size.iconMd} color={colors.ink} />}
-            text={error ?? 'Ovaj event ne postoji. Skeniraj QR kod ponovo.'}
-            action={error ? 'Pokušaj ponovo' : 'Skeniraj'}
+            text={error ?? t('errors.eventMissingRescan')}
+            action={error ? t('common.retry') : t('common.scan')}
             onAction={() => (error ? setAttempt((value) => value + 1) : router.push('/scan'))}
           />
         </View>

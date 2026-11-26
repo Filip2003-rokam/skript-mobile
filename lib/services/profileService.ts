@@ -1,6 +1,7 @@
 import { supabase } from '../supabase';
 import type { EventRow } from '../../types/database';
 import { getSession } from './authService';
+import { t } from '../i18n';
 
 export type MyProfile = {
   fullName: string | null;
@@ -24,7 +25,7 @@ export type EventStat = EventRow & {
 
 export async function getMyProfile(): Promise<MyProfile> {
   const session = await getSession();
-  if (!session) throw new Error('Nisi prijavljen.');
+  if (!session) throw new Error(t('errors.signedOut'));
   const [{ data: profile, error: profileError }, { data: priv, error: privateError }] = await Promise.all([
     supabase.from('profiles').select('full_name, avatar_url').eq('id', session.user.id).maybeSingle(),
     supabase.from('profile_private').select('email, phone, linkedin_url').eq('user_id', session.user.id).maybeSingle(),
@@ -42,7 +43,7 @@ export async function getMyProfile(): Promise<MyProfile> {
 
 export async function updateMyProfile(data: ProfileUpdate): Promise<void> {
   const session = await getSession();
-  if (!session) throw new Error('Nisi prijavljen.');
+  if (!session) throw new Error(t('errors.signedOut'));
   const name = data.fullName.trim();
   const phone = data.phone.trim() || null;
   const linkedin = data.linkedinUrl.trim() || null;
@@ -65,7 +66,7 @@ function tally(rows: { event_id: string | null }[]): Map<string, number> {
 
 export async function listMyEventStats(): Promise<EventStat[]> {
   const session = await getSession();
-  if (!session) throw new Error('Nisi prijavljen.');
+  if (!session) throw new Error(t('errors.signedOut'));
   const id = session.user.id;
   const eventColumns = 'id, slug, name, city, starts_on, days, rooms, cover_url, logo_url';
   const [attended, contacts, connections, saved] = await Promise.all([
