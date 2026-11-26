@@ -15,13 +15,6 @@ import { usePeople } from './people/usePeople';
 
 export type PeopleView = 'suggestions' | 'saved' | 'requests' | 'connected';
 
-const tabs = [
-  { id: 'suggestions', label: 'Predlozi' },
-  { id: 'saved', label: 'Sačuvani' },
-  { id: 'requests', label: 'Zahtevi' },
-  { id: 'connected', label: 'Povezani' },
-];
-
 type PeopleProps = {
   slug: string;
   view: PeopleView;
@@ -55,6 +48,13 @@ export function People({ slug, view, onView }: PeopleProps) {
   }
 
   const savedIds = new Set(data.saved.map((person) => person.userId));
+  const pending = data.incoming.filter((person) => person.status === 'pending').length;
+  const tabs = [
+    { id: 'suggestions', label: 'Predlozi' },
+    { id: 'saved', label: 'Sačuvani' },
+    { id: 'requests', label: 'Zahtevi', count: pending > 0 ? pending : undefined },
+    { id: 'connected', label: 'Povezani' },
+  ];
 
   return (
     <Screen tabBar scroll>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, StyleSheet, Text, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { File } from 'expo-file-system';
 import {
   RecordingPresets,
@@ -9,7 +10,7 @@ import {
   useAudioRecorderState,
 } from 'expo-audio';
 import { Button } from '../ui/Button';
-import { colors, fontSize, fonts, space } from '../../constants/theme';
+import { colors, fontSize, fonts, radius, size, space } from '../../constants/theme';
 import { toDisplayDate } from '../../lib/contactDates';
 import { noteWithTopic, transcribeVoiceNote, type VoiceDraft } from '../../lib/services/voiceNoteService';
 import { VoiceNoteResult } from './VoiceNoteResult';
@@ -148,10 +149,13 @@ export function VoiceNote({ existingNote, existingDate, email, onReady, onSave }
   return (
     <View style={styles.wrap}>
       {phase === 'recording' ? (
-        <>
-          <Text style={styles.status}>Snimanje · {seconds}/30 s</Text>
+        <View style={styles.recording}>
+          <View style={styles.orb}>
+            <Feather name="mic" size={size.iconLg} color={colors.ink} />
+          </View>
+          <Text style={styles.time}>0:{String(seconds).padStart(2, '0')} / 0:30</Text>
           <Button label="Zaustavi" variant="secondary" onPress={() => void stop()} />
-        </>
+        </View>
       ) : phase === 'processing' ? (
         <View style={styles.row}>
           <ActivityIndicator color={colors.ink} />
@@ -187,6 +191,16 @@ export function VoiceNote({ existingNote, existingDate, email, onReady, onSave }
 
 const styles = StyleSheet.create({
   wrap: { gap: space.gap },
+  recording: { alignItems: 'center', gap: space.gap },
+  orb: {
+    width: size.avatarLg,
+    height: size.avatarLg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.pill,
+    backgroundColor: colors.skriptYellow,
+  },
+  time: { fontFamily: fonts.semibold, fontSize: fontSize.fs13, color: colors.ink, fontVariant: ['tabular-nums'] },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.gap },
   status: { fontFamily: fonts.semibold, fontSize: fontSize.fs15, color: colors.ink },
   notice: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.text2 },

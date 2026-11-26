@@ -110,6 +110,6 @@ const styles = StyleSheet.create({
   list: { gap: space.gap },
   item: { gap: space.tight },
   status: { fontFamily: fonts.semibold, fontSize: fontSize.fs13, color: colors.text2 },
-  wait: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.ink },
+  wait: { fontFamily: fonts.regular, fontSize: fontSize.fs12, color: colors.text2 },
   error: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.ink },
 });

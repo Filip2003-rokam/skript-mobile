@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, StyleSheet, Switch, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { ContactFacts, ContactHeading } from '../../../components/contact/ContactFacts';
 import { ContactEditModal } from '../../../components/ContactEditModal';
 import { Button } from '../../../components/ui/Button';
 import { EmptyState } from '../../../components/ui/EmptyState';
@@ -9,14 +10,9 @@ import { Screen } from '../../../components/ui/Screen';
 import { ErrorState, InlineError, LoadingState } from '../../../components/ui/State';
 import { WrittenFollowUp } from '../../../components/contact/WrittenFollowUp';
 import { VoiceNote } from '../../../components/voice/VoiceNote';
-import { colors, fontSize, fonts, size, space, trackingWide } from '../../../constants/theme';
-import { toDisplayDate } from '../../../lib/contactDates';
+import { colors, fontSize, fonts, size, space } from '../../../constants/theme';
 import { authErrorMessage } from '../../../lib/services/authService';
 import { deleteContact, getContact, updateContact, type Contact, type ContactWrite } from '../../../lib/services/contactService';
-
-function linkUrl(value: string) {
-  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
-}
 
 export default function ContactScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -143,14 +139,8 @@ export default function ContactScreen() {
     <Screen scroll>
       <Button label="Nazad" variant="ghost" onPress={() => router.back()} />
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
-      <Text style={styles.name}>{contact.fullName}</Text>
-      <Fact label="Uloga" value={contact.jobTitle} />
-      <Fact label="Firma" value={contact.company} />
-      <Fact label="Mejl" value={contact.email} onPress={contact.email ? () => void Linking.openURL(`mailto:${contact.email}`) : undefined} />
-      <Fact label="Telefon" value={contact.phone} onPress={contact.phone ? () => void Linking.openURL(`tel:${contact.phone?.replace(/\s/g, '')}`) : undefined} />
-      <Fact label="LinkedIn" value={contact.linkedinUrl} onPress={contact.linkedinUrl ? () => void Linking.openURL(linkUrl(contact.linkedinUrl ?? '')) : undefined} />
-      <Fact label="Event" value={contact.eventName} />
-      <Fact label="Beleška" value={contact.note} />
+      <ContactHeading name={contact.fullName} event={contact.eventName} />
+      <ContactFacts contact={contact} />
       <WrittenFollowUp
         note={contact.note}
         draft={contact.followUpDraft}
@@ -165,7 +155,6 @@ export default function ContactScreen() {
         }}
         onMarkSent={() => toggleSent(true)}
       />
-      <Fact label="Follow-up" value={toDisplayDate(contact.followUpDate) || null} />
       <View style={styles.switchRow}>
         <Text style={styles.switchLabel}>Follow-up poslat</Text>
         <Switch
@@ -188,24 +177,8 @@ export default function ContactScreen() {
   );
 }
 
-function Fact({ label, value, onPress }: { label: string; value: string | null; onPress?: () => void }) {
-  const text = value?.trim() ? value : '—';
-  const content = <Text style={[styles.value, onPress && value ? styles.link : null]}>{text}</Text>;
-  return (
-    <View style={styles.fact}>
-      <Text style={styles.label}>{label}</Text>
-      {onPress && value ? <Pressable onPress={onPress}>{content}</Pressable> : content}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  name: { fontFamily: fonts.bold, fontSize: fontSize.fs22, color: colors.ink },
   notice: { fontFamily: fonts.semibold, fontSize: fontSize.fs13, color: colors.ink },
-  fact: { gap: space.tight },
-  label: { fontFamily: fonts.bold, fontSize: fontSize.fs11, color: colors.text2, textTransform: 'uppercase', letterSpacing: trackingWide },
-  value: { fontFamily: fonts.regular, fontSize: fontSize.fs15, color: colors.ink },
-  link: { textDecorationLine: 'underline' },
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.gap },
   switchLabel: { fontFamily: fonts.semibold, fontSize: fontSize.fs15, color: colors.ink },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.gap },

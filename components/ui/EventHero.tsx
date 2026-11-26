@@ -16,8 +16,8 @@ const styles = StyleSheet.create({
   header: { paddingTop: space.gap, paddingBottom: space.tight },
   name: {
     fontFamily: fonts.display,
-    fontSize: fontSize.fs20,
+    fontSize: fontSize.fs22,
     color: colors.ink,
-    letterSpacing: fontSize.fs20 * trackingTight,
+    letterSpacing: fontSize.fs22 * trackingTight,
   },
 });

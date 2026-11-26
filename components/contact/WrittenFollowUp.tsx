@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { Button } from '../ui/Button';
+import { Chip } from '../ui/Chip';
 import { FollowUpDraftActions } from '../voice/FollowUpDraftActions';
-import { colors, fontSize, fonts, space } from '../../constants/theme';
+import { colors, fontSize, fonts, size, space, trackingWide } from '../../constants/theme';
 import { draftFollowUp, splitDraft, type FollowUpTone } from '../../lib/services/voiceNoteService';
 
 type WrittenFollowUpProps = {
@@ -21,10 +23,11 @@ export function WrittenFollowUp({ note, draft, name, company, eventName, email, 
   const saved = splitDraft(draft);
   const [subject, setSubject] = useState(saved.subject);
   const [body, setBody] = useState(saved.body);
+  const [tone, setTone] = useState<FollowUpTone>('plain');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function write(tone: FollowUpTone) {
+  async function write(next: FollowUpTone) {
     const source = note?.trim() ?? '';
     if (!source) {
       setError('Napiši belešku o razgovoru, pa onda follow-up.');
@@ -33,10 +36,11 @@ export function WrittenFollowUp({ note, draft, name, company, eventName, email, 
     setBusy(true);
     setError(null);
     try {
-      const draft = await draftFollowUp({ note: source, name, company, event: eventName, tone });
-      setSubject(draft.subject);
-      setBody(draft.body);
-      await onDraft(draft.followUpDraft);
+      const result = await draftFollowUp({ note: source, name, company, event: eventName, tone: next });
+      setTone(next);
+      setSubject(result.subject);
+      setBody(result.body);
+      await onDraft(result.followUpDraft);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Nacrt nije napisan. Pokušaj ponovo.');
     } finally {
@@ -52,18 +56,24 @@ export function WrittenFollowUp({ note, draft, name, company, eventName, email, 
 
   return (
     <View style={styles.wrap}>
+      <Text style={styles.kicker}>Follow-up</Text>
+      <Text style={styles.to}>Za: <Text style={styles.who}>{name}</Text></Text>
       <Button label="Napiši follow-up" variant="secondary" loading={busy} onPress={() => void write('plain')} />
       {subject || body ? (
         <>
-          <Text style={styles.draft}>{subject ? `Predmet: ${subject}\n\n${body}` : body}</Text>
+          {subject ? <Text style={styles.subject}><Text style={styles.to}>Predmet: </Text>{subject}</Text> : null}
+          {body ? <Text style={styles.body}>{body}</Text> : null}
           <View style={styles.row}>
-            <Button label="Kraće" size="sm" variant="secondary" disabled={busy} onPress={() => void write('shorter')} />
-            <Button label="Formalnije" size="sm" variant="secondary" disabled={busy} onPress={() => void write('formal')} />
+            <Chip label="Kraće" selected={tone === 'shorter'} disabled={busy} onPress={() => void write('shorter')} />
+            <Chip label="Formalnije" selected={tone === 'formal'} disabled={busy} onPress={() => void write('formal')} />
           </View>
           <FollowUpDraftActions email={email} subject={subject} body={body} copyLabel="Kopiraj" />
         </>
       ) : null}
-      {done ? <Text style={styles.sent}>Označeno kao poslato. Mejl se ne šalje sam.</Text> : <Button label="Označi kao poslato" variant="ghost" onPress={() => void onMarkSent()} />}
+      <Button label={done ? 'Označeno kao poslato' : 'Označi kao poslato'} variant="ghost" disabled={done} onPress={() => void onMarkSent()}>
+        <Feather name="check" size={size.iconSm} color={colors.ink} />
+      </Button>
+      {done ? <Text style={styles.sent}>Mejl se ne šalje sam.</Text> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
@@ -71,8 +81,12 @@ export function WrittenFollowUp({ note, draft, name, company, eventName, email, 
 
 const styles = StyleSheet.create({
   wrap: { gap: space.gap },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.gap },
-  draft: { fontFamily: fonts.regular, fontSize: fontSize.fs15, color: colors.ink },
+  kicker: { fontFamily: fonts.semibold, fontSize: fontSize.fs11, color: colors.text2, textTransform: 'uppercase', letterSpacing: trackingWide },
+  to: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.text2 },
+  who: { fontFamily: fonts.semibold, color: colors.ink },
+  subject: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.ink },
+  body: { fontFamily: fonts.regular, fontSize: fontSize.fs15, lineHeight: fontSize.fs22 + size.ring, color: colors.ink },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.tight * 2 },
   sent: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.text2 },
   error: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.destructive },
 });

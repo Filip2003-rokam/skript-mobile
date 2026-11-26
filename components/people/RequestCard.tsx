@@ -51,7 +51,7 @@ export function RequestCard(props: RequestCardProps) {
         <View style={styles.header}>
           <Avatar name={person} size={size.buttonSm} />
           <View style={styles.identity}>
-            <Text style={styles.title}>{person} želi da se poveže</Text>
+            <Text style={styles.title}>{person.split(' ')[0]} želi da se poveže</Text>
             <RoleLine role={props.role} company={props.company} />
           </View>
         </View>

@@ -4,10 +4,6 @@ export type ScanResult =
   | { kind: 'swap'; token: string }
   | { kind: 'unknown' };
 
-export function userBadgeUrl(userId: string, eventSlug: string) {
-  return `skript://user/${userId}?event=${encodeURIComponent(eventSlug)}`;
-}
-
 export function readSkriptQr(value: string): ScanResult {
   try {
     const url = new URL(value.trim());

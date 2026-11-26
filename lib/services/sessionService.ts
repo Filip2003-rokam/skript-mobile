@@ -27,6 +27,32 @@ export function sessionClock(value: string | null): string {
   return `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
 }
 
+export function sessionEndClock(start: string | null, durationMin: number | null): string {
+  if (!start || durationMin == null) return '';
+  const [hour, minute] = start.split(':').map(Number);
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return '';
+  const total = hour * 60 + minute + durationMin;
+  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+export type SessionMark = 'live' | 'ended' | 'upcoming';
+
+export function sessionMark(
+  startsOn: string | null,
+  days: number | null,
+  session: Pick<SessionRow, 'day' | 'start_time' | 'duration_min'>,
+  now = new Date(),
+): SessionMark {
+  if (sessionIsLive(startsOn, days, session, now)) return 'live';
+  const timing = eventPhase(startsOn, days, now);
+  if (timing.phase === 'before') return 'upcoming';
+  if (timing.phase === 'after' || (session.day ?? 1) < timing.day) return 'ended';
+  if ((session.day ?? 1) > timing.day || !session.start_time) return 'upcoming';
+  const minute = now.getHours() * 60 + now.getMinutes();
+  const start = clockMinutes(session.start_time);
+  return minute >= start + (session.duration_min ?? 0) ? 'ended' : 'upcoming';
+}
+
 // U toku je samo na pravom danu eventa, između početka i kraja.
 export function sessionIsLive(
   startsOn: string | null,

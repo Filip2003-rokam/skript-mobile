@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { Button } from '../ui/Button';
-import { keyboardBehavior } from '../ui/Screen';
+import { Sheet } from '../ui/Sheet';
 import { TextField } from '../ui/TextField';
-import { colors, fontSize, fonts, radius, space } from '../../constants/theme';
+import { colors, fontSize, fonts } from '../../constants/theme';
 import type { MyProfile } from '../../lib/services/profileService';
 
 type EditProfileProps = {
@@ -31,33 +31,17 @@ export function EditProfile({ profile, open, saving, error, onClose, onSave }: E
   }
 
   return (
-    <Modal visible={open} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
-      <KeyboardAvoidingView behavior={keyboardBehavior} style={styles.modal}>
-        <Pressable accessibilityLabel="Zatvori" style={[StyleSheet.absoluteFill, styles.scrim]} onPress={onClose} />
-        <View style={styles.sheet}>
-          <Text style={styles.title}>Izmeni profil</Text>
-          <TextField label="Ime" value={name} onChangeText={setName} error={nameError ?? undefined} />
-          <TextField label="Telefon" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-          <TextField label="LinkedIn" value={linkedin} onChangeText={setLinkedin} autoCapitalize="none" />
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          <Button label="Sačuvaj" loading={saving} onPress={submit} />
-          <Button label="Otkaži" variant="ghost" onPress={onClose} />
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    <Sheet open={open} title="Izmeni profil" onClose={onClose}>
+      <TextField quiet label="Ime" value={name} onChangeText={setName} error={nameError ?? undefined} />
+      <TextField quiet label="Telefon" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+      <TextField quiet label="LinkedIn" value={linkedin} onChangeText={setLinkedin} autoCapitalize="none" />
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+      <Button label="Sačuvaj izmene" loading={saving} onPress={submit} />
+      <Button label="Otkaži" variant="ghost" onPress={onClose} />
+    </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
-  modal: { flex: 1, justifyContent: 'flex-end' },
-  scrim: { backgroundColor: colors.scrim },
-  sheet: {
-    gap: space.gap,
-    padding: space.edge,
-    borderTopLeftRadius: radius.panel,
-    borderTopRightRadius: radius.panel,
-    backgroundColor: colors.appBg,
-  },
-  title: { fontFamily: fonts.bold, fontSize: fontSize.fs17, color: colors.ink },
   error: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.destructive },
 });

@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Button } from '../ui/Button';
 import { EmptyState } from '../ui/EmptyState';
 import { InlineError, LoadingState } from '../ui/State';
-import { colors, size, space } from '../../constants/theme';
+import { colors, fontSize, fonts, size, space } from '../../constants/theme';
 import type { InterestPerson } from '../../lib/services/interestService';
 import type { Suggestion } from '../../lib/services/matchService';
 import { PersonCard } from './PersonCard';
@@ -34,6 +34,7 @@ export function Suggestions(props: SuggestionsProps) {
 
   return (
     <View style={styles.list}>
+      {showList ? <Text style={styles.note}>Iz tvog profila. Zainteresovan deli kontakt tek kad i druga strana pristane.</Text> : null}
       {showList ? (
         <Button
           size="sm"
@@ -49,7 +50,7 @@ export function Suggestions(props: SuggestionsProps) {
       {!props.refreshing && !props.refreshError && !showList ? (
         <EmptyState
           icon={<Feather name="users" size={size.iconMd} color={colors.ink} />}
-          text="Nema predloga. Napravi predloge da vidiš koga da upoznaš."
+          text="Još nema poklapanja."
           action="Napravi predloge"
           onAction={props.onRefresh}
         />
@@ -90,4 +91,5 @@ export function Suggestions(props: SuggestionsProps) {
 
 const styles = StyleSheet.create({
   list: { gap: space.gap },
+  note: { fontFamily: fonts.regular, fontSize: fontSize.fs12, color: colors.text2 },
 });

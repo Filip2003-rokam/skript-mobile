@@ -1,7 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, fontSize, fonts, pressScale, radius, size, space } from '../../constants/theme';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { colors, fontSize, fonts, radius, shadow, size, space } from '../../constants/theme';
 
-type Option = { id: string; label: string };
+type Option = { id: string; label: string; count?: number };
 
 type SegmentedProps = {
   value: string;
@@ -11,35 +11,36 @@ type SegmentedProps = {
 
 export function Segmented({ value, options, onChange }: SegmentedProps) {
   return (
-    <View style={styles.track}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.track} style={styles.scroll}>
       {options.slice(0, 4).map((option) => {
         const active = option.id === value;
-        const compact = options.length > 3;
         return (
           <Pressable
             key={option.id}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
             onPress={() => onChange(option.id)}
-            style={({ pressed }) => [
-              styles.option,
-              compact && styles.compact,
-              active && styles.active,
-              pressed && { transform: [{ scale: pressScale }] },
-            ]}
+            style={({ pressed }) => [styles.option, active && styles.active, pressed && !active && styles.pressed]}
           >
-            <Text numberOfLines={1} style={[styles.label, compact && styles.compactLabel, active && styles.activeLabel]}>
+            <Text numberOfLines={1} style={[styles.label, active && styles.activeLabel]}>
               {option.label}
             </Text>
+            {option.count ? (
+              <View style={styles.count}>
+                <Text style={styles.countText}>{option.count}</Text>
+              </View>
+            ) : null}
           </Pressable>
         );
       })}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: { flexGrow: 0 },
   track: {
+    flexGrow: 1,
     flexDirection: 'row',
     alignItems: 'center',
     height: size.segmented,
@@ -49,30 +50,35 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: size.border,
     borderColor: colors.surfaceBorder,
+    ...shadow.card,
   },
   option: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 0,
     alignSelf: 'stretch',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: space.tight + size.ring,
     paddingHorizontal: space.chip,
     borderRadius: radius.pill,
   },
-  active: {
-    backgroundColor: colors.skriptYellow,
-  },
-  compact: {
-    paddingHorizontal: space.tight,
-  },
+  active: { backgroundColor: colors.skriptYellow },
+  pressed: { backgroundColor: colors.fillSubtle },
   label: {
     fontFamily: fonts.semibold,
-    fontSize: fontSize.fs13,
+    fontSize: fontSize.fs12,
     color: colors.text2,
   },
-  compactLabel: {
-    fontSize: fontSize.fs11,
+  activeLabel: { color: colors.onSignal },
+  count: {
+    minWidth: size.iconSm,
+    height: size.iconSm,
+    paddingHorizontal: space.tight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.pill,
+    backgroundColor: colors.ink,
   },
-  activeLabel: {
-    color: colors.onSignal,
-  },
+  countText: { fontFamily: fonts.bold, fontSize: fontSize.fs11, color: colors.surface },
 });

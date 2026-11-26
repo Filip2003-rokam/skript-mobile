@@ -4,7 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { Button } from '../ui/Button';
 import { colors, fontSize, fonts, radius, size, space } from '../../constants/theme';
-import { actionError } from './personBits';
+import { actionError, Kicker } from './personBits';
 
 export function MatchOpeners({ lines }: { lines: string[] }) {
   const [copied, setCopied] = useState<number | null>(null);
@@ -22,6 +22,7 @@ export function MatchOpeners({ lines }: { lines: string[] }) {
 
   return (
     <View style={styles.box}>
+      <Kicker text="Pokušaj da kažeš" />
       {lines.map((line, index) => (
         <View key={line} style={styles.line}>
           <Text style={styles.opener}>"{line}"</Text>
@@ -39,7 +40,7 @@ const styles = StyleSheet.create({
   box: {
     gap: space.gap,
     padding: space.gap,
-    borderRadius: radius.card,
+    borderRadius: radius.control,
     backgroundColor: colors.fillSubtle,
   },
   line: {
@@ -50,7 +51,7 @@ const styles = StyleSheet.create({
   opener: {
     flex: 1,
     fontFamily: fonts.regular,
-    fontSize: fontSize.fs15,
+    fontSize: fontSize.fs13,
     color: colors.ink,
   },
   error: {

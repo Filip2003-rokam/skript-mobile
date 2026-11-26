@@ -10,7 +10,9 @@ import { getMyEventProfile } from '../lib/services/attendeeService';
 import { getMyProfile, listMyEventStats, updateMyProfile, type EventStat, type MyProfile } from '../lib/services/profileService';
 import { Avatar } from './ui/Avatar';
 import { Button } from './ui/Button';
+import { EventHero } from './ui/EventHero';
 import { Screen } from './ui/Screen';
+import { SkriptMark } from './ui/SkriptMark';
 import { ErrorState, InlineError, LoadingState } from './ui/State';
 import { ContactList } from './profile/ContactList';
 import { ReminderSetting } from './profile/ReminderSetting';
@@ -129,13 +131,15 @@ export function Profile({ notice }: { notice?: string }) {
   }
 
   const name = account?.fullName?.trim() || 'Bez imena';
+  const eventName = events.find((event) => event.slug === slug)?.name;
 
   return (
     <Screen tabBar scroll>
+      {eventName ? <EventHero eventName={eventName} /> : null}
       {message ? <Text style={styles.notice}>{message}</Text> : null}
       {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
       <View style={styles.header}>
-        <Avatar name={name} size={size.avatarLg} />
+        <Avatar name={name} size={size.avatarLg} source={account?.avatarUrl} />
         <View style={styles.identity}>
           <Text style={styles.name}>{name}</Text>
           {account?.email ? <Text style={styles.email}>{account.email}</Text> : null}
@@ -154,18 +158,30 @@ export function Profile({ notice }: { notice?: string }) {
           <Feather name="log-out" size={size.iconSm} color={colors.ink} />
         </Button>
       </View>
-      <Text style={styles.section}>Moji eventi</Text>
-      <EventCards events={events} current={slug} onOpen={(next) => void setSlug(next)} />
-      <Text style={styles.section}>Profil za mreženje</Text>
-      <Text style={styles.meta}>{slug ? network || 'Još nema profila za ovaj event. Otvori podešavanje u četiri koraka.' : 'Izaberi event iz liste.'}</Text>
-      {networkError ? <InlineError text={networkError} /> : null}
-      {slug ? (
-        <Button label="Izmeni u četiri koraka" size="sm" variant="secondary" onPress={() => router.push({ pathname: '/event/[slug]/profile', params: { slug } })} />
-      ) : null}
-      <Text style={styles.section}>Podsetnici</Text>
-      <ReminderSetting />
-      <Text style={styles.section}>Svi kontakti</Text>
-      <ContactList version={version} />
+      <View style={styles.block}>
+        <Text style={styles.section}>Moji eventi</Text>
+        <EventCards events={events} current={slug} onOpen={(next) => void setSlug(next)} />
+      </View>
+      <View style={styles.block}>
+        <Text style={styles.section}>Profil za mreženje</Text>
+        <Text style={styles.meta}>{slug ? network || 'Još nema profila za ovaj event. Otvori podešavanje u četiri koraka.' : 'Izaberi event iz liste.'}</Text>
+        {networkError ? <InlineError text={networkError} /> : null}
+        {slug ? (
+          <Button label="Izmeni u četiri koraka" size="sm" variant="secondary" onPress={() => router.push({ pathname: '/event/[slug]/profile', params: { slug } })} style={styles.update} />
+        ) : null}
+      </View>
+      <View style={styles.block}>
+        <Text style={styles.section}>Svi kontakti</Text>
+        <ContactList version={version} />
+      </View>
+      <View style={styles.block}>
+        <Text style={styles.section}>Podsetnik</Text>
+        <ReminderSetting />
+      </View>
+      <View style={styles.sign}>
+        <Text style={styles.by}>by</Text>
+        <SkriptMark size={fontSize.fs12} />
+      </View>
       {account && editing ? (
         <EditProfile profile={account} open={editing} saving={saving} error={editError} onClose={() => setEditing(false)} onSave={(fullName, phone, linkedin) => void save(fullName, phone, linkedin)} />
       ) : null}
@@ -175,11 +191,15 @@ export function Profile({ notice }: { notice?: string }) {
 
 const styles = StyleSheet.create({
   notice: { fontFamily: fonts.semibold, fontSize: fontSize.fs13, color: colors.ink },
-  header: { flexDirection: 'row', alignItems: 'center', gap: space.edge },
+  header: { flexDirection: 'row', alignItems: 'center', gap: space.card },
   identity: { flex: 1, minWidth: 0 },
   name: { fontFamily: fonts.bold, fontSize: fontSize.fs22, color: colors.ink },
   email: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.text2 },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.gap },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.tight * 2 },
+  block: { gap: space.tight * 2 },
   section: { fontFamily: fonts.bold, fontSize: fontSize.fs15, color: colors.ink },
   meta: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.text2 },
+  update: { alignSelf: 'flex-start', height: size.emptyIcon },
+  sign: { flexDirection: 'row', alignItems: 'center', alignSelf: 'center', gap: space.tight },
+  by: { fontFamily: fonts.regular, fontSize: fontSize.fs12, color: colors.text2 },
 });

@@ -20,21 +20,6 @@ export async function getMyEventProfile(eventId: string): Promise<EventAttendeeP
   return data;
 }
 
-export async function getAttendeeName(eventId: string, attendeeId: string): Promise<string | null> {
-  const { data: attendee, error } = await supabase
-    .from('event_attendees')
-    .select('user_id')
-    .eq('event_id', eventId)
-    .eq('user_id', attendeeId)
-    .maybeSingle();
-  if (error) throw error;
-  if (!attendee) return null;
-  const { data: profile, error: profileError } = await supabase.from('profiles').select('full_name').eq('id', attendeeId).maybeSingle();
-  if (profileError) throw profileError;
-  const name = profile?.full_name?.trim();
-  return name || 'Učesnik';
-}
-
 export async function saveMyEventProfile(eventId: string, profile: EventAttendeeProfile): Promise<void> {
   const id = await userId();
   const { error } = await supabase.from('event_attendees').upsert(

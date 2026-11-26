@@ -15,6 +15,7 @@ export const colors = {
   scrim: 'rgba(17, 17, 20, 0.28)',
   skriptYellow: '#FFE14D',
   skriptYellowSoft: '#FFF5BF',
+  accentRing: 'rgba(255, 225, 77, 0.6)',
   onSignal: '#111114',
   live: '#E5484D',
   destructive: '#D64545',
@@ -22,6 +23,8 @@ export const colors = {
   onPhoto: '#FFFFFF',
   onPhotoDim: 'rgba(255, 255, 255, 0.8)',
   onPhotoGlass: 'rgba(255, 255, 255, 0.15)',
+  night: '#111114',
+  nightInk: '#F6F6F4',
 } as const;
 
 export const fonts = {
@@ -45,12 +48,15 @@ export const fontSize = {
 } as const;
 
 export const radius = {
+  xs: 4,
+  control: 18,
   card: 22,
   panel: 28,
   pill: 999,
   logo: 10,
   cover: 24,
   tile: 18,
+  mark: 26,
 } as const;
 
 export const space = {
@@ -69,6 +75,7 @@ export const size = {
   ring: 2,
   dot: 4,
   buttonSm: 44,
+  buttonHsm: 36,
   buttonMd: 48,
   buttonLg: 56,
   chip: 32,
@@ -76,6 +83,7 @@ export const size = {
   field: 48,
   segmented: 40,
   logo: 72,
+  entryLogo: 96,
   logoSm: 24,
   nav: 56,
   hero: 220,
@@ -88,17 +96,23 @@ export const size = {
   iconMd: 18,
   iconLg: 22,
   coverMin: 140,
-  speakerTile: 64,
+  speakerTile: 84,
   liveDot: 6,
+  tryCardWidth: 164,
+  tryCardHeight: 124,
+  markBox: 132,
+  markAura: 120,
+  markTile: 84,
 } as const;
 
 export const pressScale = 0.97;
+export const pressScaleSurface = 0.98;
 export const avatarText = 0.36;
 // Logo je slika 433 x 160. Visina je 1.2 puta veličina slova pored kojeg stoji.
 export const mark = { height: 1.2, ratio: 433 / 160 } as const;
 export const trackingTight = -0.02;
 export const trackingWide = 0.6;
-export const opacity = { disabled: 0.4, homeIdle: 0.8, cover: 0.35 } as const;
+export const opacity = { disabled: 0.4, homeIdle: 0.8, cover: 0.35, aura: 0.22, ended: 0.7 } as const;
 
 // Tamni sloj preko naslovne fotografije, da beli tekst bude čitljiv.
 export const photoShade = ['rgba(17, 17, 20, 0.15)', 'rgba(17, 17, 20, 0.65)'] as const;

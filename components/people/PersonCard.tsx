@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   },
   name: {
     fontFamily: fonts.bold,
-    fontSize: fontSize.fs13,
+    fontSize: fontSize.fs15,
     color: colors.ink,
   },
   trailing: {

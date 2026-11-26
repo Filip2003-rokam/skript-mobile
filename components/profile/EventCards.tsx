@@ -26,11 +26,11 @@ export function EventCards({ events, current, onOpen }: { events: EventStat[]; c
         <Pressable
           key={event.id}
           accessibilityRole="button"
-          accessibilityLabel={event.name}
+          accessibilityLabel={event.slug === current ? `${event.name}, trenutni event` : event.name}
           onPress={() => onOpen(event.slug)}
           style={({ pressed }) => [pressed && { transform: [{ scale: pressScale }] }]}
         >
-          <Card variant={event.slug === current ? 'featured' : 'surface'}>
+          <Card variant="surface" style={styles.card}>
           {event.cover_url ? <Image source={{ uri: event.cover_url }} style={styles.cover} /> : null}
           <View style={styles.body}>
             <View style={styles.heading}>
@@ -64,9 +64,10 @@ function Stat({ value, label }: { value: number; label: string }) {
 }
 
 const styles = StyleSheet.create({
-  list: { gap: space.gap },
-  cover: { width: '100%', height: size.field, borderRadius: size.logoSm },
-  body: { gap: space.gap, paddingTop: space.gap },
+  list: { gap: space.tight * 2 },
+  card: { padding: 0, overflow: 'hidden' },
+  cover: { width: '100%', height: size.field },
+  body: { gap: space.chip - size.ring, padding: space.gap },
   heading: { flexDirection: 'row', alignItems: 'center', gap: space.gap },
   identity: { flex: 1, minWidth: 0 },
   name: { fontFamily: fonts.bold, fontSize: fontSize.fs13, color: colors.ink },

@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
   },
   error: {
     fontFamily: fonts.regular,
-    fontSize: fontSize.fs15,
-    color: colors.ink,
+    fontSize: fontSize.fs13,
+    color: colors.destructive,
   },
 });

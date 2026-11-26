@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Button } from '../../../../components/ui/Button';
@@ -8,8 +8,8 @@ import { Screen } from '../../../../components/ui/Screen';
 import { TextField } from '../../../../components/ui/TextField';
 import { InlineError, LoadingState } from '../../../../components/ui/State';
 import { needOptions, offerOptions, roleOptions, whyOptions } from '../../../../constants/options';
-import { colors, fontSize, fonts, size, space } from '../../../../constants/theme';
-import { Ask, ChoiceChips, Mine, choiceLabels } from '../../../../components/ProfileChat';
+import { colors, size, space } from '../../../../constants/theme';
+import { Ask, ChoiceChips, Mine, StepLabel, choiceLabels } from '../../../../components/ProfileChat';
 import { authErrorMessage } from '../../../../lib/services/authService';
 import { getMyEventProfile, saveMyEventProfile } from '../../../../lib/services/attendeeService';
 import { getEventBySlug } from '../../../../lib/services/eventService';
@@ -117,11 +117,12 @@ export default function EventProfileScreen() {
   return (
     <Screen scroll>
       {error ? <InlineError text={error} /> : null}
+      <View style={styles.thread}>
       <Ask text="Kratko podešavanje da nađem prave ljude. Šta te dovodi ovde? Izaberi sve što važi." />
       {step === 0 ? (
         <>
           <ChoiceChips options={whyOptions} selected={why} onPress={(key) => setWhy((list) => toggle(list, key))} />
-          <Button label="Nastavi" disabled={why.length === 0} onPress={() => setStep(1)} />
+          <Button label="Nastavi" size="sm" disabled={why.length === 0} onPress={() => setStep(1)} />
         </>
       ) : (
         <Mine text={choiceLabels(whyOptions, why)} />
@@ -141,10 +142,10 @@ export default function EventProfileScreen() {
           <Ask text="Tvoja firma?" />
           {step === 2 ? (
             <>
-              <TextField label="Firma" value={company} onChangeText={setCompany} autoCapitalize="words" />
+              <TextField hideLabel label="Firma" placeholder="Ime firme" value={company} onChangeText={setCompany} autoCapitalize="words" />
               <View style={styles.row}>
-                <Button label="Nastavi" disabled={!company.trim()} onPress={() => setStep(3)} />
-                <Button label="Preskoči" variant="secondary" onPress={() => { setCompany(''); setStep(3); }} />
+                <Button label="Nastavi" size="sm" disabled={!company.trim()} onPress={() => setStep(3)} />
+                <Button label="Preskoči" size="sm" variant="secondary" onPress={() => { setCompany(''); setStep(3); }} />
               </View>
             </>
           ) : (
@@ -155,25 +156,19 @@ export default function EventProfileScreen() {
       {step >= 3 ? (
         <>
           <Ask text="Šta nudiš, a gde ti treba pomoć?" />
-          <Text style={styles.group}>NUDIM</Text>
+          <StepLabel text="Nudim" />
           <ChoiceChips options={offerOptions} selected={offers} onPress={(key) => setOffers((list) => toggle(list, key))} />
-          <Text style={styles.group}>TREBA MI POMOĆ OKO</Text>
+          <StepLabel text="Treba mi pomoć oko" />
           <ChoiceChips options={needOptions} selected={needs} onPress={(key) => setNeeds((list) => toggle(list, key))} />
-          <Button label="Gotovo" loading={saving} disabled={offers.length === 0 && needs.length === 0} onPress={finish} />
+          <Button label="Gotovo" size="sm" loading={saving} disabled={offers.length === 0 && needs.length === 0} onPress={finish} />
         </>
       ) : null}
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    gap: space.gap,
-  },
-  group: {
-    fontFamily: fonts.semibold,
-    fontSize: fontSize.fs11,
-    color: colors.text2,
-  },
+  thread: { gap: space.edge },
+  row: { flexDirection: 'row', gap: space.tight * 2 },
 });

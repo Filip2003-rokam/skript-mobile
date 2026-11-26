@@ -2,24 +2,24 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect, type Href } from 'expo-router';
+import { emptyFacts, loadFacts, type HomeFacts } from './home/loadHome';
+import { HomeMark } from './home/HomeMark';
+import { Section } from './home/HomeSections';
+import { StatusPills } from './home/StatusPills';
+import { buildTryCards, TryCards } from './home/TryCards';
 import { Chip } from './ui/Chip';
 import { EmptyState } from './ui/EmptyState';
-import { EventCover } from './ui/EventCover';
-import { Featured, Section, SessionList } from './home/HomeSections';
 import { Screen } from './ui/Screen';
 import { InlineError, LoadingState } from './ui/State';
-import { colors, fontSize, fonts, size, space } from '../constants/theme';
+import { colors, fontSize, fonts, size, space, trackingWide } from '../constants/theme';
 import { authErrorMessage } from '../lib/services/authService';
-import { countIncoming } from '../lib/services/connectionService';
-import { eventPhase, eventPlaceLine, getEventBySlug, type EventRow } from '../lib/services/eventService';
-import { listSessions, sessionIsLive, upcomingSessions, type SessionRow } from '../lib/services/sessionService';
+import { getEventBySlug, type EventRow } from '../lib/services/eventService';
+import { sessionIsLive, upcomingSessions } from '../lib/services/sessionService';
 
 export function EventHome({ slug }: { slug: string }) {
   const [event, setEvent] = useState<EventRow | null>(null);
-  const [incoming, setIncoming] = useState(0);
-  const [sessions, setSessions] = useState<SessionRow[]>([]);
+  const [facts, setFacts] = useState<HomeFacts>(emptyFacts);
   const [ready, setReady] = useState(false);
-  const [missing, setMissing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const loadedSlug = useRef<string | null>(null);
@@ -28,9 +28,9 @@ export function EventHome({ slug }: { slug: string }) {
     if (loadedSlug.current !== slug) {
       loadedSlug.current = null;
       setEvent(null);
+      setFacts(emptyFacts);
       setReady(false);
     }
-    setMissing(false);
     setError(null);
   }, [slug, attempt]);
 
@@ -41,16 +41,14 @@ export function EventHome({ slug }: { slug: string }) {
         .then(async (row) => {
           if (!active) return;
           if (!row) {
-            setMissing(true);
+            setEvent(null);
             return;
           }
           setEvent(row);
-          const [requests, list] = await Promise.all([countIncoming(row.id), listSessions(row.id)]);
+          const next = await loadFacts(row.id);
           if (!active) return;
-          setIncoming(requests);
-          setSessions(list);
+          setFacts(next);
           loadedSlug.current = slug;
-          setMissing(false);
           setError(null);
         })
         .catch((cause) => {
@@ -89,48 +87,27 @@ export function EventHome({ slug }: { slug: string }) {
   }
 
   const now = new Date();
-  const live = sessions.filter((session) => sessionIsLive(event.starts_on, event.days, session, now));
-  const next = upcomingSessions(event.starts_on, event.days, sessions, now);
-  const ended = eventPhase(event.starts_on, event.days, now).phase === 'after';
+  const live = facts.sessions.filter((session) => sessionIsLive(event.starts_on, event.days, session, now));
+  const next = upcomingSessions(event.starts_on, event.days, facts.sessions, now, 1);
   const icon = (name: keyof typeof Feather.glyphMap) => <Feather name={name} size={size.iconSm} color={colors.ink} />;
 
   return (
     <Screen tabBar scroll>
-      <EventCover name={event.name} place={eventPlaceLine(event)} coverUri={event.cover_url ?? undefined} />
+      <View style={styles.hero}>
+        <Text style={styles.eventName}>{event.name}</Text>
+        <HomeMark color={event.color} />
+        <Text style={styles.question}>Šta ti treba na konferenciji?</Text>
+        <StatusPills live={live.length} linksToday={facts.linksToday} />
+      </View>
       {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
-      {incoming > 0 ? (
-        <Featured
-          eyebrow="Novi zahtevi"
-          title={incoming === 1 ? 'Jedna osoba želi da se upoznate' : `${incoming} osobe žele da se upoznate`}
-          text="Kontakt se deli tek kad oboje kažete da."
-          action="Pogledaj zahteve"
-          onPress={() => router.push({ pathname: '/people', params: { view: 'requests' } })}
-        />
-      ) : (
-        <Featured
-          eyebrow="Mreženje"
-          title="Koga vredi upoznati?"
-          text="Predlozi prema tvom profilu. Kontakt se deli tek kad oboje kažete da."
-          action="Prikaži ljude"
-          onPress={() => router.push({ pathname: '/people', params: { view: 'suggestions' } })}
-        />
-      )}
-      {live.length > 0 ? (
-        <Section title="Uživo" live>
-          <SessionList sessions={live} live />
-        </Section>
-      ) : null}
-      {next.length > 0 ? (
-        <Section title="Uskoro">
-          <SessionList sessions={next} />
-        </Section>
-      ) : null}
-      {ended ? <Text style={styles.note}>Event je završen. Kontakti koje si sačuvao ostaju u profilu.</Text> : null}
+      <Section title="Probaj">
+        <TryCards cards={buildTryCards(live[0]?.title ?? null, next[0]?.title ?? null, facts.suggestions, facts.followUps)} />
+      </Section>
       <Section title="Brzo">
         <View style={styles.quick}>
           <Chip label="Razmeni kontakt" icon={icon('repeat')} onPress={() => router.push('/swap' as Href)} />
           <Chip label="Skeniraj QR" icon={icon('camera')} onPress={() => router.push('/scan')} />
-          <Chip label="Moji kontakti" icon={icon('book')} onPress={() => router.push({ pathname: '/profile', params: { view: 'contacts' } })} />
+          <Chip label="Moji kontakti" icon={icon('book')} onPress={() => router.push('/profile')} />
           <Chip label="Profil za event" icon={icon('edit-2')} onPress={() => router.push({ pathname: '/event/[slug]/profile', params: { slug } })} />
         </View>
       </Section>
@@ -144,14 +121,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  hero: {
+    alignItems: 'center',
+    gap: space.gap,
+    paddingTop: space.gap,
+  },
+  eventName: {
+    fontFamily: fonts.bold,
+    fontSize: fontSize.fs11,
+    color: colors.text3,
+    letterSpacing: trackingWide,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
+  question: {
+    fontFamily: fonts.bold,
+    fontSize: fontSize.fs17,
+    color: colors.ink,
+    textAlign: 'center',
+  },
   quick: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: space.tight * 2,
-  },
-  note: {
-    fontFamily: fonts.regular,
-    fontSize: fontSize.fs13,
-    color: colors.text2,
   },
 });

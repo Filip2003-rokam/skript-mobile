@@ -10,10 +10,7 @@ import { colors, size } from '../../../../constants/theme';
 import { useCurrentEvent } from '../../../../lib/currentEvent';
 import { authErrorMessage, getSession } from '../../../../lib/services/authService';
 import {
-  countLiveSessions,
   eventInitials,
-  eventPlaceLine,
-  eventStatusLine,
   getEventBySlug,
   getMyAttendance,
   type EventRow,
@@ -24,7 +21,6 @@ export default function EventWelcomeScreen() {
   const code = typeof slug === 'string' ? slug : '';
   const { setSlug } = useCurrentEvent();
   const [event, setEvent] = useState<EventRow | null>(null);
-  const [live, setLive] = useState<number | null>(null);
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -33,7 +29,6 @@ export default function EventWelcomeScreen() {
 
   useEffect(() => {
     setEvent(null);
-    setLive(null);
     setMissing(false);
     setError(null);
     setEntering(false);
@@ -44,15 +39,13 @@ export default function EventWelcomeScreen() {
     setMissing(false);
     setError(null);
     getEventBySlug(code)
-      .then(async (row) => {
+      .then((row) => {
         if (!active) return;
         if (!row) {
           setMissing(true);
           return;
         }
         setEvent(row);
-        const count = await countLiveSessions(row.id);
-        if (active) setLive(count);
       })
       .catch((cause) => {
         if (active) setError(authErrorMessage(cause));
@@ -124,22 +117,12 @@ export default function EventWelcomeScreen() {
     );
   }
 
-  const status =
-    live === null
-      ? error
-        ? 'Stanje sesija nije učitano. Pokušaj ponovo.'
-        : 'Učitavam stanje sesija.'
-      : eventStatusLine(event, live);
-
   return (
-    <Screen scroll>
+    <Screen>
       <WelcomeCard
-        coverUri={event.cover_url}
         initials={eventInitials(event.name)}
         logoUri={event.logo_url}
         name={event.name}
-        place={eventPlaceLine(event)}
-        status={status}
         entering={entering}
         error={error}
         onEnter={() => void enterEvent()}

@@ -117,9 +117,8 @@ export default function RootLayout() {
         <Stack.Protected guard={session !== null}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="swap" />
-          <Stack.Screen name="event/[slug]/profile" />
-          <Stack.Screen name="event/[slug]/badge" />
-          <Stack.Screen name="contact/new" />
+        <Stack.Screen name="event/[slug]/profile" />
+        <Stack.Screen name="contact/new" />
           <Stack.Screen name="contact/[id]" />
         </Stack.Protected>
         <Stack.Protected guard={session === null}>

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, type PressableProps } from 'react-native';
-import { colors, fontSize, fonts, opacity, pressScale, radius, size, space } from '../../constants/theme';
+import { ActivityIndicator, Pressable, StyleSheet, Text, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
+import { colors, fontSize, fonts, opacity, pressScale, radius, shadow, size, space } from '../../constants/theme';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'accent' | 'icon';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -11,9 +11,10 @@ type ButtonProps = Omit<PressableProps, 'style' | 'children'> & {
   size?: ButtonSize;
   loading?: boolean;
   children?: ReactNode;
+  style?: StyleProp<ViewStyle>;
 };
 
-const height: Record<ButtonSize, number> = { sm: size.buttonSm, md: size.buttonMd, lg: size.buttonLg };
+const height: Record<ButtonSize, number> = { sm: size.buttonHsm, md: size.buttonMd, lg: size.buttonLg };
 const padX: Record<ButtonSize, number> = { sm: space.buttonSm, md: space.buttonMd, lg: space.buttonLg };
 const labelSize: Record<ButtonSize, number> = { sm: fontSize.fs13, md: fontSize.fs15, lg: fontSize.fs17 };
 const labelColor: Record<Variant, string> = {
@@ -31,6 +32,7 @@ export function Button({
   loading = false,
   disabled,
   children,
+  style,
   ...props
 }: ButtonProps) {
   const off = Boolean(disabled || loading);
@@ -47,7 +49,9 @@ export function Button({
           width: variant === 'icon' ? height[buttonSize] : undefined,
           opacity: off ? opacity.disabled : 1,
         },
+        pressed && !off && variant === 'ghost' && styles.ghostPressed,
         pressed && !off && { transform: [{ scale: pressScale }] },
+        style,
       ]}
       {...props}
     >
@@ -65,13 +69,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: space.tight,
+    gap: space.tight * 2,
     borderRadius: radius.pill,
   },
   label: { fontFamily: fonts.semibold },
   primary: { backgroundColor: colors.ink },
-  secondary: { backgroundColor: colors.glass, borderWidth: size.border, borderColor: colors.hairline },
+  secondary: { backgroundColor: colors.glass, borderWidth: size.border, borderColor: colors.hairline, ...shadow.soft },
   ghost: {},
+  ghostPressed: { backgroundColor: colors.fillSubtle },
   accent: { backgroundColor: colors.skriptYellow },
-  icon: { backgroundColor: colors.glass, borderWidth: size.border, borderColor: colors.hairline },
+  icon: { backgroundColor: colors.glass, borderWidth: size.border, borderColor: colors.hairline, ...shadow.soft },
 });

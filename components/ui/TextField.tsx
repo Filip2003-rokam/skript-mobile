@@ -1,18 +1,22 @@
 import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
-import { colors, fontSize, fonts, radius, size, space } from '../../constants/theme';
+import { colors, fontSize, fonts, opacity, radius, shadow, size, space } from '../../constants/theme';
 
 type TextFieldProps = TextInputProps & {
   label: string;
   error?: string;
+  quiet?: boolean;
+  hideLabel?: boolean;
 };
 
-export function TextField({ label, error, style, ...props }: TextFieldProps) {
+export function TextField({ label, error, quiet = false, hideLabel = false, editable = true, style, ...props }: TextFieldProps) {
   return (
-    <View style={styles.wrap}>
-      <Text style={styles.label}>{label}</Text>
+    <View style={[styles.wrap, quiet && styles.quietWrap]}>
+      {hideLabel ? null : <Text style={[styles.label, quiet && styles.quietLabel]}>{label}</Text>}
       <TextInput
+        accessibilityLabel={label}
+        editable={editable}
         placeholderTextColor={colors.text3}
-        style={[styles.input, error ? styles.inputError : null, style]}
+        style={[styles.input, error ? styles.inputError : null, editable === false && styles.off, style]}
         {...props}
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -21,13 +25,16 @@ export function TextField({ label, error, style, ...props }: TextFieldProps) {
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    gap: space.tight,
-  },
+  wrap: { gap: space.tight },
+  quietWrap: { gap: space.tight * 2 },
   label: {
     fontFamily: fonts.semibold,
     fontSize: fontSize.fs13,
     color: colors.ink,
+  },
+  quietLabel: {
+    fontFamily: fonts.regular,
+    color: colors.text2,
   },
   input: {
     height: size.field,
@@ -39,10 +46,10 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     fontSize: fontSize.fs15,
     color: colors.ink,
+    ...shadow.soft,
   },
-  inputError: {
-    borderColor: colors.destructive,
-  },
+  inputError: { borderColor: colors.destructive },
+  off: { opacity: opacity.disabled },
   error: {
     fontFamily: fonts.regular,
     fontSize: fontSize.fs13,

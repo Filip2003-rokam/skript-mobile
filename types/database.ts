@@ -6,6 +6,7 @@ export type EventRow = {
   starts_on: string | null;
   days: number | null;
   rooms: string[];
+  color: string | null;
   cover_url: string | null;
   logo_url: string | null;
 };

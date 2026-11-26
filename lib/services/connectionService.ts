@@ -89,21 +89,6 @@ function toPerson(row: ConnectionDb, otherId: string, bits: PersonBits | undefin
   };
 }
 
-export async function sendRequest(eventId: string, receiverId: string, message: string, source: ConnectionSource) {
-  const id = await userId();
-  const text = message.trim();
-  const { error } = await supabase.from('connections').insert({
-    event_id: eventId,
-    requester_id: id,
-    receiver_id: receiverId,
-    message: text ? text.slice(0, 280) : null,
-    source,
-    status: 'pending',
-  });
-  if (error?.code === '23505') throw new Error('Zahtev je već poslat.');
-  if (error) throw error;
-}
-
 export async function getIncoming(eventId: string): Promise<ConnectionPerson[]> {
   const id = await userId();
   const { data, error } = await supabase
@@ -161,6 +146,22 @@ export async function respond(connectionId: string, status: 'accepted' | 'declin
   const id = await userId();
   const { error } = await supabase.from('connections').update({ status }).eq('id', connectionId).eq('receiver_id', id).eq('status', 'pending');
   if (error) throw error;
+}
+
+// Prihvaćene veze od ponoći po vremenu telefona. Obe strane ulaze u zbir.
+export async function countAcceptedToday(eventId: string, now = new Date()): Promise<number> {
+  const session = await getSession();
+  if (!session) throw new Error('Nisi prijavljen.');
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const { count, error } = await supabase
+    .from('connections')
+    .select('id', { count: 'exact', head: true })
+    .eq('event_id', eventId)
+    .eq('status', 'accepted')
+    .or(`requester_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`)
+    .gte('responded_at', start.toISOString());
+  if (error) throw error;
+  return count ?? 0;
 }
 
 export async function countIncoming(eventId: string): Promise<number> {

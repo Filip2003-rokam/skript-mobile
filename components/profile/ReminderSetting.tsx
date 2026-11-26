@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
 import { StyleSheet, Switch, Text, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
-import { colors, fontSize, fonts, space } from '../../constants/theme';
+import { Card } from '../ui/Card';
+import { colors, fontSize, fonts, space, trackingWide } from '../../constants/theme';
 import { remindersEnabled, setRemindersEnabled } from '../../lib/services/reminderService';
 import { InlineError } from '../ui/State';
 
@@ -43,9 +45,13 @@ export function ReminderSetting() {
   }
 
   return (
-    <View style={styles.wrap}>
+    <Card variant="surface" style={styles.card}>
+      <View style={styles.kicker}>
+        <Feather name="bell" size={fontSize.fs13} color={colors.text2} />
+        <Text style={styles.kickerText}>Podsetnik za follow-up</Text>
+      </View>
       <View style={styles.row}>
-        <Text style={styles.label}>Podsetnici za follow-up</Text>
+        <Text style={styles.label}>Ujutru, u 9:00</Text>
         <Switch
           accessibilityLabel="Podsetnici za follow-up"
           disabled={!ready}
@@ -55,15 +61,23 @@ export function ReminderSetting() {
           thumbColor={colors.surface}
         />
       </View>
-      <Text style={styles.hint}>Ujutru tog dana, u 9:00, stiže obaveštenje koje otvara kontakt.</Text>
+      <Text style={styles.hint}>Tog dana stiže obaveštenje koje otvara kontakt.</Text>
       {error ? <InlineError text={error} /> : null}
-    </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: space.tight },
+  card: { gap: space.gap, padding: space.gap },
+  kicker: { flexDirection: 'row', alignItems: 'center', gap: space.tight * 2 },
+  kickerText: {
+    fontFamily: fonts.semibold,
+    fontSize: fontSize.fs11,
+    color: colors.text2,
+    textTransform: 'uppercase',
+    letterSpacing: trackingWide,
+  },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.gap },
-  label: { flex: 1, fontFamily: fonts.semibold, fontSize: fontSize.fs15, color: colors.ink },
-  hint: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.text2 },
+  label: { flex: 1, fontFamily: fonts.bold, fontSize: fontSize.fs17, color: colors.ink },
+  hint: { fontFamily: fonts.regular, fontSize: fontSize.fs11, color: colors.text3 },
 });

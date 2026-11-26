@@ -16,11 +16,11 @@ export function Kicker({ text }: { text: string }) {
   return <Text style={styles.kicker}>{text}</Text>;
 }
 
-export function RoleLine({ role, company }: { role: string | null; company: string | null }) {
+export function RoleLine({ role, company, compact = false }: { role: string | null; company: string | null; compact?: boolean }) {
   const line = [role, company].filter(Boolean).join(' · ');
   if (!line) return null;
   return (
-    <Text numberOfLines={1} style={styles.role}>
+    <Text numberOfLines={1} style={[styles.role, compact && styles.roleCompact]}>
       {line}
     </Text>
   );
@@ -39,4 +39,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.fs13,
     color: colors.text2,
   },
+  roleCompact: { fontSize: fontSize.fs12 },
 });

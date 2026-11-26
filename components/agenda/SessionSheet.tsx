@@ -1,75 +1,75 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, fontSize, fonts, radius, shadow, size, space, trackingTight } from '../../constants/theme';
-import { sessionClock, type SessionRow } from '../../lib/services/sessionService';
+import { StyleSheet, Text, View } from 'react-native';
+import { Avatar } from '../ui/Avatar';
+import { Sheet } from '../ui/Sheet';
+import { colors, fontSize, fonts, radius, size, space, trackingTight } from '../../constants/theme';
+import { sessionClock, sessionEndClock, type SessionMark, type SessionRow } from '../../lib/services/sessionService';
 
 type SessionSheetProps = {
   session: SessionRow | null;
+  mark: SessionMark;
   open: boolean;
   onClose: () => void;
 };
 
-export function SessionSheet({ session, open, onClose }: SessionSheetProps) {
-  const insets = useSafeAreaInsets();
+export function SessionSheet({ session, mark, open, onClose }: SessionSheetProps) {
   const time = session ? sessionClock(session.start_time) : '';
+  const end = session ? sessionEndClock(session.start_time, session.duration_min) : '';
+  const span = time && end ? `${time}–${end}` : time;
+  const where = [session?.room, session?.day ? `Dan ${session.day}` : '', span].filter(Boolean).join(' · ');
   return (
-    <Modal visible={open} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
-      <View style={styles.modal}>
-        <Pressable accessibilityLabel="Zatvori" style={[StyleSheet.absoluteFill, styles.scrim]} onPress={onClose} />
-        {session ? (
-          <View style={[styles.sheet, { marginBottom: Math.max(insets.bottom, space.gap) }]}>
-            <View style={styles.handle} />
-            {time ? <Text style={styles.time}>{time}</Text> : null}
-            <Text style={styles.modalTitle}>{session.title}</Text>
-            {session.room ? <Text style={styles.meta}>{session.room}</Text> : null}
-            {session.speakers.length > 0 ? <Text style={styles.meta}>{session.speakers.join(', ')}</Text> : null}
-            {session.duration_min != null ? <Text style={styles.meta}>Trajanje: {session.duration_min} min</Text> : null}
-          </View>
-        ) : null}
-      </View>
-    </Modal>
+    <Sheet open={open && session != null} onClose={onClose}>
+      {session ? (
+        <View style={styles.body}>
+          {where ? <Text style={styles.meta}>{where}</Text> : null}
+          <Text style={styles.title}>{session.title}</Text>
+          {session.speakers.map((name) => (
+            <View key={name} style={styles.speaker}>
+              <Avatar name={name} size={size.logoSm} />
+              <Text style={styles.speakerName}>{name}</Text>
+            </View>
+          ))}
+          <Status mark={mark} />
+        </View>
+      ) : null}
+    </Sheet>
   );
 }
 
+function Status({ mark }: { mark: SessionMark }) {
+  if (mark === 'live') {
+    return (
+      <View style={styles.live}>
+        <View style={styles.dot} />
+        <Text style={styles.liveText}>Uživo</Text>
+      </View>
+    );
+  }
+  return <Text style={mark === 'ended' ? styles.ended : styles.upcoming}>{mark === 'ended' ? 'Završeno' : 'Uskoro'}</Text>;
+}
+
 const styles = StyleSheet.create({
-  time: {
-    fontFamily: fonts.semibold,
-    fontSize: fontSize.fs13,
-    color: colors.text2,
-    fontVariant: ['tabular-nums'],
-  },
-  meta: {
-    fontFamily: fonts.regular,
-    fontSize: fontSize.fs13,
-    color: colors.text2,
-  },
-  modal: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  scrim: {
-    backgroundColor: colors.scrim,
-  },
-  sheet: {
-    gap: space.gap,
-    marginHorizontal: space.gap,
-    maxHeight: '80%',
-    borderRadius: radius.panel,
-    padding: space.edge,
-    backgroundColor: colors.glassStrong,
-    ...shadow.lift,
-  },
-  handle: {
-    alignSelf: 'center',
-    width: size.emptyIcon,
-    height: size.dot + size.ring,
-    borderRadius: radius.pill,
-    backgroundColor: colors.hairline,
-  },
-  modalTitle: {
+  body: { gap: space.gap },
+  meta: { fontFamily: fonts.semibold, fontSize: fontSize.fs12, color: colors.text2, fontVariant: ['tabular-nums'] },
+  title: {
     fontFamily: fonts.bold,
-    fontSize: fontSize.fs22,
+    fontSize: fontSize.fs17,
     color: colors.ink,
-    letterSpacing: fontSize.fs22 * trackingTight,
+    letterSpacing: fontSize.fs17 * trackingTight,
   },
+  speaker: { flexDirection: 'row', alignItems: 'center', gap: space.tight * 2 },
+  speakerName: { fontFamily: fonts.semibold, fontSize: fontSize.fs12, color: colors.ink },
+  live: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.tight,
+    height: size.chipSm,
+    paddingHorizontal: space.gap,
+    borderRadius: radius.pill,
+    backgroundColor: colors.live,
+  },
+  dot: { width: size.liveDot, height: size.liveDot, borderRadius: radius.pill, backgroundColor: colors.onInk },
+  liveText: { fontFamily: fonts.bold, fontSize: fontSize.fs12, color: colors.onInk },
+  ended: { fontFamily: fonts.semibold, fontSize: fontSize.fs12, color: colors.text3 },
+  upcoming: { fontFamily: fonts.semibold, fontSize: fontSize.fs12, color: colors.text2 },
 });

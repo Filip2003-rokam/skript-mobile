@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Avatar } from '../ui/Avatar';
@@ -7,9 +7,8 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Chip } from '../ui/Chip';
 import { EmptyState } from '../ui/EmptyState';
-import { TextField } from '../ui/TextField';
 import { InlineError, LoadingState } from '../ui/State';
-import { colors, fontSize, fonts, pressScale, size, space, trackingWide } from '../../constants/theme';
+import { colors, fontSize, fonts, pressScale, radius, shadow, size, space, trackingWide } from '../../constants/theme';
 import { followUpIsDue, toDisplayDate } from '../../lib/contactDates';
 import { authErrorMessage } from '../../lib/services/authService';
 import { listContacts, type ContactListItem } from '../../lib/services/contactService';
@@ -59,7 +58,15 @@ export function ContactList({ version }: { version: number }) {
     <View style={styles.list}>
       <View style={styles.tools}>
         <View style={styles.search}>
-          <TextField label="Pretraga" value={search} onChangeText={setSearch} placeholder="Ime, firma, beleška" accessibilityLabel="Pretraga kontakata" />
+          <Feather name="search" size={size.iconSm} color={colors.text2} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Pretraga kontakata"
+            placeholderTextColor={colors.text3}
+            accessibilityLabel="Pretraga kontakata"
+            style={styles.input}
+          />
         </View>
         <Button variant="icon" accessibilityLabel="Nov kontakt" onPress={() => router.push('/contact/new')}>
           <Feather name="plus" size={size.iconMd} color={colors.ink} />
@@ -92,15 +99,14 @@ export function ContactList({ version }: { version: number }) {
               onPress={() => router.push({ pathname: '/contact/[id]', params: { id: contact.id } })}
               style={({ pressed }) => [pressed && { transform: [{ scale: pressScale }] }]}
             >
-              <Card variant="surface">
-                <View style={styles.row}>
-                  <Avatar name={contact.fullName} />
-                  <View style={styles.identity}>
-                    <Text numberOfLines={1} style={styles.name}>{contact.fullName}</Text>
-                    {contact.company ? <Text numberOfLines={1} style={styles.company}>{contact.company}</Text> : null}
-                    <FollowUp contact={contact} />
-                  </View>
+              <Card variant="surface" style={styles.card}>
+                <Avatar name={contact.fullName} />
+                <View style={styles.identity}>
+                  <Text numberOfLines={1} style={styles.name}>{contact.fullName}</Text>
+                  {contact.company ? <Text numberOfLines={1} style={styles.company}>{contact.company}</Text> : null}
+                  <FollowUp contact={contact} />
                 </View>
+                <Feather name="chevron-right" size={size.iconSm} color={colors.text2} />
               </Card>
             </Pressable>
           ))}
@@ -114,19 +120,38 @@ function FollowUp({ contact }: { contact: ContactListItem }) {
   const date = toDisplayDate(contact.followUpDate);
   if (!contact.followUpDone && !date) return null;
   const due = followUpIsDue(contact.followUpDate, contact.followUpDone);
-  return <Text style={[styles.follow, due && styles.followDue]}>{contact.followUpDone ? 'Follow-up poslat' : `Follow-up · ${date}`}</Text>;
+  return (
+    <View style={styles.followRow}>
+      {!contact.followUpDone ? <Feather name="bell" size={fontSize.fs11} color={due ? colors.ink : colors.text2} /> : null}
+      <Text numberOfLines={1} style={[styles.follow, due && styles.followDue]}>{contact.followUpDone ? 'Follow-up poslat' : `Follow-up · ${date}`}</Text>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   list: { gap: space.gap },
-  tools: { flexDirection: 'row', alignItems: 'flex-end', gap: space.gap },
-  search: { flex: 1 },
-  group: { gap: space.tight },
+  tools: { flexDirection: 'row', alignItems: 'center', gap: space.gap },
+  search: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.tight * 2,
+    height: size.segmented,
+    paddingHorizontal: space.card,
+    borderRadius: radius.pill,
+    borderWidth: size.border,
+    borderColor: colors.surfaceBorder,
+    backgroundColor: colors.surface,
+    ...shadow.card,
+  },
+  input: { flex: 1, padding: 0, fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.ink },
+  group: { gap: space.tight + size.ring },
   groupTitle: { marginTop: space.tight, fontFamily: fonts.bold, fontSize: fontSize.fs11, color: colors.text2, textTransform: 'uppercase', letterSpacing: trackingWide },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.gap, minHeight: size.nav },
+  card: { flexDirection: 'row', alignItems: 'center', gap: space.gap, minHeight: size.nav, paddingHorizontal: space.gap, paddingVertical: space.chip - size.ring },
   identity: { flex: 1, minWidth: 0 },
   name: { fontFamily: fonts.bold, fontSize: fontSize.fs13, color: colors.ink },
-  company: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.text2 },
-  follow: { fontFamily: fonts.medium, fontSize: fontSize.fs11, color: colors.text2 },
+  company: { fontFamily: fonts.regular, fontSize: fontSize.fs12, color: colors.text2 },
+  followRow: { flexDirection: 'row', alignItems: 'center', gap: space.tight },
+  follow: { flex: 1, fontFamily: fonts.medium, fontSize: fontSize.fs11, color: colors.text2 },
   followDue: { color: colors.ink },
 });

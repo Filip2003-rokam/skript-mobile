@@ -1,23 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { AgendaFilters } from './agenda/AgendaFilters';
+import { AgendaList } from './agenda/AgendaList';
 import { SessionSheet } from './agenda/SessionSheet';
 import { EmptyState } from './ui/EmptyState';
 import { EventHero } from './ui/EventHero';
-import { SessionCard } from './ui/SessionCard';
 import { Screen } from './ui/Screen';
 import { InlineError, LoadingState } from './ui/State';
-import { colors, fontSize, fonts, size, space } from '../constants/theme';
+import { colors, size, space } from '../constants/theme';
 import { authErrorMessage } from '../lib/services/authService';
 import { eventPhase, getEventBySlug, type EventRow } from '../lib/services/eventService';
-import { listSessions, sessionClock, sessionIsLive, type SessionRow } from '../lib/services/sessionService';
+import { listSessions, sessionMark, type SessionRow } from '../lib/services/sessionService';
 
 const minute = 60_000;
 
 export function Agenda({ slug }: { slug: string }) {
-  const [listWidth, setListWidth] = useState(0);
   const [event, setEvent] = useState<EventRow | null>(null);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [day, setDay] = useState(1);
@@ -112,58 +111,17 @@ export function Agenda({ slug }: { slug: string }) {
   const dayCount = event.days && event.days > 0 ? event.days : 1;
   const days = Array.from({ length: dayCount }, (_, index) => index + 1);
   const rooms = Array.isArray(event.rooms) ? event.rooms : [];
-  const visible = sessions.filter((session) => session.day === day && (room === null || session.room === room));
-  const live = visible.filter((session) => sessionIsLive(event.starts_on, event.days, session, now));
-  const liveIds = new Set(live.map((session) => session.id));
-  const groups = new Map<string, SessionRow[]>();
-  for (const session of visible) {
-    if (liveIds.has(session.id)) continue;
-    const time = sessionClock(session.start_time);
-    const list = groups.get(time);
-    if (list) list.push(session);
-    else groups.set(time, [session]);
-  }
-
-  function show(session: SessionRow) {
-    setSelected(session);
-    setOpen(true);
-  }
+  const openMark = selected ? sessionMark(event.starts_on, event.days, selected, now) : 'upcoming';
 
   return (
     <Screen tabBar>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.list}
-        keyboardShouldPersistTaps="handled"
-        onLayout={(layout) => setListWidth(layout.nativeEvent.layout.width)}
-      >
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
         {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
         <EventHero eventName={event.name} />
-        <AgendaFilters days={days} day={day} onDay={setDay} rooms={rooms} room={room} onRoom={setRoom} listWidth={listWidth} />
-        {live.length > 0 ? (
-          <View style={styles.section}>
-            <View style={styles.liveHeading}>
-              <View style={styles.dot} />
-              <Text style={styles.liveTitle}>Upravo traje</Text>
-            </View>
-            {live.map((session) => (
-              <SessionCard key={session.id} session={session} live onPress={() => show(session)} />
-            ))}
-          </View>
-        ) : null}
-        {[...groups.entries()].map(([time, list]) => (
-          <View key={time || 'bez-vremena'} style={styles.section}>
-            {time ? <Text style={styles.timeHeading}>{time}</Text> : null}
-            {list.map((session) => (
-              <SessionCard key={session.id} session={session} onPress={() => show(session)} />
-            ))}
-          </View>
-        ))}
-        {visible.length === 0 ? (
-          <EmptyState icon={<Feather name="calendar" size={size.iconMd} color={colors.ink} />} text="Nema sesija za ove filtere." />
-        ) : null}
+        <AgendaFilters days={days} day={day} onDay={setDay} rooms={rooms} room={room} onRoom={setRoom} />
+        <AgendaList event={event} sessions={sessions} day={day} room={room} now={now} onOpen={(session) => { setSelected(session); setOpen(true); }} />
       </ScrollView>
-      <SessionSheet session={selected} open={open} onClose={() => setOpen(false)} />
+      <SessionSheet session={selected} mark={openMark} open={open} onClose={() => setOpen(false)} />
     </Screen>
   );
 }
@@ -175,36 +133,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: space.gap,
   },
-  scroll: {
-    flex: 1,
-  },
-  list: {
-    gap: space.gap,
-    paddingBottom: space.gap,
-  },
-  section: {
-    gap: space.gap,
-  },
-  liveHeading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.gap,
-  },
-  dot: {
-    width: size.dot * 2,
-    height: size.dot * 2,
-    borderRadius: size.dot,
-    backgroundColor: colors.live,
-  },
-  liveTitle: {
-    fontFamily: fonts.semibold,
-    fontSize: fontSize.fs13,
-    color: colors.ink,
-  },
-  timeHeading: {
-    fontFamily: fonts.semibold,
-    fontSize: fontSize.fs13,
-    color: colors.text2,
-    fontVariant: ['tabular-nums'],
-  },
+  scroll: { flex: 1 },
+  list: { gap: space.gap, paddingBottom: space.gap },
 });

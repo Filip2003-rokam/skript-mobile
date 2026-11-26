@@ -5,16 +5,18 @@ type EventLogoProps = {
   initials: string;
   source?: ImageSourcePropType;
   small?: boolean;
+  box?: number;
 };
 
-export function EventLogo({ initials, source, small = false }: EventLogoProps) {
-  const box = small ? size.logoSm : size.logo;
+export function EventLogo({ initials, source, small = false, box }: EventLogoProps) {
+  const side = box ?? (small ? size.logoSm : size.logo);
+  const letters = side > size.logo ? fontSize.fs30 : small ? fontSize.fs11 : fontSize.fs22;
   return (
-    <View style={[styles.box, { width: box, height: box }]}>
+    <View style={[styles.box, { width: side, height: side }]}>
       {source ? (
         <Image source={source} style={styles.image} />
       ) : (
-        <Text style={[styles.initials, small && styles.small]}>{initials}</Text>
+        <Text style={[styles.initials, { fontSize: letters }]}>{initials}</Text>
       )}
     </View>
   );
@@ -35,10 +37,6 @@ const styles = StyleSheet.create({
   },
   initials: {
     fontFamily: fonts.bold,
-    fontSize: fontSize.fs22,
     color: colors.ink,
-  },
-  small: {
-    fontSize: fontSize.fs11,
   },
 });

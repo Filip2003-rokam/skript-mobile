@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { Button } from '../ui/Button';
 import { EmptyState } from '../ui/EmptyState';
 import { colors, size, space } from '../../constants/theme';
 import { PersonCard } from './PersonCard';
@@ -42,10 +43,12 @@ export function Roster({ people, empty, onFind, trailing }: RosterProps) {
           trailing={trailing?.(person)}
         />
       ))}
+      <Button size="sm" variant="secondary" label="Nađi još ljudi" onPress={onFind} style={styles.more} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   list: { gap: space.gap },
+  more: { alignSelf: 'flex-start', height: size.emptyIcon, marginTop: space.tight },
 });

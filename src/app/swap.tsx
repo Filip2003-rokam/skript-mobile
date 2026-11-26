@@ -5,18 +5,17 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { SwapCode } from '../../components/swap/SwapCode';
+import { SavedSwap } from '../../components/swap/SavedSwap';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Screen } from '../../components/ui/Screen';
 import { InlineError, LoadingState } from '../../components/ui/State';
-import { VoiceNote } from '../../components/voice/VoiceNote';
-import { colors, fontSize, fonts, radius, size, space } from '../../constants/theme';
+import { colors, fontSize, fonts, radius, size, space, trackingTight } from '../../constants/theme';
 import { useCurrentEvent } from '../../lib/currentEvent';
 import { readSkriptQr } from '../../lib/skriptQr';
 import { authErrorMessage } from '../../lib/services/authService';
-import { getMyEventProfile } from '../../lib/services/attendeeService';
 import { getContact, updateContact, type Contact } from '../../lib/services/contactService';
-import { eventInitials, eventPlaceLine, getEventBySlug, type EventRow } from '../../lib/services/eventService';
+import { getEventBySlug, type EventRow } from '../../lib/services/eventService';
 import { getMyProfile } from '../../lib/services/profileService';
 import { issueSwapToken, revokeSwapToken, swapContact, swapRefreshMs } from '../../lib/services/swapService';
 
@@ -25,7 +24,6 @@ export default function SwapScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [event, setEvent] = useState<EventRow | null>(null);
   const [person, setPerson] = useState('Učesnik');
-  const [company, setCompany] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [saved, setSaved] = useState<Contact | null>(null);
@@ -54,11 +52,10 @@ export default function SwapScreen() {
           setEvent(null);
           return;
         }
-        const [profile, attendance] = await Promise.all([getMyProfile(), getMyEventProfile(row.id)]);
+        const profile = await getMyProfile();
         if (!active) return;
         setEvent(row);
         setPerson(profile.fullName?.trim() || 'Učesnik');
-        setCompany(attendance?.company?.trim() || null);
         await refresh(row.id);
       })
       .catch((cause) => {
@@ -139,57 +136,53 @@ export default function SwapScreen() {
   if (saved) {
     return (
       <Screen scroll>
-        <Text style={styles.title}>Kontakt je sačuvan</Text>
-        <Text style={styles.body}>{saved.fullName} je sada u tvojim kontaktima. Isto važi i za tu osobu.</Text>
-        <VoiceNote
-          existingNote={saved.note}
-          existingDate={saved.followUpDate}
-          email={saved.email}
+        <SavedSwap
+          contact={saved}
+          onLater={() => router.back()}
           onSave={async (value) => {
             await updateContact(saved.id, value);
           }}
         />
-        <Button label="Kasnije" variant="ghost" onPress={() => router.back()} />
       </Screen>
     );
   }
 
   return (
     <Screen scroll>
-      <Button label="Nazad" variant="ghost" onPress={() => router.back()} />
+      <Text style={styles.title}>Razmena kontakata</Text>
       {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
-      {token ? (
-        <SwapCode
-          token={token}
-          eventName={event.name}
-          place={eventPlaceLine(event)}
-          coverUri={event.cover_url}
-          initials={eventInitials(event.name)}
-          logoUri={event.logo_url}
-          person={person}
-          company={company}
-        />
-      ) : null}
+      {token ? <SwapCode token={token} person={person} eventName={event.name} /> : null}
+      <Text style={styles.note}>Kod važi pet minuta i menja se dok je ovaj ekran otvoren. Fotografija kasnije ne radi.</Text>
       {scanning ? (
         <View style={styles.scan}>
+          <Text style={styles.scanning}>Skeniram…</Text>
           {!permission ? null : permission.granted ? (
             <CameraView style={styles.camera} facing="back" barcodeScannerSettings={{ barcodeTypes: ['qr'] }} onBarcodeScanned={({ data }) => void onScan(data)} />
           ) : (
             <Button label={permission.canAskAgain ? 'Dozvoli kameru' : 'Otvori podešavanja'} onPress={() => (permission.canAskAgain ? requestPermission() : Linking.openSettings())} />
           )}
-          {notice ? <Text style={styles.body}>{notice}</Text> : null}
+          {notice ? <Text style={styles.note}>{notice}</Text> : null}
           <Button label="Zatvori skener" variant="ghost" onPress={() => setScanning(false)} />
         </View>
       ) : (
-        <Button label="Skeniraj njihov" onPress={() => { locked.current = false; setScanning(true); }} />
+        <Button label="Skeniraj njihov" onPress={() => { locked.current = false; setScanning(true); }}>
+          <Feather name="camera" size={size.iconMd} color={colors.onInk} />
+        </Button>
       )}
+      <Button label="Nazad" variant="ghost" onPress={() => router.back()} />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  title: { fontFamily: fonts.display, fontSize: fontSize.fs30, color: colors.ink },
-  body: { fontFamily: fonts.regular, fontSize: fontSize.fs15, color: colors.ink },
+  title: {
+    fontFamily: fonts.bold,
+    fontSize: fontSize.fs22,
+    color: colors.ink,
+    letterSpacing: fontSize.fs22 * trackingTight,
+  },
+  note: { fontFamily: fonts.regular, fontSize: fontSize.fs13, lineHeight: fontSize.fs22, color: colors.text2, textAlign: 'center' },
+  scanning: { fontFamily: fonts.semibold, fontSize: fontSize.fs13, color: colors.ink, textAlign: 'center' },
   scan: { gap: space.gap },
   camera: { height: size.hero, borderRadius: radius.card, overflow: 'hidden' },
 });

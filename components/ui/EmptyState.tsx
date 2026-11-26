@@ -15,7 +15,7 @@ export function EmptyState({ icon, text, action, onAction }: EmptyStateProps) {
     <View style={styles.wrap}>
       <View style={styles.icon}>{icon}</View>
       <Text style={styles.text}>{text}</Text>
-      {action && onAction ? <Button label={action} size="sm" onPress={onAction} /> : null}
+      {action && onAction ? <Button label={action} size="sm" onPress={onAction} style={styles.action} /> : null}
     </View>
   );
 }
@@ -24,7 +24,8 @@ const styles = StyleSheet.create({
   wrap: {
     alignItems: 'center',
     gap: space.gap,
-    paddingVertical: space.gap,
+    paddingHorizontal: space.buttonLg,
+    paddingVertical: space.buttonLg,
   },
   icon: {
     width: size.emptyIcon,
@@ -41,4 +42,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.fs13,
     color: colors.text2,
   },
+  action: { height: size.emptyIcon },
 });

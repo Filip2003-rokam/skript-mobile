@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Chip } from '../ui/Chip';
-import { colors, fontSize, fonts, size, space } from '../../constants/theme';
+import { colors, fontSize, fonts, radius, size, space, trackingTight } from '../../constants/theme';
 import { MatchOpeners } from './MatchOpeners';
 import { actionError, displayName, Kicker, RoleLine } from './personBits';
 
@@ -24,7 +23,14 @@ type PersonMatchCardProps = {
   onToggleSave: () => Promise<void>;
 };
 
+const tile = size.logo + size.dot;
+
+function initials(name: string) {
+  return name.split(/\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join('').toUpperCase();
+}
+
 export function PersonMatchCard(props: PersonMatchCardProps) {
+  const [open, setOpen] = useState(false);
   const [tips, setTips] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -56,62 +62,88 @@ export function PersonMatchCard(props: PersonMatchCardProps) {
   }
 
   return (
-    <Card variant="surface">
-      <View style={styles.body}>
-        <View style={styles.header}>
-          <Avatar name={person} />
-          <View style={styles.identity}>
-            <Text numberOfLines={1} style={styles.name}>
-              {person}
-            </Text>
-            <RoleLine role={props.role} company={props.company} />
-          </View>
-          <Chip label={`${props.score}/10`} selected small />
+    <Card variant="surface" style={styles.card}>
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen((value) => !value)} style={styles.top}>
+        <View style={styles.identity}>
+          <Text style={styles.scoreLine}>
+            <Text style={styles.score}>{props.score}/10</Text>
+            {' poklapanje'}
+            {props.saved ? ' · Sačuvano' : ''}
+          </Text>
+          <Text numberOfLines={1} style={styles.name}>{person}</Text>
+          <RoleLine compact role={props.role} company={props.company} />
+          <Kicker text="Zašto da se upoznate" />
+          {props.why ? <Text numberOfLines={open ? undefined : 2} style={styles.why}>{props.why}</Text> : null}
         </View>
-        <View style={styles.block}>
-          <Kicker text="ZAŠTO DA SE UPOZNATE" />
-          {props.why ? <Text style={styles.why}>{props.why}</Text> : null}
+        <View style={styles.side}>
+          <View style={styles.tile}><Text style={styles.tileText}>{initials(person)}</Text></View>
+          <Feather name={open ? 'chevron-up' : 'chevron-down'} size={size.iconSm} color={colors.text2} />
         </View>
-        {props.matchedMine && props.matchedTheirs ? (
-          <View style={styles.block}>
-            <Kicker text="POKLAPANJE" />
-            <View style={styles.chips}>
-              <Chip label={props.matchedMine} selected small />
-              <Text style={styles.arrow}>↔</Text>
-              <Chip label={props.matchedTheirs} small />
-            </View>
-          </View>
-        ) : null}
-        <View style={styles.actions}>
-          <Button size="sm" label="Zainteresovan" disabled={acting} onPress={() => void run(props.onInterest)}>
-            <Feather name="user-plus" size={size.iconSm} color={colors.onInk} />
-          </Button>
-          <Button size="sm" variant="secondary" label="Preskoči" disabled={acting} onPress={() => void run(props.onSkip)}>
-            <Feather name="x" size={size.iconSm} color={colors.ink} />
-          </Button>
-          <Button size="sm" variant="secondary" label={props.saved ? 'Sačuvano' : 'Sačuvaj'} disabled={saving} onPress={() => void toggleSave()}>
-            <Feather name="bookmark" size={size.iconSm} color={colors.ink} />
-          </Button>
-          <Button size="sm" variant="secondary" label="Kako da počnem?" onPress={() => setTips((open) => !open)}>
-            <Feather name="zap" size={size.iconSm} color={colors.ink} />
-          </Button>
-        </View>
-        {tips ? <MatchOpeners lines={props.openers.slice(0, 2)} /> : null}
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+      </Pressable>
+      <View style={styles.actions}>
+        <Button size="sm" label="Zainteresovan" disabled={acting} onPress={() => void run(props.onInterest)} style={styles.action}>
+          <Feather name="heart" size={size.iconSm} color={colors.onInk} />
+        </Button>
+        <Button size="sm" variant="secondary" label="Preskoči" disabled={acting} onPress={() => void run(props.onSkip)} style={styles.action}>
+          <Feather name="x" size={size.iconSm} color={colors.ink} />
+        </Button>
       </View>
+      {open ? (
+        <>
+          {props.matchedMine && props.matchedTheirs ? (
+            <View style={styles.block}>
+              <Kicker text="Poklapanje" />
+              <View style={styles.chips}>
+                <Chip label={props.matchedMine} selected small />
+                <Text style={styles.arrow}>↔</Text>
+                <Chip label={props.matchedTheirs} small />
+              </View>
+            </View>
+          ) : null}
+          <View style={styles.more}>
+            <Button size="sm" variant="secondary" label={props.saved ? 'Sačuvano' : 'Sačuvaj'} disabled={saving} onPress={() => void toggleSave()}>
+              <Feather name="bookmark" size={size.iconSm} color={colors.ink} />
+            </Button>
+            <Button size="sm" variant="secondary" label="Kako da počnem?" onPress={() => setTips((value) => !value)}>
+              <Feather name="zap" size={size.iconSm} color={colors.ink} />
+            </Button>
+          </View>
+          {tips ? <MatchOpeners lines={props.openers.slice(0, 2)} /> : null}
+        </>
+      ) : null}
+      {error ? <Text style={styles.error}>{error}</Text> : null}
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  body: { gap: space.gap },
-  header: { flexDirection: 'row', alignItems: 'center', gap: space.gap },
-  identity: { flex: 1, minWidth: 0 },
-  name: { fontFamily: fonts.bold, fontSize: fontSize.fs13, color: colors.ink },
+  card: { padding: space.gap, gap: space.chip - size.ring },
+  top: { flexDirection: 'row', alignItems: 'stretch', gap: space.gap },
+  identity: { flex: 1, minWidth: 0, gap: space.tight },
+  scoreLine: { fontFamily: fonts.semibold, fontSize: fontSize.fs11, color: colors.text2 },
+  score: { fontFamily: fonts.bold, fontSize: fontSize.fs11, color: colors.ink },
+  name: {
+    fontFamily: fonts.bold,
+    fontSize: fontSize.fs15,
+    color: colors.ink,
+    letterSpacing: fontSize.fs15 * trackingTight,
+  },
+  why: { fontFamily: fonts.regular, fontSize: fontSize.fs12, lineHeight: fontSize.fs17, color: colors.ink },
+  side: { alignItems: 'center', justifyContent: 'space-between' },
+  tile: {
+    width: tile,
+    height: tile,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.tile,
+    backgroundColor: colors.skriptYellowSoft,
+  },
+  tileText: { fontFamily: fonts.display, fontSize: fontSize.fs22, color: colors.ink },
+  actions: { flexDirection: 'row', gap: space.tight * 2 },
+  action: { flex: 1, alignSelf: 'stretch' },
   block: { gap: space.tight },
-  why: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.ink },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.gap },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.tight + size.ring },
   arrow: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.text3 },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.gap },
-  error: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.ink },
+  more: { flexDirection: 'row', flexWrap: 'wrap', gap: space.tight * 2 },
+  error: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.destructive },
 });
