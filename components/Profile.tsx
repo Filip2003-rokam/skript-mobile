@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect, type Href } from 'expo-router';
-import { colors, fontSize, fonts, size, space } from '../constants/theme';
+import { colors, fontSize, fonts, pressScale, radius, shadow, size, space } from '../constants/theme';
 import { useCurrentEvent } from '../lib/currentEvent';
 import { authErrorMessage, signOut } from '../lib/services/authService';
 import { getEventBySlug } from '../lib/services/eventService';
@@ -156,18 +156,32 @@ export function Profile({ notice }: { notice?: string }) {
         <Button label={t('profile.edit')} variant="secondary" onPress={() => setEditing(true)}>
           <Feather name="edit-2" size={size.iconSm} color={colors.ink} />
         </Button>
-        {slug ? (
-          <Button label={t('home.swap')} variant="secondary" onPress={() => router.push('/swap' as Href)}>
-            <Feather name="repeat" size={size.iconSm} color={colors.ink} />
-          </Button>
-        ) : null}
-        <Button label={t('profile.signOut')} variant="ghost" loading={leaving} onPress={() => void leave()}>
-          <Feather name="log-out" size={size.iconSm} color={colors.ink} />
-        </Button>
       </View>
+      {slug ? (
+        // Kao bedž u demou: lični kod za razmenu uživo. Kod se menja svakih pet minuta, pa živi na ekranu razmene.
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('profile.qrTitle')}
+          onPress={() => router.push('/swap' as Href)}
+          style={({ pressed }) => [styles.qrCard, pressed && { transform: [{ scale: pressScale }] }]}
+        >
+          <View style={styles.qrIcon}>
+            <Feather name="maximize" size={size.iconMd} color={colors.ink} />
+          </View>
+          <View style={styles.identity}>
+            <Text style={styles.qrTitle}>{t('profile.qrTitle')}</Text>
+            <Text style={styles.meta}>{t('profile.qrHint')}</Text>
+          </View>
+          <Feather name="chevron-right" size={size.iconSm} color={colors.text3} />
+        </Pressable>
+      ) : null}
       <View style={styles.block}>
         <Text style={styles.section}>{t('home.myEvents')}</Text>
         <EventCards events={events} current={slug} onOpen={(next) => void setSlug(next)} />
+      </View>
+      <View style={styles.block}>
+        <Text style={styles.section}>{t('profile.allContacts')}</Text>
+        <ContactList version={version} />
       </View>
       <View style={styles.block}>
         <Text style={styles.section}>{t('profile.networking')}</Text>
@@ -176,10 +190,6 @@ export function Profile({ notice }: { notice?: string }) {
         {slug ? (
           <Button label={t('profile.editSteps')} size="sm" variant="secondary" onPress={() => router.push({ pathname: '/event/[slug]/profile', params: { slug } })} style={styles.update} />
         ) : null}
-      </View>
-      <View style={styles.block}>
-        <Text style={styles.section}>{t('profile.allContacts')}</Text>
-        <ContactList version={version} />
       </View>
       <View style={styles.block}>
         <Text style={styles.section}>{t('profile.reminder')}</Text>
@@ -196,6 +206,9 @@ export function Profile({ notice }: { notice?: string }) {
           onChange={(id) => void setAppLanguage(id === 'en' ? 'en' : 'sr')}
         />
       </View>
+      <Button label={t('profile.signOut')} variant="ghost" loading={leaving} onPress={() => void leave()}>
+        <Feather name="log-out" size={size.iconSm} color={colors.ink} />
+      </Button>
       <View style={styles.sign}>
         <Text style={styles.by}>by</Text>
         <SkriptMark size={fontSize.fs12} />
@@ -208,6 +221,17 @@ export function Profile({ notice }: { notice?: string }) {
 }
 
 const styles = StyleSheet.create({
+  qrCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.card,
+    padding: space.card,
+    borderRadius: radius.card,
+    backgroundColor: colors.surface,
+    ...shadow.card,
+  },
+  qrIcon: { width: size.chip + space.tight * 2, height: size.chip + space.tight * 2, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.skriptYellowSoft },
+  qrTitle: { fontFamily: fonts.semibold, fontSize: fontSize.fs15, color: colors.ink },
   notice: { fontFamily: fonts.semibold, fontSize: fontSize.fs13, color: colors.ink },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.card },
   identity: { flex: 1, minWidth: 0 },

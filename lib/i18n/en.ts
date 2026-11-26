@@ -238,6 +238,8 @@ export const en: WithoutFew<Dictionary> = {
     networking: "Networking profile",
     noEventProfile: "No profile for this event yet. Open the four-step setup.",
     noName: "No name",
+    qrHint: "Show your code or scan theirs.",
+    qrTitle: "Swap contacts in person",
     pickEvent: "Pick an event from the list.",
     reminder: "Reminder",
     saveChanges: "Save changes",
@@ -315,7 +317,7 @@ export const en: WithoutFew<Dictionary> = {
   tabs: {
     agenda: "Agenda",
     home: "Home",
-    me: "Profile",
+    me: "Me",
     people: "People",
   },
   voice: {

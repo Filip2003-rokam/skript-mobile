@@ -13,29 +13,47 @@ const tabs = {
 
 type TabKey = keyof typeof tabs;
 
-export function TabBar({ activeKey, onPress, bottom = 0 }: { activeKey: string; onPress: (key: string) => void; bottom?: number }) {
+// Mikrofon u sredini je kao u demou: odmah otvara novu glasovnu belešku posle razgovora.
+export function TabBar({ activeKey, onPress, onMic, bottom = 0 }: { activeKey: string; onPress: (key: string) => void; onMic?: () => void; bottom?: number }) {
+  const keys = Object.keys(tabs) as TabKey[];
+  const left = keys.slice(0, 2);
+  const right = keys.slice(2);
+  const renderTab = (key: TabKey) => {
+    const item = tabs[key];
+    const active = key === activeKey;
+    const color = active ? colors.ink : colors.text3;
+    return (
+      <Pressable
+        key={key}
+        accessibilityRole="button"
+        accessibilityLabel={item.label}
+        accessibilityState={{ selected: active }}
+        onPress={() => onPress(key)}
+        style={({ pressed }) => [styles.tab, pressed && { transform: [{ scale: pressScale }] }]}
+      >
+        <Feather name={item.icon} size={size.iconMd} color={color} />
+        <Text style={[styles.label, { color }, active && styles.labelOn]}>{item.label}</Text>
+        <View style={[styles.dot, active && styles.dotOn]} />
+      </Pressable>
+    );
+  };
   return (
     <View style={[styles.wrap, { paddingBottom: bottom }]}>
       <View style={styles.bar}>
-        {(Object.keys(tabs) as TabKey[]).map((key) => {
-          const item = tabs[key];
-          const active = key === activeKey;
-          const color = active ? colors.ink : colors.text3;
-          return (
+        {left.map(renderTab)}
+        {onMic ? (
+          <View style={styles.micSlot}>
             <Pressable
-              key={key}
               accessibilityRole="button"
-              accessibilityLabel={item.label}
-              accessibilityState={{ selected: active }}
-              onPress={() => onPress(key)}
-              style={({ pressed }) => [styles.tab, pressed && { transform: [{ scale: pressScale }] }]}
+              accessibilityLabel={t('voice.record')}
+              onPress={onMic}
+              style={({ pressed }) => [styles.mic, pressed && { transform: [{ scale: pressScale }] }]}
             >
-              <Feather name={item.icon} size={size.iconMd} color={color} />
-              <Text style={[styles.label, { color }, active && styles.labelOn]}>{item.label}</Text>
-              <View style={[styles.dot, active && styles.dotOn]} />
+              <Feather name="mic" size={size.iconMd} color={colors.nightInk} />
             </Pressable>
-          );
-        })}
+          </View>
+        ) : null}
+        {right.map(renderTab)}
       </View>
     </View>
   );
@@ -52,4 +70,13 @@ const styles = StyleSheet.create({
   labelOn: { fontFamily: fonts.semibold },
   dot: { width: size.dot, height: size.dot, borderRadius: radius.pill },
   dotOn: { backgroundColor: colors.ink },
+  micSlot: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  mic: {
+    width: size.nav - space.tight * 2,
+    height: size.nav - space.tight * 2,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.night,
+  },
 });

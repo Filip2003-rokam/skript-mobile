@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { router, Tabs, type Href } from 'expo-router';
 import { TabBar } from '../../../components/ui/TabBar';
 import { colors, space } from '../../../constants/theme';
 import { t } from '../../../lib/i18n';
@@ -14,6 +14,7 @@ export default function TabLayout() {
             const route = props.state.routes.find((item) => item.name === key);
             if (route) props.navigateToTab(route.key);
           }}
+          onMic={() => router.push('/contact/new' as Href)}
         />
       )}
       screenOptions={{

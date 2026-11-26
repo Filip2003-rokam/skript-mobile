@@ -239,6 +239,8 @@ export const sr = {
     networking: "Profil za mreženje",
     noEventProfile: "Još nema profila za ovaj event. Otvori podešavanje u četiri koraka.",
     noName: "Bez imena",
+    qrHint: "Pokaži svoj kod ili skeniraj tuđi.",
+    qrTitle: "Razmeni kontakt uživo",
     pickEvent: "Izaberi event iz liste.",
     reminder: "Podsetnik",
     saveChanges: "Sačuvaj izmene",
@@ -316,7 +318,7 @@ export const sr = {
   tabs: {
     agenda: "Agenda",
     home: "Početna",
-    me: "Profil",
+    me: "Ja",
     people: "Ljudi",
   },
   voice: {
