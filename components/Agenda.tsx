@@ -7,6 +7,7 @@ import { AgendaList } from './agenda/AgendaList';
 import { SessionSheet } from './agenda/SessionSheet';
 import { EmptyState } from './ui/EmptyState';
 import { EventHero } from './ui/EventHero';
+import { useTabBarInset } from './ui/TabBar';
 import { Screen } from './ui/Screen';
 import { InlineError, LoadingState } from './ui/State';
 import { colors, size, space } from '../constants/theme';
@@ -45,6 +46,7 @@ export function Agenda({ slug, view = 'agenda', onView }: { slug: string; view?:
   const [saveError, setSaveError] = useState<string | null>(null);
   const [offline, setOffline] = useState<string | null>(null);
   const meetings = useMeetings(event);
+  const tabInset = useTabBarInset();
 
   // Podsetnik 10 minuta pre svake sačuvane sesije. Zakazuje ga telefon, pa stiže i bez mreže.
   useEffect(() => {
@@ -70,7 +72,7 @@ export function Agenda({ slug, view = 'agenda', onView }: { slug: string; view?:
       let active = true;
       setNow(new Date());
       const timer = setInterval(() => setNow(new Date()), minute);
-      withOfflineCache(`agenda:${slug}`, async () => {
+      withOfflineCache(`agenda:2:${slug}`, async () => {
         const row = await getEventBySlug(slug);
         if (!row) return null;
         const list = await listSessions(row.id);
@@ -166,7 +168,7 @@ export function Agenda({ slug, view = 'agenda', onView }: { slug: string; view?:
 
   return (
     <Screen tabBar>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.scroll} contentContainerStyle={[styles.list, { paddingBottom: tabInset }]} keyboardShouldPersistTaps="handled">
         {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
         {offline ? <OfflineNote savedAt={offline} onRetry={() => setAttempt((value) => value + 1)} /> : null}
         <EventHero eventName={event.name} />
@@ -219,5 +221,5 @@ const styles = StyleSheet.create({
     gap: space.gap,
   },
   scroll: { flex: 1 },
-  list: { gap: space.gap, paddingBottom: space.gap },
+  list: { gap: space.gap },
 });

@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router, type Href } from 'expo-router';
 import { colors, fontSize, fonts, pressScale, radius, size, space } from '../../constants/theme';
@@ -14,15 +14,15 @@ export type TryCard = {
   onPress: () => void;
 };
 
-export function buildTryCards(liveTitle: string | null, nextTitle: string | null, suggestions: number, followUps: number): TryCard[] {
+export function buildTryCards(liveTitle: string | null, nextTitle: string | null, suggestions: number, followUps: number, ended = false): TryCard[] {
   return [
     {
       key: 'now',
-      tag: t('session.live'),
-      icon: 'radio',
-      live: Boolean(liveTitle),
-      title: t('home.nowTitle'),
-      detail: liveTitle ?? t('home.noLive'),
+      tag: ended ? t('tabs.agenda') : t('session.live'),
+      icon: ended ? 'calendar' : 'radio',
+      live: Boolean(liveTitle) && !ended,
+      title: ended ? t('home.endedTitle') : t('home.nowTitle'),
+      detail: ended ? t('home.endedDetail') : (liveTitle ?? t('home.noLive')),
       onPress: () => router.push('/agenda'),
     },
     {
@@ -30,7 +30,7 @@ export function buildTryCards(liveTitle: string | null, nextTitle: string | null
       tag: t('tabs.agenda'),
       icon: 'calendar',
       title: t('home.nextTitle'),
-      detail: nextTitle ?? t('home.noNext'),
+      detail: ended ? t('home.seeAgenda') : (nextTitle ?? t('home.noNext')),
       onPress: () => router.push('/agenda'),
     },
     {
@@ -61,10 +61,16 @@ export function buildTryCards(liveTitle: string | null, nextTitle: string | null
 }
 
 export function TryCards({ cards }: { cards: TryCard[] }) {
+  const { width } = useWindowDimensions();
+  const peek = space.edge;
+  const cardWidth = width > 0 ? Math.floor((width - space.edge * 2 - space.gap - peek) / 2) : size.tryCardWidth;
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      decelerationRate="fast"
+      snapToInterval={cardWidth + space.gap}
+      snapToAlignment="start"
       contentContainerStyle={styles.row}
       style={styles.bleed}
     >
@@ -73,7 +79,7 @@ export function TryCards({ cards }: { cards: TryCard[] }) {
           key={card.key}
           accessibilityRole="button"
           onPress={card.onPress}
-          style={({ pressed }) => [styles.card, pressed && { transform: [{ scale: pressScale }] }]}
+          style={({ pressed }) => [styles.card, { width: cardWidth }, pressed && { transform: [{ scale: pressScale }] }]}
         >
           <View style={styles.top}>
             <View style={styles.tag}>
@@ -105,7 +111,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.edge,
   },
   card: {
-    width: size.tryCardWidth,
     height: size.tryCardHeight,
     borderRadius: radius.control,
     backgroundColor: colors.surface,

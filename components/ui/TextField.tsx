@@ -16,7 +16,8 @@ export function TextField({ label, error, quiet = false, hideLabel = false, edit
         accessibilityLabel={label}
         editable={editable}
         placeholderTextColor={colors.text3}
-        style={[styles.input, error ? styles.inputError : null, editable === false && styles.off, style]}
+        underlineColorAndroid="transparent"
+        style={[styles.input, props.multiline ? styles.area : null, error ? styles.inputError : null, editable === false && styles.off, style]}
         {...props}
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -49,6 +50,13 @@ const styles = StyleSheet.create({
     ...shadow.soft,
   },
   inputError: { borderColor: colors.destructive },
+  area: {
+    height: size.field * 2,
+    borderRadius: radius.card,
+    backgroundColor: colors.surface,
+    textAlignVertical: 'top',
+    paddingTop: space.gap,
+  },
   off: { opacity: opacity.disabled },
   error: {
     fontFamily: fonts.regular,

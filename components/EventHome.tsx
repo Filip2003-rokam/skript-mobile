@@ -8,13 +8,14 @@ import { InboxBell } from './home/InboxBell';
 import { Section } from './home/HomeSections';
 import { StatusPills } from './home/StatusPills';
 import { buildTryCards, TryCards } from './home/TryCards';
+import { HomeNext } from './home/HomeNext';
 import { Chip } from './ui/Chip';
 import { EmptyState } from './ui/EmptyState';
 import { Screen } from './ui/Screen';
 import { InlineError, LoadingState } from './ui/State';
 import { colors, fontSize, fonts, size, space, trackingWide } from '../constants/theme';
 import { authErrorMessage } from '../lib/services/authService';
-import { getEventBySlug, type EventRow } from '../lib/services/eventService';
+import { getEventBySlug, eventPhase, type EventRow } from '../lib/services/eventService';
 import { sessionIsLive, upcomingSessions } from '../lib/services/sessionService';
 import { t } from '../lib/i18n';
 
@@ -89,8 +90,9 @@ export function EventHome({ slug }: { slug: string }) {
   }
 
   const now = new Date();
-  const live = facts.sessions.filter((session) => sessionIsLive(event.starts_on, event.days, session, now));
-  const next = upcomingSessions(event.starts_on, event.days, facts.sessions, now, 1);
+  const ended = eventPhase(event.starts_on, event.days, now).phase === 'after';
+  const live = ended ? [] : facts.sessions.filter((session) => sessionIsLive(event.starts_on, event.days, session, now));
+  const next = ended ? [] : upcomingSessions(event.starts_on, event.days, facts.sessions, now, 1);
   const icon = (name: keyof typeof Feather.glyphMap) => <Feather name={name} size={size.iconSm} color={colors.ink} />;
 
   return (
@@ -105,13 +107,13 @@ export function EventHome({ slug }: { slug: string }) {
             <InboxBell eventId={event.id} />
           </View>
         </View>
-        <HomeMark color={event.color} />
+        <HomeMark />
         <Text style={styles.question}>{t('home.question')}</Text>
         <StatusPills live={live.length} linksToday={facts.linksToday} />
       </View>
       {error ? <InlineError text={error} onRetry={() => setAttempt((value) => value + 1)} /> : null}
       <Section title={t('home.try')}>
-        <TryCards cards={buildTryCards(live[0]?.title ?? null, next[0]?.title ?? null, facts.suggestions, facts.followUps)} />
+        <TryCards cards={buildTryCards(live[0]?.title ?? null, next[0]?.title ?? null, facts.suggestions, facts.followUps, ended)} />
       </Section>
       <Section title={t('home.quick')}>
         <View style={styles.quick}>
@@ -121,6 +123,7 @@ export function EventHome({ slug }: { slug: string }) {
           <Chip label={t('home.eventProfile')} icon={icon('edit-2')} onPress={() => router.push({ pathname: '/event/[slug]/profile', params: { slug } })} />
         </View>
       </Section>
+      {ended ? null : <HomeNext startsOn={event.starts_on} days={event.days} sessions={facts.sessions} now={now} />}
     </Screen>
   );
 }

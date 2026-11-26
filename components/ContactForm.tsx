@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Button } from './ui/Button';
 import { TextField } from './ui/TextField';
 import { FollowUpDraftActions } from './voice/FollowUpDraftActions';
-import { colors, fontSize, fonts, radius, size, space } from '../constants/theme';
+import { colors, fontSize, fonts, space } from '../constants/theme';
 import { fromDisplayDate, toDisplayDate } from '../lib/contactDates';
 import type { Contact, ContactWrite } from '../lib/services/contactService';
 import { formatDraft, splitDraft } from '../lib/services/voiceNoteService';
@@ -65,7 +65,7 @@ export function ContactForm({ contact, saving = false, error, onSubmit }: Contac
       <TextField label={t('fields.email')} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
       <TextField label={t('fields.phone')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
       <TextField label={t('fields.linkedin')} value={linkedinUrl} onChangeText={setLinkedinUrl} autoCapitalize="none" />
-      <TextField label={t('fields.note')} value={note} onChangeText={setNote} multiline style={styles.note} />
+      <TextField label={t('fields.note')} value={note} onChangeText={setNote} multiline />
       <TextField
         label={t('fields.followUp')}
         value={followUp}
@@ -75,7 +75,7 @@ export function ContactForm({ contact, saving = false, error, onSubmit }: Contac
         error={dateError ?? undefined}
       />
       <TextField label={t('fields.emailSubject')} value={subject} onChangeText={setSubject} />
-      <TextField label={t('fields.emailBody')} value={mailBody} onChangeText={setMailBody} multiline style={styles.note} />
+      <TextField label={t('fields.emailBody')} value={mailBody} onChangeText={setMailBody} multiline />
       <FollowUpDraftActions email={email} subject={subject} body={mailBody} />
       {error ? <Text style={styles.dateError}>{error}</Text> : null}
       <Button label={t('common.save')} loading={saving} onPress={submit} />
@@ -86,5 +86,4 @@ export function ContactForm({ contact, saving = false, error, onSubmit }: Contac
 const styles = StyleSheet.create({
   form: { gap: space.gap },
   dateError: { fontFamily: fonts.regular, fontSize: fontSize.fs13, color: colors.destructive },
-  note: { height: size.field * 2, borderRadius: radius.card, textAlignVertical: 'top', paddingTop: space.gap },
 });

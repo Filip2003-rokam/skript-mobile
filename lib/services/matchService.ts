@@ -33,6 +33,45 @@ type SuggestionRow = {
 
 type ProfileRow = { id: string; full_name: string | null; avatar_url: string | null };
 
+const phraseEn: Record<string, string> = {
+  'Praviš softver': 'You build software',
+  'Dizajniraš proizvode': 'You design products',
+  Investiraš: 'You invest',
+  'Praviš prodajne kontakte': 'You make sales intros',
+  'Radiš marketing': 'You do marketing',
+  'Mentoruješ osnivače': 'You mentor founders',
+  'Tražiš klijente': 'You are looking for clients',
+  'Tražiš programere': 'You are looking for developers',
+  'Tražiš partnere': 'You are looking for partners',
+  Zapošljavaš: 'You are hiring',
+  'Skupljaš novac': 'You are raising money',
+  'Treba im razvojni tim': 'They need a dev team',
+  'Skuplja seed rundu': 'Raising a seed round',
+  'Traži klijente': 'Looking for clients',
+  'Traži partnere': 'Looking for partners',
+  'Traži programere': 'Looking for developers',
+  'Treba im marketing': 'They need marketing',
+  'Treba im dizajn': 'They need design',
+  'Traži mentora': 'Looking for a mentor',
+  'Investira u seed': 'Invests in seed',
+  'Pravi softver': 'Builds software',
+  'Može biti prvi kupac': 'Could be a first customer',
+};
+
+function englishPhrase(value: string | null): string | null {
+  if (!value || appLanguage() !== 'en') return value;
+  return phraseEn[value] ?? value;
+}
+
+function englishWhy(why: string | null, mine: string | null, theirs: string | null): string | null {
+  if (!why || appLanguage() !== 'en') return why;
+  const mineEn = mine ? phraseEn[mine] : undefined;
+  const theirsEn = theirs ? phraseEn[theirs] : undefined;
+  if (!/[čćžšđ]/i.test(why) && !why.startsWith('Ti ')) return why;
+  if (!mineEn || !theirsEn) return why;
+  return `${mineEn}, and ${theirsEn.charAt(0).toLowerCase()}${theirsEn.slice(1)}.`;
+}
+
 type AttendeeRow = {
   user_id: string;
   role: string | null;
@@ -77,9 +116,9 @@ export async function getSuggestions(eventId: string): Promise<Suggestion[]> {
         id: row.id,
         suggestedUserId: row.suggested_user_id,
         score: row.score,
-        why: row.why,
-        matchedMine: row.matched_mine,
-        matchedTheirs: row.matched_theirs,
+        why: englishWhy(row.why, row.matched_mine, row.matched_theirs),
+        matchedMine: englishPhrase(row.matched_mine),
+        matchedTheirs: englishPhrase(row.matched_theirs),
         openers: row.openers ?? [],
         name: person?.full_name ?? null,
         avatarUrl: person?.avatar_url ?? null,

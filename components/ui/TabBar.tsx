@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { colors, fontSize, fonts, pressScale, radius, shadow, size, space } from '../../constants/theme';
 import { t } from '../../lib/i18n';
@@ -12,6 +13,12 @@ const tabs = {
 };
 
 type TabKey = keyof typeof tabs;
+
+// Visina lebdeće trake, da poslednji red liste stane iznad nje.
+export function useTabBarInset() {
+  const insets = useSafeAreaInsets();
+  return size.nav + space.gap * 2 + Math.max(insets.bottom, space.gap);
+}
 
 // Mikrofon u sredini je kao u demou: odmah otvara novu glasovnu belešku posle razgovora.
 export function TabBar({ activeKey, onPress, onMic, bottom = 0 }: { activeKey: string; onPress: (key: string) => void; onMic?: () => void; bottom?: number }) {

@@ -102,8 +102,10 @@ export default function NewContactScreen() {
   return (
     <Screen scroll>
       <Button label={t('common.back')} variant="ghost" onPress={() => router.back()} />
-      <Text style={styles.title}>{t('contact.newTitle')}</Text>
+      <Text style={styles.title}>{t('contact.voiceTitle')}</Text>
+      <Text style={styles.lead}>{t('contact.voiceLead')}</Text>
       <VoiceNote onReady={fillFromVoice} />
+      <Text style={styles.or}>{t('contact.orType')}</Text>
       <ContactForm key={formKey} contact={seed} saving={saving} error={error} onSubmit={(data) => void save(data)} />
     </Screen>
   );
@@ -114,6 +116,16 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     fontSize: fontSize.fs22,
     color: colors.ink,
-    marginBottom: space.tight,
+  },
+  lead: {
+    fontFamily: fonts.regular,
+    fontSize: fontSize.fs15,
+    color: colors.text2,
+  },
+  or: {
+    fontFamily: fonts.semibold,
+    fontSize: fontSize.fs13,
+    color: colors.ink,
+    marginTop: space.gap,
   },
 });

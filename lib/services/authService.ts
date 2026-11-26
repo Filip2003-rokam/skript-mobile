@@ -53,6 +53,14 @@ export function onAuthChange(callback: (session: Session | null) => void) {
   return () => data.subscription.unsubscribe();
 }
 
+function ownSentence(error: unknown): string | null {
+  if (!(error instanceof Error)) return null;
+  const message = error.message.trim();
+  if (!message || message.length > 180) return null;
+  if (/[{}<>]|postgres|pgrst|typeerror|syntaxerror|jwt|stack|sql|fetch|network|timeout/i.test(message)) return null;
+  return message;
+}
+
 export function authErrorMessage(error: unknown): string {
   const value = typeof error === 'object' && error !== null ? (error as { message?: string; code?: string; name?: string }) : {};
   const text = `${value.code ?? ''} ${value.name ?? ''} ${value.message ?? ''}`.toLowerCase();
@@ -63,8 +71,14 @@ export function authErrorMessage(error: unknown): string {
   if (text.includes('already registered') || text.includes('already been registered') || text.includes('user_already_exists')) {
     return t('errors.accountExists');
   }
-  if (text.includes('network') || text.includes('fetch') || text.includes('offline')) {
+  if (text.includes('network') || text.includes('fetch') || text.includes('offline') || text.includes('timeout')) {
     return t('errors.offline');
   }
-  return t('errors.generic');
+  if (text.includes('jwt') || text.includes('session') || text.includes('not authenticated') || text.includes('refresh token') || text.includes('nisi prijavljen')) {
+    return t('errors.signedOutRetry');
+  }
+  if (text.includes('pgrst') || text.includes('42501') || text.includes('permission') || text.includes('row-level') || text.includes('postgres')) {
+    return t('errors.query');
+  }
+  return ownSentence(error) ?? t('errors.generic');
 }

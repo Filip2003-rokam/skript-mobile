@@ -38,20 +38,20 @@ function NoEventHome() {
 
   const retry = () => setAttempt((value) => value + 1);
 
+  if (error && !events) {
+    return (
+      <Screen tabBar>
+        <ErrorState text={error} onRetry={retry} />
+      </Screen>
+    );
+  }
+
   return (
     <Screen tabBar scroll>
       <View style={styles.prompt}>
         <SkriptMark size={fontSize.fs30} />
       </View>
       {events === null && !error ? <LoadingState fill={false} /> : null}
-      {error && !events ? (
-        <EmptyState
-          icon={<Feather name="alert-circle" size={size.iconMd} color={colors.ink} />}
-          text={error}
-          action={t('common.retry')}
-          onAction={retry}
-        />
-      ) : null}
       {error && events ? <InlineError text={error} onRetry={retry} /> : null}
       {events && events.length === 0 ? (
         <EmptyState
