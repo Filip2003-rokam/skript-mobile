@@ -2,6 +2,8 @@
 
 Radi se na telefonu, sa dva naloga kad scenario traži drugu osobu. Oba naloga su na istom eventu i imaju dopunjene profile (šta nude i šta im treba). Za razmenu uživo drugi nalog može biti pregledač: u Metro terminalu pritisni `w`, prijavi se i otvori Razmeni kontakt. Poslednja kolona ostaje prazna dok se test ne odradi.
 
+Scenariji 19 do 25 traže fizički telefon sa development build-om, jer Expo Go i emulator nemaju sve: push token, kalendar, imenik i snimanje sa zaključanim ekranom. Pravila u bazi (ko šta vidi) ne testiraju se ručno nego komandom `npm run test:db`, scenario 26.
+
 ## 1. Registracija
 
 | Koraci | Očekivano | Stvarni rezultat |
@@ -90,7 +92,7 @@ Radi se na telefonu, sa dva naloga kad scenario traži drugu osobu. Oba naloga s
 
 | Koraci | Očekivano | Stvarni rezultat |
 | --- | --- | --- |
-| 1. Otvori event, agendu i ljude dok ima mreže. 2. Isključi internet. 3. Ostani na istom ekranu, pa povuci ili ponovo otvori tab. 4. Pokušaj da sačuvaš kontakt ili da napišeš follow-up. | Već učitani nazivi, sesije i ljudi ostaju na ekranu. Radnja koja traži mrežu napiše „Nema interneta. Proveri vezu i pokušaj ponovo.“ i ne briše listu. | |
+| 1. Otvori agendu, Moj dan i Profil sa kontaktima dok ima mreže. 2. Isključi internet (avionski režim). 3. Zatvori aplikaciju i otvori je ponovo. 4. Otvori agendu i kontakte. 5. Pokušaj da sačuvaš kontakt ili da napišeš follow-up. | Agenda, sastanci i kontakti se vide, uz traku „Nema mreže. Prikazujem sačuvano u HH:MM.“ Radnja koja traži mrežu napiše „Nema interneta. Proveri vezu i pokušaj ponovo.“ i ne briše listu. | |
 
 ## 16. Event pre prijave
 
@@ -103,3 +105,57 @@ Radi se na telefonu, sa dva naloga kad scenario traži drugu osobu. Oba naloga s
 | Koraci | Očekivano | Stvarni rezultat |
 | --- | --- | --- |
 | 1. Otvori kontakt koji ima pisanu belešku. 2. Pritisni „Napiši follow-up“. 3. Pritisni „Kraće“, pa „Formalnije“. 4. Pritisni „Otvori u mejlu“ i ne šalji poruku. 5. Pritisni „Označi kao poslato“. 6. Na kontaktu bez beleške ponovo pritisni „Napiši follow-up“. | Pojavi se predmet i tekst. Kraće i formalnije napišu nov nacrt. Mejl aplikacija se otvori, a poruka ostane neposlata. Posle oznake piše „Označeno kao poslato. Mejl se ne šalje sam.“ i prekidač „Follow-up poslat“ je uključen. Bez beleške piše „Napiši belešku o razgovoru, pa onda follow-up.“ | |
+
+## 18. Dva jezika
+
+| Koraci | Očekivano | Stvarni rezultat |
+| --- | --- | --- |
+| 1. Na telefonu podešenom na engleski otvori aplikaciju prvi put. 2. Otvori Ja, pa Jezik, i izaberi „Srpski“. 3. Zatvori i ponovo otvori aplikaciju. 4. Drugi nalog pošalje prvom zahtev ili predlog sastanka. | Prvo je sve na engleskom. Posle izbora tabovi su Početna, Agenda, Ljudi, Ja. Izbor ostaje i posle ponovnog pokretanja. Push za zahtev stiže na srpskom, jer je jezik sačuvan na nalogu. | |
+
+## 19. Navigacija
+
+| Koraci | Očekivano | Stvarni rezultat |
+| --- | --- | --- |
+| 1. Uđi na event. 2. Prođi kroz Početna, Agenda, Ljudi, Ja. 3. Pritisni okruglo dugme sa mikrofonom u sredini trake. | Svaki tab otvara svoj ekran, a aktivni je označen. Mikrofon otvara nov kontakt sa glasovnom beleškom. | |
+
+## 20. Sastanak
+
+| Koraci | Očekivano | Stvarni rezultat |
+| --- | --- | --- |
+| 1. Na tabu Ljudi, Povezani, otvori osobu i pritisni „Predloži sastanak“. 2. Ostavi mesto prazno i pošalji. 3. Upiši vreme „11:30“ i mesto „Hol“ i pritisni „Pošalji predlog“. 4. Drugi nalog otvori zvonce na početnoj i predlog. 5. Pritisne „Prihvati“. 6. Prvi nalog pokuša da pošalje još jedan predlog istoj osobi dok prvi čeka. | Bez mesta piše „Upiši mesto.“ Posle slanja piše „Predlog je poslat.“, a kod prvog naloga stoji „Čeka potvrdu“. Drugi vidi „{ime} predlaže sastanak“. Posle prihvatanja oba vide „Sastanak zakazan“. Drugi otvoren predlog istoj osobi odbije poruka „Sa ovom osobom već imate otvoren predlog.“ | |
+
+## 21. Moj dan
+
+| Koraci | Očekivano | Stvarni rezultat |
+| --- | --- | --- |
+| 1. Na Agendi otvori predavanje i pritisni „Sačuvaj u moj dan“. 2. Prebaci na „Moj dan“. 3. Na predavanju u Mom danu pritisni „Dodaj u kalendar“. | Dugme postane „U mom danu“. Moj dan prikazuje to predavanje i prihvaćeni sastanak iz scenarija 20, po vremenu. Otvara se forma kalendara telefona sa naslovom i vremenom; posle čuvanja na iPhone-u piše „Dodato u kalendar.“ | |
+
+## 22. Zvonce
+
+| Koraci | Očekivano | Stvarni rezultat |
+| --- | --- | --- |
+| 1. Drugi nalog pošalje zahtev, predlog sastanka i prihvati jedan. 2. Prvi nalog otvori početnu eventa. 3. Pritisni zvonce. 4. Pritisni jedno obaveštenje. 5. Zatvori i ponovo otvori zvonce. | Na zvoncetu je broj nepročitanih. U listi su „{ime} želi da se poveže“, „{ime} predlaže sastanak“ i slično. Dodir otvara Zahteve ili Moj dan. Posle otvaranja broj nestaje. | |
+
+## 23. Podsetnici
+
+| Koraci | Očekivano | Stvarni rezultat |
+| --- | --- | --- |
+| 1. U Ja, Podsetnici, proveri da je prekidač uključen. 2. Sačuvaj predavanje koje počinje za 15 do 20 minuta (na probnom eventu podesi vreme u bazi). 3. Isključi internet i zaključaj telefon. 4. Sačekaj. 5. Isključi prekidač Podsetnici i ponovi sa drugim predavanjem. | 10 minuta pre početka stigne „Za 10 min počinje“ sa naslovom i salom, i bez interneta. Dodir otvara Moj dan. Kad je prekidač isključen, podsetnik ne stiže. | |
+
+## 24. Imenik telefona
+
+| Koraci | Očekivano | Stvarni rezultat |
+| --- | --- | --- |
+| 1. Otvori kontakt koji ima mejl ili telefon. 2. Pritisni „Sačuvaj u imenik“. 3. U sistemskoj formi pritisni Sačuvaj. 4. Otvori imenik telefona. | Otvara se forma imenika popunjena imenom, firmom, mejlom i telefonom. Kontakt je u imeniku. Aplikacija ne traži da čita ceo imenik. | |
+
+## 25. Glasovna beleška sa zaključanim ekranom
+
+| Koraci | Očekivano | Stvarni rezultat |
+| --- | --- | --- |
+| 1. Pritisni mikrofon u traci i počni snimanje. 2. Zaključaj telefon i govori 15 sekundi. 3. Otključaj i zaustavi snimanje. 4. Snimi duže od 30 sekundi. | Snimak sadrži i deo izgovoren dok je ekran bio zaključan, a beleška ga prepiše. Predugačak snimak dobije „Snimak je predugačak. Snimi najviše 30 sekundi.“ | |
+
+## 26. Pravila u bazi (automatski)
+
+| Koraci | Očekivano | Stvarni rezultat |
+| --- | --- | --- |
+| 1. U folderu `skript-mobile` pokreni `npm run test:db`. 2. Privremeno u novoj migraciji `999_proba.sql` napiši `drop policy profiles_select on public.profiles; create policy profiles_select on public.profiles for select to authenticated using (true);`. 3. Ponovo pokreni `npm run test:db`. 4. Obriši `999_proba.sql`. | Prvo prođu svi testovi (sastanci i privatnost). Sa olabavljenom politikom padnu testovi „učesnik vidi profile i prijave samo ljudi sa svog eventa“ i „neko sa drugog eventa vidi samo sebe“. Posle brisanja fajla opet sve prolazi. | |
